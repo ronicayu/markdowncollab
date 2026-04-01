@@ -1,0 +1,23 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "MC" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e6]: Editing
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - generic "Swift Deer (you)" [ref=e9]: SD
+          - generic "Swift Deer" [ref=e10]: SD
+        - button "Share" [ref=e11]:
+          - img [ref=e12]
+          - text: Share
+        - button "Invite Agent" [ref=e14]
+    - generic [ref=e18]:
+      - paragraph [ref=e19]:
+        - mark [ref=e20]: Test
+      - paragraph [ref=e21]
+      - paragraph [ref=e22]: More
+  - button "Open Next.js Dev Tools" [ref=e28] [cursor=pointer]:
+    - img [ref=e29]
+  - alert [ref=e32]

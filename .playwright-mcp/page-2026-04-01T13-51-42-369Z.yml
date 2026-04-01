@@ -1,0 +1,33 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "MC" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e6]: Editing
+      - generic [ref=e7]:
+        - generic "Swift Deer (you)" [ref=e9]: SD
+        - button "Share" [ref=e11]:
+          - img [ref=e12]
+          - text: Share
+        - button "Invite Agent" [ref=e14]
+    - generic [ref=e18]:
+      - paragraph [ref=e19]:
+        - mark [ref=e20]: Test
+      - paragraph [ref=e21]
+      - paragraph [ref=e22]: More
+    - button "Comment" [ref=e33]:
+      - img [ref=e34]
+      - text: Comment
+    - generic [ref=e37]:
+      - heading "Add comment" [level=3] [ref=e39]
+      - textbox "Type your comment..." [active] [ref=e40]
+      - generic [ref=e41]:
+        - button "Cancel" [ref=e42]
+        - button "Comment" [disabled] [ref=e43]
+      - generic [ref=e44]:
+        - paragraph [ref=e45]: Comments
+        - generic [ref=e47]: "Swift Deer: Should we rename this to something more descriptive?"
+  - button "Open Next.js Dev Tools" [ref=e28] [cursor=pointer]:
+    - img [ref=e29]
+  - alert [ref=e32]

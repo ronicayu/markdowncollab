@@ -254,6 +254,16 @@ export default function DocumentPage({
     [editor, userName, ydoc, id]
   );
 
+  const [mobileCommentOpen, setMobileCommentOpen] = useState(false);
+  const [mobileCommentText, setMobileCommentText] = useState("");
+
+  function handleMobileCommentSubmit() {
+    if (!mobileCommentText.trim()) return;
+    handleAddComment(mobileCommentText.trim());
+    setMobileCommentText("");
+    setMobileCommentOpen(false);
+  }
+
   const handleInviteAgent = useCallback(async () => {
     try {
       const res = await fetch("/api/agent/invite", {
@@ -309,6 +319,65 @@ export default function DocumentPage({
           />
         </div>
       </div>
+      {/* Mobile: floating comment button when text is selected */}
+      {hasSelection && (
+        <button
+          onClick={() => setMobileCommentOpen(true)}
+          className="md:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 active:bg-blue-800"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+          </svg>
+          Comment
+        </button>
+      )}
+
+      {/* Mobile: comment bottom sheet */}
+      {mobileCommentOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/30" onClick={() => setMobileCommentOpen(false)}>
+          <div className="bg-white rounded-t-2xl p-4 pb-8" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Add comment</h3>
+            <textarea
+              autoFocus
+              value={mobileCommentText}
+              onChange={(e) => setMobileCommentText(e.target.value)}
+              placeholder="Type your comment..."
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-blue-400"
+              rows={3}
+            />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => { setMobileCommentOpen(false); setMobileCommentText(""); }}
+                className="flex-1 text-sm text-gray-600 border border-gray-200 rounded-lg py-2.5 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMobileCommentSubmit}
+                disabled={!mobileCommentText.trim()}
+                className="flex-1 text-sm font-medium text-white bg-blue-600 rounded-lg py-2.5 hover:bg-blue-700 disabled:bg-gray-300"
+              >
+                Comment
+              </button>
+            </div>
+
+            {/* Show existing comments */}
+            {comments.filter((c) => !c.resolved).length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <p className="text-xs font-medium text-gray-500 mb-2">Comments</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {comments.filter((c) => !c.resolved).map((c) => (
+                    <div key={c.id} className="text-xs text-gray-600 bg-gray-50 rounded-lg p-2">
+                      <span className="font-medium text-gray-800">{c.authorName}</span>: {c.content}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
