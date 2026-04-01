@@ -1,0 +1,26 @@
+- generic [active] [ref=e1]:
+  - button "Open Next.js Dev Tools" [ref=e13] [cursor=pointer]:
+    - img [ref=e14]
+  - alert [ref=e17]
+  - generic [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: MarkdownCollab
+        - generic [ref=e27]: /
+        - generic [ref=e28]: 78af7288-f977-4805-a930-e089896938f7
+        - generic [ref=e29]: Suggesting
+      - generic [ref=e30]:
+        - generic "Swift Hawk" [ref=e32]: SH
+        - link "Export .md" [ref=e33] [cursor=pointer]:
+          - /url: /api/documents/78af7288-f977-4805-a930-e089896938f7/export
+        - button "Invite Agent" [ref=e34]
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - paragraph [ref=e37]: OUTLINE
+        - paragraph [ref=e38]: No headings yet
+      - generic [ref=e39]:
+        - generic [ref=e40]: Reconnecting...
+        - paragraph [ref=e44]
+      - generic [ref=e45]:
+        - heading "Suggestions & Comments" [level=2] [ref=e46]
+        - paragraph [ref=e47]: No suggestions or comments yet. Invite an agent to get started.

@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["ws", "y-protocols", "lib0", "yjs"],
-  allowedDevOrigins: ["*"],
+  allowedDevOrigins: ["100.109.228.117", "localhost", "0.0.0.0"],
 };
 
 export default nextConfig;

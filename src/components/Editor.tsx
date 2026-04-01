@@ -95,12 +95,6 @@ export default function Editor({
 
   return (
     <div className="relative flex-1 overflow-auto bg-white">
-      {!connected && (
-        <div className="absolute top-2 right-2 z-10 flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-800">
-          <span className="inline-block h-2 w-2 rounded-full bg-yellow-500" />
-          Reconnecting...
-        </div>
-      )}
       <EditorContent editor={editor} />
     </div>
   );
