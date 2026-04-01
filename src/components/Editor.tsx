@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { SuggestionMark } from "@/extensions/suggestion-mark";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo, useState } from "react";
@@ -60,6 +61,7 @@ export default function Editor({ documentId, userName }: EditorProps) {
       StarterKit.configure({
         undoRedo: false,
       }),
+      SuggestionMark,
       Collaboration.configure({
         document: ydoc,
       }),
