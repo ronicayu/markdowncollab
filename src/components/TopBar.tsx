@@ -23,11 +23,18 @@ export default function TopBar({
 }: TopBarProps) {
   const [copied, setCopied] = useState(false);
 
-  async function copyShareLink() {
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  async function handleShare() {
     const url = `${window.location.origin}/doc/${documentId}`;
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API fails on non-HTTPS — show modal with selectable URL
+      setShowShareModal(true);
+    }
   }
 
   return (
@@ -84,7 +91,7 @@ export default function TopBar({
 
         {/* Share button */}
         <button
-          onClick={copyShareLink}
+          onClick={handleShare}
           className="flex items-center gap-1.5 h-8 px-2.5 md:px-3 border border-gray-200 text-gray-700 text-xs md:text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -92,6 +99,30 @@ export default function TopBar({
           </svg>
           {copied ? "Copied!" : "Share"}
         </button>
+
+        {/* Share modal fallback for non-HTTPS */}
+        {showShareModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setShowShareModal(false)}>
+            <div className="bg-white rounded-lg shadow-lg p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Share this document</h3>
+              <p className="text-xs text-gray-500 mb-3">Copy the link below and send it to your collaborators:</p>
+              <input
+                readOnly
+                value={`${typeof window !== "undefined" ? window.location.origin : ""}/doc/${documentId}`}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-700 bg-gray-50 select-all"
+                onFocus={(e) => e.target.select()}
+              />
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Export */}
         <a

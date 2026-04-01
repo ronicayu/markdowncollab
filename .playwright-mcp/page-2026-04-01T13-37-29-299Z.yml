@@ -1,0 +1,31 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "MC" [ref=e5] [cursor=pointer]:
+          - /url: /
+        - generic [ref=e6]: /
+        - generic [ref=e7]: 6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1
+        - generic [ref=e8]: Suggesting
+      - generic [ref=e9]:
+        - generic "Swift Hawk (you)" [ref=e11]: SH
+        - button "Share" [ref=e12]:
+          - img [ref=e13]
+          - text: Share
+        - link "Export .md" [ref=e15] [cursor=pointer]:
+          - /url: /api/documents/6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1/export
+        - button "Invite Agent" [ref=e16]
+    - generic [ref=e17]:
+      - generic [ref=e19]:
+        - paragraph [ref=e20]: OUTLINE
+        - paragraph [ref=e21]: No headings yet
+      - generic [ref=e24]:
+        - paragraph [ref=e25]: Test
+        - paragraph [ref=e26]
+        - paragraph [ref=e27]: More
+      - generic [ref=e29]:
+        - heading "Suggestions & Comments" [level=2] [ref=e30]
+        - paragraph [ref=e31]: No suggestions or comments yet. Invite an agent to get started.
+  - button "Open Next.js Dev Tools" [ref=e37] [cursor=pointer]:
+    - img [ref=e38]
+  - alert [ref=e41]
