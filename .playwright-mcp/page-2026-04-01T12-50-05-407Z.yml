@@ -1,0 +1,26 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: MC
+        - generic [ref=e7]: /
+        - generic [ref=e8]: 6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1
+        - generic [ref=e9]: Suggesting
+      - generic [ref=e10]:
+        - generic "Swift Deer" [ref=e12]: SD
+        - link "Export .md" [ref=e13] [cursor=pointer]:
+          - /url: /api/documents/6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1/export
+        - button "Invite Agent" [ref=e14]
+    - generic [ref=e15]:
+      - generic [ref=e17]:
+        - paragraph [ref=e18]: OUTLINE
+        - paragraph [ref=e19]: No headings yet
+      - generic [active] [ref=e22]:
+        - paragraph [ref=e23]: Test
+        - paragraph [ref=e38]
+      - generic [ref=e25]:
+        - heading "Suggestions & Comments" [level=2] [ref=e26]
+        - paragraph [ref=e27]: No suggestions or comments yet. Invite an agent to get started.
+  - button "Open Next.js Dev Tools" [ref=e33] [cursor=pointer]:
+    - img [ref=e34]
+  - alert [ref=e37]

@@ -26,7 +26,137 @@ if (!existsSync(persistDir)) mkdirSync(persistDir, { recursive: true });
 const messageSync = 0;
 const messageAwareness = 1;
 
+const markdownDir = process.env.MARKDOWN_DIR || "./documents";
+if (!existsSync(markdownDir)) mkdirSync(markdownDir, { recursive: true });
+
 const docs = new Map();
+
+/**
+ * Convert a Yjs XmlFragment (ProseMirror doc) to markdown.
+ * Walks the tree and produces clean markdown text.
+ */
+function xmlFragmentToMarkdown(fragment) {
+  let md = "";
+
+  for (let i = 0; i < fragment.length; i++) {
+    const child = fragment.get(i);
+
+    if (child instanceof Y.XmlText) {
+      md += xmlTextToMarkdown(child);
+    } else if (child instanceof Y.XmlElement) {
+      const tag = child.nodeName;
+
+      if (tag === "heading") {
+        const level = child.getAttribute("level") || 1;
+        const prefix = "#".repeat(Number(level));
+        md += `${prefix} ${getElementText(child)}\n\n`;
+      } else if (tag === "paragraph") {
+        const text = getElementText(child);
+        if (text.length > 0) {
+          md += `${text}\n\n`;
+        } else {
+          md += "\n";
+        }
+      } else if (tag === "bulletList") {
+        md += listToMarkdown(child, "- ", 0);
+        md += "\n";
+      } else if (tag === "orderedList") {
+        md += listToMarkdown(child, "1. ", 0);
+        md += "\n";
+      } else if (tag === "blockquote") {
+        const inner = xmlFragmentToMarkdown(child);
+        md += inner
+          .split("\n")
+          .map((line) => (line.trim() ? `> ${line}` : ">"))
+          .join("\n");
+        md += "\n\n";
+      } else if (tag === "codeBlock") {
+        const language = child.getAttribute("language") || "";
+        md += `\`\`\`${language}\n${getElementText(child)}\n\`\`\`\n\n`;
+      } else if (tag === "horizontalRule") {
+        md += "---\n\n";
+      } else {
+        // Unknown block — just extract text
+        const text = getElementText(child);
+        if (text) md += `${text}\n\n`;
+      }
+    }
+  }
+
+  return md.replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+}
+
+/**
+ * Extract text from an XmlElement, handling inline marks.
+ */
+function getElementText(element) {
+  let text = "";
+  for (let i = 0; i < element.length; i++) {
+    const child = element.get(i);
+    if (child instanceof Y.XmlText) {
+      text += xmlTextToMarkdown(child);
+    } else if (child instanceof Y.XmlElement) {
+      // Nested element (e.g. listItem containing paragraph)
+      text += getElementText(child);
+    }
+  }
+  return text;
+}
+
+/**
+ * Convert XmlText with formatting deltas to inline markdown.
+ */
+function xmlTextToMarkdown(xmlText) {
+  const delta = xmlText.toDelta();
+  let text = "";
+  for (const op of delta) {
+    if (typeof op.insert !== "string") continue;
+    let segment = op.insert;
+    const attrs = op.attributes || {};
+
+    // Skip suggestion-delete marks (text being removed)
+    if (attrs.suggestionMark && attrs.suggestionMark.type === "delete") continue;
+
+    if (attrs.code) segment = `\`${segment}\``;
+    if (attrs.bold) segment = `**${segment}**`;
+    if (attrs.italic) segment = `*${segment}*`;
+    if (attrs.strike) segment = `~~${segment}~~`;
+    if (attrs.link) segment = `[${segment}](${attrs.link.href})`;
+
+    text += segment;
+  }
+  return text;
+}
+
+/**
+ * Convert list elements to markdown with proper indentation.
+ */
+function listToMarkdown(listElement, prefix, indent) {
+  let md = "";
+  const spaces = "  ".repeat(indent);
+  let itemNum = 1;
+
+  for (let i = 0; i < listElement.length; i++) {
+    const child = listElement.get(i);
+    if (child instanceof Y.XmlElement && child.nodeName === "listItem") {
+      for (let j = 0; j < child.length; j++) {
+        const inner = child.get(j);
+        if (inner instanceof Y.XmlElement) {
+          if (inner.nodeName === "paragraph") {
+            const bullet = prefix === "1. " ? `${itemNum}. ` : prefix;
+            md += `${spaces}${bullet}${getElementText(inner)}\n`;
+            itemNum++;
+          } else if (inner.nodeName === "bulletList") {
+            md += listToMarkdown(inner, "- ", indent + 1);
+          } else if (inner.nodeName === "orderedList") {
+            md += listToMarkdown(inner, "1. ", indent + 1);
+          }
+        }
+      }
+    }
+  }
+  return md;
+}
 
 function getDoc(docName) {
   if (docs.has(docName)) return docs.get(docName);
@@ -43,8 +173,21 @@ function getDoc(docName) {
   doc.on("update", () => {
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
+      // Save Yjs binary state
       const state = Y.encodeStateAsUpdate(doc);
       writeFileSync(filePath, Buffer.from(state));
+
+      // Save markdown file alongside
+      try {
+        const yxml = doc.getXmlFragment("default");
+        if (yxml.length > 0) {
+          const markdown = xmlFragmentToMarkdown(yxml);
+          const mdPath = join(markdownDir, docName + ".md");
+          writeFileSync(mdPath, markdown, "utf-8");
+        }
+      } catch (err) {
+        console.error(`Error saving markdown for ${docName}:`, err.message);
+      }
     }, 1000);
   });
 
