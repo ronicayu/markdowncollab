@@ -12,6 +12,7 @@ import {
   getSuggestions,
   getComments,
   updateSuggestionStatus,
+  addComment,
 } from "@/lib/suggestion-store";
 import type { Suggestion, Comment } from "@/types";
 
@@ -77,9 +78,21 @@ export default function DocumentPage({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [hasSelection, setHasSelection] = useState(false);
   const [editor, setEditor] = useState<import("@tiptap/core").Editor | null>(
     null
   );
+
+  // Track text selection state for comment button
+  useEffect(() => {
+    if (!editor) return;
+    const onSelectionUpdate = () => {
+      const { from, to } = editor.state.selection;
+      setHasSelection(from !== to);
+    };
+    editor.on("selectionUpdate", onSelectionUpdate);
+    return () => { editor.off("selectionUpdate", onSelectionUpdate); };
+  }, [editor]);
 
   // Set awareness user info when userName is ready
   useEffect(() => {
@@ -202,6 +215,45 @@ export default function DocumentPage({
     [editor, suggestions, ydoc]
   );
 
+  const handleAddComment = useCallback(
+    (text: string) => {
+      if (!editor || !userName) return;
+      const { from, to } = editor.state.selection;
+      if (from === to) return; // no selection
+
+      const yxml = ydoc.getXmlFragment("default");
+      const startRelPos = Y.encodeRelativePosition(
+        Y.createRelativePositionFromTypeIndex(yxml, from - 1)
+      );
+      const endRelPos = Y.encodeRelativePosition(
+        Y.createRelativePositionFromTypeIndex(yxml, to - 1)
+      );
+
+      const comment: Comment = {
+        id: crypto.randomUUID(),
+        documentId: id,
+        authorName: userName,
+        authorType: "human",
+        content: text,
+        startRelPos,
+        endRelPos,
+        parentCommentId: null,
+        resolved: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      addComment(ydoc, comment);
+
+      // Apply highlight mark to selected text
+      editor
+        .chain()
+        .setTextSelection({ from, to })
+        .setMark("commentMark", { commentId: comment.id })
+        .run();
+    },
+    [editor, userName, ydoc, id]
+  );
+
   const handleInviteAgent = useCallback(async () => {
     try {
       const res = await fetch("/api/agent/invite", {
@@ -252,6 +304,8 @@ export default function DocumentPage({
             onAcceptSuggestion={handleAccept}
             onRejectSuggestion={handleReject}
             onClickItem={handleClickItem}
+            onAddComment={handleAddComment}
+            hasSelection={hasSelection}
           />
         </div>
       </div>
