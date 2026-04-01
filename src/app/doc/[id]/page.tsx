@@ -84,11 +84,17 @@ export default function DocumentPage({
   );
 
   // Track text selection state for comment button
+  // Save last non-collapsed selection so we can use it even after blur
+  const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
   useEffect(() => {
     if (!editor) return;
     const onSelectionUpdate = () => {
       const { from, to } = editor.state.selection;
-      setHasSelection(from !== to);
+      const hasText = from !== to;
+      setHasSelection(hasText);
+      if (hasText) {
+        lastSelectionRef.current = { from, to };
+      }
     };
     editor.on("selectionUpdate", onSelectionUpdate);
     return () => { editor.off("selectionUpdate", onSelectionUpdate); };
@@ -260,9 +266,11 @@ export default function DocumentPage({
 
   function openMobileComment() {
     if (!editor) return;
-    const { from, to } = editor.state.selection;
-    if (from === to) return;
-    setSavedSelection({ from, to });
+    // Use the last saved non-collapsed selection (current selection may already
+    // be collapsed on mobile because tapping the button blurs the editor)
+    const sel = lastSelectionRef.current;
+    if (!sel) return;
+    setSavedSelection(sel);
     setMobileCommentOpen(true);
   }
 
