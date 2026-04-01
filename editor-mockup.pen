@@ -70,6 +70,47 @@
                   "fontFamily": "Inter",
                   "fontSize": 14,
                   "fontWeight": "500"
+                },
+                {
+                  "type": "frame",
+                  "id": "kVLXm",
+                  "name": "modeIndicator",
+                  "height": 24,
+                  "fill": "#F0FDF4",
+                  "cornerRadius": 4,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#BBF7D0"
+                  },
+                  "gap": 4,
+                  "padding": [
+                    0,
+                    8
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "c2ql5",
+                      "name": "modeIcon",
+                      "width": 12,
+                      "height": 12,
+                      "iconFontName": "pen-line",
+                      "iconFontFamily": "lucide",
+                      "fill": "#16A34A"
+                    },
+                    {
+                      "type": "text",
+                      "id": "nDuv0",
+                      "name": "modeText",
+                      "fill": "#16A34A",
+                      "content": "Suggesting",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "500"
+                    }
+                  ]
                 }
               ]
             },
@@ -101,7 +142,7 @@
                   "id": "9QPIe",
                   "name": "agentBadge",
                   "height": 28,
-                  "fill": "#7C3AED",
+                  "fill": "#334155",
                   "cornerRadius": 6,
                   "gap": 6,
                   "padding": [
@@ -145,7 +186,7 @@
                   "id": "sVR2v",
                   "name": "inviteBtn",
                   "height": 32,
-                  "fill": "#7C3AED",
+                  "fill": "#334155",
                   "cornerRadius": 6,
                   "gap": 6,
                   "padding": [
@@ -462,246 +503,361 @@
                   "fill": "#334155",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "All API requests require a Bearer token in the Authorization header. Tokens are issued via OAuth 2.0 flow.",
+                  "content": "All API requests require a Bearer token in the Authorization header.",
                   "lineHeight": 1.6,
                   "fontFamily": "Inter",
                   "fontSize": 15
                 },
                 {
                   "type": "frame",
-                  "id": "w2H9N",
-                  "name": "spacer6",
+                  "id": "YczRf",
+                  "name": "spacerA",
                   "width": "fill_container",
-                  "height": 16
+                  "height": 4
                 },
                 {
                   "type": "frame",
-                  "id": "iuz2Q",
-                  "name": "suggestionBlock",
+                  "id": "sYUve",
+                  "name": "suggInline",
                   "width": "fill_container",
-                  "fill": "#FAF5FF",
-                  "cornerRadius": 8,
-                  "stroke": {
-                    "align": "outside",
-                    "thickness": 2,
-                    "fill": "#7C3AED"
-                  },
                   "layout": "vertical",
+                  "gap": 2,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "PmQ1Y",
+                      "name": "removedInline",
+                      "fill": "#DC2626",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Tokens are issued via OAuth 2.0 flow.",
+                      "lineHeight": 1.6,
+                      "fontFamily": "Inter",
+                      "fontSize": 15
+                    },
+                    {
+                      "type": "text",
+                      "id": "EbCLo",
+                      "name": "addedInline",
+                      "fill": "#16A34A",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Tokens are obtained through the OAuth 2.0 authorization code flow. See Section 2.1 for supported grant types.",
+                      "lineHeight": 1.6,
+                      "fontFamily": "Inter",
+                      "fontSize": 15
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "1Pn7N",
+                  "name": "spacerB",
+                  "width": "fill_container",
+                  "height": 24
+                },
+                {
+                  "type": "text",
+                  "id": "GLrbp",
+                  "name": "h2c",
+                  "fill": "#0F172A",
+                  "content": "## 3. Endpoints",
+                  "fontFamily": "JetBrains Mono",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "frame",
+                  "id": "ffs1P",
+                  "name": "spacerC",
+                  "width": "fill_container",
+                  "height": 12
+                },
+                {
+                  "type": "text",
+                  "id": "tR3iq",
+                  "name": "para4",
+                  "fill": "#334155",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "The base URL for all endpoints is https://api.markdowncollab.com/v2.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 15
+                },
+                {
+                  "type": "frame",
+                  "id": "1XXiN",
+                  "name": "spacerD",
+                  "width": "fill_container",
+                  "height": 4
+                },
+                {
+                  "type": "text",
+                  "id": "rm0Ya",
+                  "name": "para5removed",
+                  "fill": "#DC2626",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "All responses are in JSON format.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 15
+                },
+                {
+                  "type": "text",
+                  "id": "Zks9B",
+                  "name": "para5added",
+                  "fill": "#16A34A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "All responses use JSON with consistent envelope: { data, error, meta }.",
+                  "lineHeight": 1.6,
+                  "fontFamily": "Inter",
+                  "fontSize": 15
+                },
+                {
+                  "type": "frame",
+                  "id": "w3ptV",
+                  "name": "cursorLayer",
+                  "width": "fill_container",
+                  "height": "fill_container",
+                  "layout": "none",
                   "children": [
                     {
                       "type": "frame",
-                      "id": "4jAbm",
-                      "name": "suggHeader",
+                      "id": "qjIx0",
+                      "x": 320,
+                      "y": 38,
+                      "name": "cur1",
+                      "layout": "vertical",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "gxn0s",
+                          "name": "cur1Lbl",
+                          "height": 16,
+                          "fill": "#10B981",
+                          "cornerRadius": [
+                            3,
+                            3,
+                            3,
+                            0
+                          ],
+                          "padding": [
+                            0,
+                            5
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "h2Aqp",
+                              "name": "cur1Name",
+                              "fill": "#FFFFFF",
+                              "content": "Sarah",
+                              "fontFamily": "Inter",
+                              "fontSize": 9,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "rectangle",
+                          "id": "EVwp6",
+                          "name": "cur1Line",
+                          "fill": "#10B981",
+                          "width": 2,
+                          "height": 20
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ZOp46",
+              "name": "commentSidebar",
+              "width": 280,
+              "height": "fill_container",
+              "fill": "#F8FAFC",
+              "stroke": {
+                "align": "inside",
+                "thickness": {
+                  "left": 1
+                },
+                "fill": "#E2E8F0"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": [
+                20,
+                16
+              ],
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "wjFGu",
+                  "name": "comment1",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#E2E8F0"
+                  },
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "EnT7z",
+                      "name": "c1Header",
                       "width": "fill_container",
-                      "height": 36,
-                      "fill": "#7C3AED",
-                      "cornerRadius": [
-                        8,
-                        8,
-                        0,
-                        0
-                      ],
-                      "padding": [
-                        0,
-                        12
-                      ],
-                      "justifyContent": "space_between",
+                      "gap": 6,
                       "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "X4bak",
-                          "name": "suggHeaderLeft",
-                          "gap": 6,
+                          "id": "2L8ba",
+                          "name": "c1Avatar",
+                          "width": 22,
+                          "height": 22,
+                          "fill": "#334155",
+                          "cornerRadius": 100,
+                          "justifyContent": "center",
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "icon_font",
-                              "id": "qVQGt",
-                              "name": "suggBot",
-                              "width": 14,
-                              "height": 14,
+                              "id": "u0G9d",
+                              "name": "c1AvatarIcon",
+                              "width": 12,
+                              "height": 12,
                               "iconFontName": "bot",
+                              "iconFontFamily": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "id": "rbsUf",
+                          "name": "c1Name",
+                          "fill": "#334155",
+                          "content": "Claude",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ohQrg",
+                          "name": "c1Time",
+                          "fill": "#94A3B8",
+                          "content": "Just now",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "wjZ8C",
+                      "name": "c1Body",
+                      "fill": "#475569",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Replaced vague OAuth reference with specific grant type and cross-reference to Section 2.1 for completeness.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "q7CWq",
+                      "name": "c1Actions",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "cAYA0",
+                          "name": "c1Accept",
+                          "height": 28,
+                          "fill": "#16A34A",
+                          "cornerRadius": 4,
+                          "gap": 4,
+                          "padding": [
+                            0,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "1PdJ3",
+                              "name": "c1AcceptIcon",
+                              "width": 12,
+                              "height": 12,
+                              "iconFontName": "check",
                               "iconFontFamily": "lucide",
                               "fill": "#FFFFFF"
                             },
                             {
                               "type": "text",
-                              "id": "UCDJy",
-                              "name": "suggLabel",
+                              "id": "XfxOh",
+                              "name": "c1AcceptText",
                               "fill": "#FFFFFF",
-                              "content": "Agent: Claude — Suggestion",
-                              "fontFamily": "JetBrains Mono",
-                              "fontSize": 11,
-                              "fontWeight": "600",
-                              "letterSpacing": 1
-                            }
-                          ]
-                        },
-                        {
-                          "type": "frame",
-                          "id": "7BGoG",
-                          "name": "suggActions",
-                          "gap": 8,
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "frame",
-                              "id": "wiT1x",
-                              "name": "acceptBtn",
-                              "height": 24,
-                              "fill": "#FFFFFF",
-                              "cornerRadius": 4,
-                              "gap": 4,
-                              "padding": [
-                                0,
-                                10
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon_font",
-                                  "id": "flijo",
-                                  "name": "acceptIcon",
-                                  "width": 12,
-                                  "height": 12,
-                                  "iconFontName": "check",
-                                  "iconFontFamily": "lucide",
-                                  "fill": "#16A34A"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "N7Zmr",
-                                  "name": "acceptText",
-                                  "fill": "#16A34A",
-                                  "content": "Accept",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 11,
-                                  "fontWeight": "600"
-                                }
-                              ]
-                            },
-                            {
-                              "type": "frame",
-                              "id": "6QAWT",
-                              "name": "rejectBtn",
-                              "height": 24,
-                              "fill": "#FFFFFF30",
-                              "cornerRadius": 4,
-                              "stroke": {
-                                "align": "inside",
-                                "thickness": 1,
-                                "fill": "#FFFFFF60"
-                              },
-                              "gap": 4,
-                              "padding": [
-                                0,
-                                10
-                              ],
-                              "alignItems": "center",
-                              "children": [
-                                {
-                                  "type": "icon_font",
-                                  "id": "JIWgs",
-                                  "name": "rejectIcon",
-                                  "width": 12,
-                                  "height": 12,
-                                  "iconFontName": "x",
-                                  "iconFontFamily": "lucide",
-                                  "fill": "#FFFFFF"
-                                },
-                                {
-                                  "type": "text",
-                                  "id": "xPJqD",
-                                  "name": "rejectText",
-                                  "fill": "#FFFFFF",
-                                  "content": "Reject",
-                                  "fontFamily": "Inter",
-                                  "fontSize": 11,
-                                  "fontWeight": "600"
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "lxRuM",
-                      "name": "suggBody",
-                      "width": "fill_container",
-                      "layout": "vertical",
-                      "gap": 8,
-                      "padding": [
-                        12,
-                        16
-                      ],
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "uGho0",
-                          "name": "removedLine",
-                          "width": "fill_container",
-                          "fill": "#FEE2E2",
-                          "cornerRadius": 4,
-                          "padding": [
-                            4,
-                            8
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "DF2GB",
-                              "name": "removedText",
-                              "fill": "#DC2626",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "- All API requests require a Bearer token in the Authorization header. Tokens are issued via OAuth 2.0 flow.",
-                              "lineHeight": 1.5,
+                              "content": "Accept",
                               "fontFamily": "Inter",
-                              "fontSize": 14
+                              "fontSize": 12,
+                              "fontWeight": "500"
                             }
                           ]
                         },
                         {
                           "type": "frame",
-                          "id": "Ww8Rb",
-                          "name": "addedLine",
-                          "width": "fill_container",
-                          "fill": "#DCFCE7",
+                          "id": "6s3KD",
+                          "name": "c1Reject",
+                          "height": 28,
                           "cornerRadius": 4,
-                          "layout": "vertical",
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#E2E8F0"
+                          },
                           "gap": 4,
                           "padding": [
-                            4,
-                            8
+                            0,
+                            10
                           ],
+                          "alignItems": "center",
                           "children": [
                             {
-                              "type": "text",
-                              "id": "lL2Ui",
-                              "name": "addedText1",
-                              "fill": "#16A34A",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "+ All API requests require authentication via Bearer token in the Authorization header.",
-                              "lineHeight": 1.5,
-                              "fontFamily": "Inter",
-                              "fontSize": 14
+                              "type": "icon_font",
+                              "id": "62e4Q",
+                              "name": "c1RejectIcon",
+                              "width": 12,
+                              "height": 12,
+                              "iconFontName": "x",
+                              "iconFontFamily": "lucide",
+                              "fill": "#94A3B8"
                             },
                             {
                               "type": "text",
-                              "id": "ipVEj",
-                              "name": "addedText2",
-                              "fill": "#16A34A",
-                              "textGrowth": "fixed-width",
-                              "width": "fill_container",
-                              "content": "+ Tokens are obtained through the OAuth 2.0 authorization code flow. See Section 2.1 for supported grant types.",
-                              "lineHeight": 1.5,
+                              "id": "4M8R4",
+                              "name": "c1RejectText",
+                              "fill": "#64748B",
+                              "content": "Reject",
                               "fontFamily": "Inter",
-                              "fontSize": 14
+                              "fontSize": 12,
+                              "fontWeight": "500"
                             }
                           ]
                         }
@@ -711,151 +867,263 @@
                 },
                 {
                   "type": "frame",
-                  "id": "sDf0r",
-                  "name": "spacer7",
+                  "id": "9S8LF",
+                  "name": "comment2",
                   "width": "fill_container",
-                  "height": 24
-                },
-                {
-                  "type": "text",
-                  "id": "hW8fy",
-                  "name": "moreContent",
-                  "fill": "#0F172A",
-                  "content": "## 3. Endpoints",
-                  "fontFamily": "JetBrains Mono",
-                  "fontSize": 20,
-                  "fontWeight": "600"
-                },
-                {
-                  "type": "frame",
-                  "id": "WVUSz",
-                  "name": "spacer8",
-                  "width": "fill_container",
-                  "height": 12
-                },
-                {
-                  "type": "text",
-                  "id": "uegTN",
-                  "name": "para4",
-                  "fill": "#334155",
-                  "textGrowth": "fixed-width",
-                  "width": "fill_container",
-                  "content": "The base URL for all endpoints is `https://api.markdowncollab.com/v2`.",
-                  "lineHeight": 1.6,
-                  "fontFamily": "Inter",
-                  "fontSize": 15
-                },
-                {
-                  "type": "frame",
-                  "id": "x8Pcd",
-                  "name": "cursorOverlay",
-                  "width": "fill_container",
-                  "height": "fill_container",
-                  "layout": "none",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#E2E8F0"
+                  },
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 12,
                   "children": [
                     {
                       "type": "frame",
-                      "id": "ay43x",
-                      "x": 410,
-                      "y": 38,
-                      "name": "cursor1",
-                      "layout": "vertical",
+                      "id": "lAFhw",
+                      "name": "c2Header",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "9DcLw",
-                          "name": "cursor1Label",
-                          "height": 18,
-                          "fill": "#10B981",
-                          "cornerRadius": [
-                            4,
-                            4,
-                            4,
-                            0
-                          ],
-                          "padding": [
-                            0,
-                            6
-                          ],
+                          "id": "eY3Am",
+                          "name": "c2Avatar",
+                          "width": 22,
+                          "height": 22,
+                          "fill": "#334155",
+                          "cornerRadius": 100,
+                          "justifyContent": "center",
                           "alignItems": "center",
                           "children": [
                             {
-                              "type": "text",
-                              "id": "0UVZf",
-                              "name": "cursor1Name",
-                              "fill": "#FFFFFF",
-                              "content": "Sarah",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "600"
+                              "type": "icon_font",
+                              "id": "oRvbb",
+                              "name": "c2AvatarIcon",
+                              "width": 12,
+                              "height": 12,
+                              "iconFontName": "bot",
+                              "iconFontFamily": "lucide",
+                              "fill": "#FFFFFF"
                             }
                           ]
                         },
                         {
-                          "type": "rectangle",
-                          "id": "T0euI",
-                          "name": "cursor1Line",
-                          "fill": "#10B981",
-                          "width": 2,
-                          "height": 22
+                          "type": "text",
+                          "id": "fqM2Z",
+                          "name": "c2Name",
+                          "fill": "#334155",
+                          "content": "Claude",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "ebddQ",
+                          "name": "c2Time",
+                          "fill": "#94A3B8",
+                          "content": "Just now",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
                         }
                       ]
                     },
                     {
+                      "type": "text",
+                      "id": "q4V2v",
+                      "name": "c2Body",
+                      "fill": "#475569",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Added consistent response envelope specification. Clients should always expect { data, error, meta } shape.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
                       "type": "frame",
-                      "id": "0B681",
-                      "x": 2,
-                      "y": 142,
-                      "name": "cursor2",
-                      "layout": "vertical",
+                      "id": "zp8Ay",
+                      "name": "c2Actions",
+                      "width": "fill_container",
+                      "gap": 8,
+                      "alignItems": "center",
                       "children": [
                         {
                           "type": "frame",
-                          "id": "q0C1D",
-                          "name": "cursor2Label",
-                          "height": 18,
-                          "fill": "#7C3AED",
-                          "cornerRadius": [
-                            4,
-                            4,
-                            4,
-                            0
-                          ],
+                          "id": "yOWl2",
+                          "name": "c2Accept",
+                          "height": 28,
+                          "fill": "#16A34A",
+                          "cornerRadius": 4,
+                          "gap": 4,
                           "padding": [
                             0,
-                            6
+                            10
                           ],
                           "alignItems": "center",
                           "children": [
                             {
                               "type": "icon_font",
-                              "id": "d2B2D",
-                              "name": "cursor2Icon",
-                              "width": 10,
-                              "height": 10,
-                              "iconFontName": "bot",
+                              "id": "duj14",
+                              "name": "c2AcceptIcon",
+                              "width": 12,
+                              "height": 12,
+                              "iconFontName": "check",
                               "iconFontFamily": "lucide",
                               "fill": "#FFFFFF"
                             },
                             {
                               "type": "text",
-                              "id": "JYo0f",
-                              "name": "cursor2Name",
+                              "id": "Rhw2U",
+                              "name": "c2AcceptText",
                               "fill": "#FFFFFF",
-                              "content": "Claude",
+                              "content": "Accept",
                               "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "600"
+                              "fontSize": 12,
+                              "fontWeight": "500"
                             }
                           ]
                         },
                         {
-                          "type": "rectangle",
-                          "id": "h63WQ",
-                          "name": "cursor2Line",
-                          "fill": "#7C3AED",
-                          "width": 2,
+                          "type": "frame",
+                          "id": "XazQh",
+                          "name": "c2Reject",
+                          "height": 28,
+                          "cornerRadius": 4,
+                          "stroke": {
+                            "align": "inside",
+                            "thickness": 1,
+                            "fill": "#E2E8F0"
+                          },
+                          "gap": 4,
+                          "padding": [
+                            0,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon_font",
+                              "id": "jUVDJ",
+                              "name": "c2RejectIcon",
+                              "width": 12,
+                              "height": 12,
+                              "iconFontName": "x",
+                              "iconFontFamily": "lucide",
+                              "fill": "#94A3B8"
+                            },
+                            {
+                              "type": "text",
+                              "id": "8kj5Q",
+                              "name": "c2RejectText",
+                              "fill": "#64748B",
+                              "content": "Reject",
+                              "fontFamily": "Inter",
+                              "fontSize": 12,
+                              "fontWeight": "500"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "jXLzj",
+                  "name": "humanComment",
+                  "width": "fill_container",
+                  "fill": "#FFFFFF",
+                  "cornerRadius": 8,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#10B98140"
+                  },
+                  "layout": "vertical",
+                  "gap": 8,
+                  "padding": 12,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "J5Ecb",
+                      "name": "hcHeader",
+                      "width": "fill_container",
+                      "gap": 6,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "ellipse",
+                          "id": "4f7cB",
+                          "name": "hcAvatar",
+                          "fill": "#10B981",
+                          "width": 22,
                           "height": 22
+                        },
+                        {
+                          "type": "text",
+                          "id": "MTXOU",
+                          "name": "hcName",
+                          "fill": "#10B981",
+                          "content": "Sarah",
+                          "fontFamily": "Inter",
+                          "fontSize": 12,
+                          "fontWeight": "600"
+                        },
+                        {
+                          "type": "text",
+                          "id": "nQtYN",
+                          "name": "hcTime",
+                          "fill": "#94A3B8",
+                          "content": "2 min ago",
+                          "fontFamily": "Inter",
+                          "fontSize": 11
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "YvnYR",
+                      "name": "hcBody",
+                      "fill": "#475569",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Should we also document the refresh token flow here? Users will need it for long-running agent sessions.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "Inter",
+                      "fontSize": 13
+                    },
+                    {
+                      "type": "frame",
+                      "id": "dRhJy",
+                      "name": "hcReply",
+                      "width": "fill_container",
+                      "height": 32,
+                      "cornerRadius": 4,
+                      "stroke": {
+                        "align": "inside",
+                        "thickness": 1,
+                        "fill": "#E2E8F0"
+                      },
+                      "padding": [
+                        0,
+                        10
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "IzslH",
+                          "name": "hcReplyText",
+                          "fill": "#94A3B8",
+                          "content": "Reply...",
+                          "fontFamily": "Inter",
+                          "fontSize": 12
                         }
                       ]
                     }
@@ -866,6 +1134,16 @@
           ]
         }
       ]
+    },
+    {
+      "type": "text",
+      "id": "ky64P",
+      "x": 483,
+      "y": -74,
+      "fill": "#ffffff",
+      "fontFamily": "Inter",
+      "fontSize": 16,
+      "fontWeight": "normal"
     }
   ]
 }
