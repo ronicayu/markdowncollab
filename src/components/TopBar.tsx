@@ -47,8 +47,8 @@ export default function TopBar({
         <span className="hidden sm:inline text-sm font-medium text-gray-700 truncate max-w-[150px] md:max-w-none">
           {title}
         </span>
-        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 shrink-0">
-          Suggesting
+        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 shrink-0">
+          Editing
         </span>
       </div>
       <div className="flex items-center gap-2 md:gap-3 shrink-0">

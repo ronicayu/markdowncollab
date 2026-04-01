@@ -2,3 +2,5 @@
 [     294ms] [LOG] [HMR] connected @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
 [     412ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
 [     418ms] [LOG] [Fast Refresh] done in 107ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  102039ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  102069ms] [LOG] [Fast Refresh] done in 103ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
