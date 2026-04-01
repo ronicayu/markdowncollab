@@ -1,0 +1,75 @@
+"use client";
+
+export interface Collaborator {
+  name: string;
+  color: string;
+  isAgent?: boolean;
+}
+
+interface TopBarProps {
+  title: string;
+  collaborators: Collaborator[];
+  onInviteAgent: () => void;
+}
+
+export default function TopBar({
+  title,
+  collaborators,
+  onInviteAgent,
+}: TopBarProps) {
+  return (
+    <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2">
+      <div className="flex items-center gap-4">
+        <span className="font-mono text-lg font-bold text-gray-900">
+          MarkdownCollab
+        </span>
+        <span className="text-sm text-gray-500">/</span>
+        <span className="text-sm font-medium text-gray-700">{title}</span>
+        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+          Suggesting
+        </span>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="flex -space-x-2">
+          {collaborators.map((collaborator, index) => (
+            <div
+              key={index}
+              className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white"
+              style={{ backgroundColor: collaborator.color }}
+              title={collaborator.name}
+            >
+              {collaborator.isAgent ? (
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47"
+                  />
+                </svg>
+              ) : (
+                collaborator.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)
+              )}
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={onInviteAgent}
+          className="rounded-md bg-gray-700 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+        >
+          Invite Agent
+        </button>
+      </div>
+    </div>
+  );
+}
