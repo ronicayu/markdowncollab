@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useCallback, useEffect, useMemo } from "react";
+import { use, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import Editor from "@/components/Editor";
@@ -255,8 +255,8 @@ export default function DocumentPage({
   );
 
   const [mobileCommentOpen, setMobileCommentOpen] = useState(false);
-  const [mobileCommentText, setMobileCommentText] = useState("");
   const [savedSelection, setSavedSelection] = useState<{ from: number; to: number } | null>(null);
+  const mobileTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   function openMobileComment() {
     if (!editor) return;
@@ -267,7 +267,8 @@ export default function DocumentPage({
   }
 
   function handleMobileCommentSubmit() {
-    if (!mobileCommentText.trim() || !editor || !userName || !savedSelection) return;
+    const text = mobileTextareaRef.current?.value?.trim();
+    if (!text || !editor || !userName || !savedSelection) return;
     const { from, to } = savedSelection;
 
     const yxml = ydoc.getXmlFragment("default");
@@ -283,7 +284,7 @@ export default function DocumentPage({
       documentId: id,
       authorName: userName,
       authorType: "human",
-      content: mobileCommentText.trim(),
+      content: text,
       startRelPos,
       endRelPos,
       parentCommentId: null,
@@ -299,7 +300,7 @@ export default function DocumentPage({
       .setMark("commentMark", { commentId: comment.id })
       .run();
 
-    setMobileCommentText("");
+    if (mobileTextareaRef.current) mobileTextareaRef.current.value = "";
     setMobileCommentOpen(false);
     setSavedSelection(null);
   }
@@ -379,24 +380,22 @@ export default function DocumentPage({
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
             <h3 className="text-sm font-semibold text-gray-900 mb-2">Add comment</h3>
             <textarea
+              ref={mobileTextareaRef}
               autoFocus
-              value={mobileCommentText}
-              onChange={(e) => setMobileCommentText(e.target.value)}
               placeholder="Type your comment..."
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-blue-400"
               rows={3}
             />
             <div className="flex gap-2 mt-3">
               <button
-                onClick={() => { setMobileCommentOpen(false); setMobileCommentText(""); }}
+                onClick={() => { setMobileCommentOpen(false); }}
                 className="flex-1 text-sm text-gray-600 border border-gray-200 rounded-lg py-2.5 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleMobileCommentSubmit}
-                disabled={!mobileCommentText.trim()}
-                className="flex-1 text-sm font-medium text-white bg-blue-600 rounded-lg py-2.5 hover:bg-blue-700 disabled:bg-gray-300"
+                className="flex-1 text-sm font-medium text-white bg-blue-600 rounded-lg py-2.5 hover:bg-blue-700 active:bg-blue-800"
               >
                 Comment
               </button>

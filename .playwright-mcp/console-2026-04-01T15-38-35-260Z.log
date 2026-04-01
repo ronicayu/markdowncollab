@@ -1,2 +1,31 @@
 [     235ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
 [     275ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  524679ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  524786ms] ReferenceError: useRef is not defined
+    at DocumentPage (http://localhost:3000/_next/static/chunks/projects_markdown-collab_src_0b7efkz._.js?id=%255Bproject%255D%252Fprojects%252Fmarkdown-collab%252Fsrc%252Fapp%252Fdoc%252F%255Bid%255D%252Fpage.tsx+%255Bapp-client%255D+%2528ecmascript%2529:294:31)
+    at Object.react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:15037:24)
+    at renderWithHooks (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:4620:24)
+    at updateFunctionComponent (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:6081:21)
+    at beginWork (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:6691:24)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:965:74)
+    at performUnitOfWork (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:9555:97)
+    at workLoopSync (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:9449:40)
+    at renderRootSync (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:9433:13)
+    at performWorkOnRoot (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:9098:47)
+    at performSyncWorkOnRoot (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:10263:9)
+    at flushSyncWorkAcrossRoots_impl (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:10179:316)
+    at flushSyncWork$1 (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:9230:86)
+    at Object.scheduleRefresh (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_react-dom_08ibudp._.js:299:13)
+    at http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_0ly30~5._.js:391:33
+    at Set.forEach (<anonymous>)
+    at Object.performReactRefresh (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_0ly30~5._.js:384:38)
+    at applyUpdate (http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_0ly30~5._.js:878:31)
+    at http://localhost:3000/_next/static/chunks/0e4n_next_dist_compiled_0ly30~5._.js:886:13
+[  524878ms] [LOG] [Fast Refresh] done in 113ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  531390ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  531392ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  531431ms] [LOG] [Fast Refresh] done in 81ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  531590ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  531620ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  561016ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  561044ms] [LOG] [Fast Refresh] done in 58ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
