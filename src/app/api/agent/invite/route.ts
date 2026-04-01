@@ -4,7 +4,7 @@ import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { generateSuggestions } from "@/lib/agent";
 import { addSuggestion } from "@/lib/suggestion-store";
 
-const WS_URL = process.env.YJS_WS_URL || "ws://localhost:1234";
+const WS_URL = process.env.WS_URL || "ws://localhost:3000/ws";
 
 /**
  * Recursively extract plain text from a Yjs XmlFragment/XmlElement.

@@ -1,0 +1,3 @@
+[     394ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[     466ms] [LOG] [HMR] connected @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   16565ms] [WARNING] WebSocket connection to 'ws://100.109.228.117:3000/ws/6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1' failed: WebSocket is closed before the connection is established. @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2247

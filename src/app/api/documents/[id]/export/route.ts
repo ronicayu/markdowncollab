@@ -4,7 +4,7 @@ import { cleanMarkdown } from "@/lib/export-markdown";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const wsUrl = process.env.WS_URL || "ws://localhost:1234";
+  const wsUrl = process.env.WS_URL || "ws://localhost:3000/ws";
   let cleanup: (() => void) | null = null;
 
   try {

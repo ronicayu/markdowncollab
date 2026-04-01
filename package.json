@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node server/combined-server.mjs",
+    "dev:next": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "dev:ws": "node server/ws-server.mjs",
-    "dev:all": "npx concurrently \"npm run dev\" \"npm run dev:ws\""
+    "dev:all": "npx concurrently \"npm run dev:next\" \"npm run dev:ws\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.81.0",
