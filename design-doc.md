@@ -111,7 +111,8 @@ Complete Notion replacement — docs, specs, knowledge base, all markdown-native
 
 **Minimal data model:**
 - `documents` — id, title, yjs_state (binary), created_at, updated_at
-- `suggestions` — id, document_id, agent_name, original_text, suggested_text, status (pending/accepted/rejected/stale), created_at, resolved_at
+- `suggestions` — id, document_id, author_name, author_type (human/agent), original_text, suggested_text, rationale, status (pending/accepted/rejected/stale), start_rel_pos (Yjs RelativePosition, binary), end_rel_pos (Yjs RelativePosition, binary), content_hash, created_at, resolved_at
+- `comments` — id, document_id, author_name, author_type (human/agent), content, start_rel_pos (binary), end_rel_pos (binary), parent_comment_id (nullable, for threads), resolved, created_at
 - `sessions` — id, document_id, participant_name, participant_type (human/agent), connected_at, disconnected_at
 
 **Core features (priority order):**
@@ -120,15 +121,30 @@ Complete Notion replacement — docs, specs, knowledge base, all markdown-native
 3. Humans can accept/reject each agent suggestion with one click
 4. Export to clean markdown file — exports the current document state with only accepted suggestions applied; pending suggestions are stripped, rejected suggestions are excluded
 
-**AI suggestion model (core technical decision):**
+**Suggestion & comment UX model (Google Docs-style):**
 
-Suggestions are implemented as custom ProseMirror node types, not raw CRDT operations. This keeps suggestions reversible without fighting Yjs's append-only semantics.
+Suggestions appear as inline tracked changes in the document flow (red strikethrough for removed text, green for additions), with corresponding suggestion cards in a right sidebar showing rationale, author, and accept/reject buttons. Comments appear as sidebar cards anchored to highlighted text selections. This mirrors Google Docs' "Suggesting" mode — both humans and AI agents create suggestions and comments through the same UI patterns.
 
-- A `suggestion` is a block-level ProseMirror node (not inline). It wraps one or more block nodes (paragraphs, headings, list items) with metadata: suggestion_id, agent_name, original_text, suggested_text, status (pending/accepted/rejected/stale). It renders as a visually distinct card containing a side-by-side or inline diff view (red strikethrough for removed, green highlight for added) with accept/reject buttons.
-- When an agent proposes an edit, it inserts a `suggestion` node at the target location containing both the original and proposed content blocks
-- Accept: replaces the `suggestion` node with the suggested_text content as normal document nodes
-- Reject: replaces the `suggestion` node with the original_text content as normal document nodes
-- Concurrent human edits to text inside a pending suggestion invalidate the suggestion (status -> stale). Detection: store a content hash of the original text when the suggestion is created. A Yjs observe callback on the suggestion node's content range fires on any remote update; if the content hash no longer matches, mark the suggestion as stale. Stale suggestions show a "Content changed — re-run?" prompt instead of accept/reject. The agent can be re-invited to re-evaluate.
+- Suggestions use ProseMirror marks (not block nodes) to annotate inline text ranges with metadata: suggestion_id, author, original_text, suggested_text, status (pending/accepted/rejected/stale). The mark renders as strikethrough (removed) or green highlight (added) inline.
+- Accept: removes the mark and keeps the suggested text / deletes the original text
+- Reject: removes the mark and keeps the original text / deletes the suggested text
+- Sidebar cards show the suggestion rationale, author avatar, timestamp, and accept/reject buttons. Clicking a card scrolls to and highlights the anchored text.
+
+**Comment anchoring (core technical decision):**
+
+Comments and suggestions must remain attached to their target text through all edits — insertions, deletions, reformatting, and concurrent changes. Pure text matching fails because the same text can appear multiple times, and edited text shifts all absolute offsets.
+
+Solution: **Yjs RelativePosition.** Every character in a Yjs document gets a unique, immutable CRDT item ID at creation time. `Y.RelativePosition` converts an absolute document position into a reference to a specific CRDT item, not an offset.
+
+- When a user (or agent) creates a comment on a text selection, the system captures `Y.createRelativePositionFromTypeIndex()` for both start and end of the selection
+- Comments are stored with: `{ id, startRelPos, endRelPos, content, author, timestamp, resolved }`
+- To render the highlight, convert back: `Y.createAbsolutePositionFromRelativePosition(relPos, ydoc)` — returns the current absolute position accounting for all edits since creation
+- If anchored text is modified but not deleted: anchor holds (CRDT items at boundaries still exist)
+- If anchored text is entirely deleted: relative position resolves to nearest surviving neighbor. Comment shows "Referenced text was deleted" in sidebar and becomes detached
+- If same text appears multiple times: not a problem. Each instance is composed of different Yjs items with different IDs. Comments anchor to specific items, not text content
+- Cut+paste: original CRDT items are deleted, new items created. Comment becomes orphaned (same behavior as Google Docs)
+
+**Stale suggestion detection:** Store a content hash of the anchored range when the suggestion is created. A Yjs observe callback on the range fires on any remote update; if the hash no longer matches, mark the suggestion as stale. Stale suggestions show "Content changed — re-run?" instead of accept/reject.
 
 **Agent lifecycle:**
 
