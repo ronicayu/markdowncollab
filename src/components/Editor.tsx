@@ -5,9 +5,11 @@ import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
-import * as Y from "yjs";
-import { WebsocketProvider } from "y-websocket";
+import { CommentMark } from "@/extensions/comment-mark";
+import type * as Y from "yjs";
+import type { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo, useState } from "react";
+import type { Editor as TiptapEditor } from "@tiptap/core";
 
 const CURSOR_COLORS = [
   "#f44336",
@@ -29,18 +31,19 @@ function getRandomColor() {
 interface EditorProps {
   documentId: string;
   userName: string;
+  ydoc: Y.Doc;
+  provider: WebsocketProvider;
+  onEditorReady?: (editor: TiptapEditor) => void;
 }
 
-export default function Editor({ documentId, userName }: EditorProps) {
+export default function Editor({
+  documentId,
+  userName,
+  ydoc,
+  provider,
+  onEditorReady,
+}: EditorProps) {
   const [connected, setConnected] = useState(false);
-
-  const { ydoc, provider } = useMemo(() => {
-    const ydoc = new Y.Doc();
-    const wsUrl =
-      process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:1234";
-    const provider = new WebsocketProvider(wsUrl, documentId, ydoc);
-    return { ydoc, provider };
-  }, [documentId]);
 
   useEffect(() => {
     const onStatus = ({ status }: { status: string }) => {
@@ -49,10 +52,8 @@ export default function Editor({ documentId, userName }: EditorProps) {
     provider.on("status", onStatus);
     return () => {
       provider.off("status", onStatus);
-      provider.destroy();
-      ydoc.destroy();
     };
-  }, [provider, ydoc]);
+  }, [provider]);
 
   const cursorColor = useMemo(() => getRandomColor(), []);
 
@@ -62,6 +63,7 @@ export default function Editor({ documentId, userName }: EditorProps) {
         undoRedo: false,
       }),
       SuggestionMark,
+      CommentMark,
       Collaboration.configure({
         document: ydoc,
       }),
@@ -81,6 +83,12 @@ export default function Editor({ documentId, userName }: EditorProps) {
     },
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor);
+    }
+  }, [editor, onEditorReady]);
 
   return (
     <div className="relative flex-1 overflow-auto bg-white">

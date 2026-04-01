@@ -1,8 +1,18 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useState, useCallback, useEffect, useMemo } from "react";
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
 import Editor from "@/components/Editor";
-import TopBar, { Collaborator } from "@/components/TopBar";
+import TopBar from "@/components/TopBar";
+import type { Collaborator } from "@/components/TopBar";
+import CommentSidebar from "@/components/CommentSidebar";
+import {
+  getSuggestions,
+  getComments,
+  updateSuggestionStatus,
+} from "@/lib/suggestion-store";
+import type { Suggestion, Comment } from "@/types";
 
 const ADJECTIVES = [
   "Swift",
@@ -52,13 +62,129 @@ export default function DocumentPage({
     setUserName(getUserName());
   }, []);
 
+  const ydoc = useMemo(() => new Y.Doc(), []);
+  const provider = useMemo(
+    () =>
+      new WebsocketProvider(
+        process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:1234",
+        id,
+        ydoc
+      ),
+    [id, ydoc]
+  );
+
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [editor, setEditor] = useState<import("@tiptap/core").Editor | null>(
+    null
+  );
+
+  useEffect(() => {
+    const suggMap = ydoc.getMap("suggestions");
+    const commMap = ydoc.getMap("comments");
+    const updateState = () => {
+      setSuggestions(getSuggestions(ydoc));
+      setComments(getComments(ydoc));
+    };
+    suggMap.observe(updateState);
+    commMap.observe(updateState);
+    updateState();
+    return () => {
+      suggMap.unobserve(updateState);
+      commMap.unobserve(updateState);
+      provider.destroy();
+      ydoc.destroy();
+    };
+  }, [ydoc, provider]);
+
+  const handleAccept = useCallback(
+    (suggestionId: string) => {
+      const sugg = suggestions.find((s) => s.id === suggestionId);
+      if (!sugg || !editor) return;
+      const startAbs = Y.createAbsolutePositionFromRelativePosition(
+        Y.decodeRelativePosition(sugg.startRelPos),
+        ydoc
+      );
+      const endAbs = Y.createAbsolutePositionFromRelativePosition(
+        Y.decodeRelativePosition(sugg.endRelPos),
+        ydoc
+      );
+      if (startAbs && endAbs) {
+        editor
+          .chain()
+          .setTextSelection({ from: startAbs.index + 1, to: endAbs.index + 1 })
+          .insertContent(sugg.suggestedText)
+          .unsetSuggestionMark()
+          .run();
+      }
+      updateSuggestionStatus(ydoc, suggestionId, "accepted");
+    },
+    [ydoc, editor, suggestions]
+  );
+
+  const handleReject = useCallback(
+    (suggestionId: string) => {
+      if (!editor) return;
+      const { doc } = editor.state;
+      const markType = editor.schema.marks.suggestionMark;
+      if (markType) {
+        doc.descendants((node, pos) => {
+          node.marks.forEach((mark) => {
+            if (
+              mark.type === markType &&
+              mark.attrs.suggestionId === suggestionId
+            ) {
+              editor
+                .chain()
+                .setTextSelection({ from: pos, to: pos + node.nodeSize })
+                .unsetSuggestionMark()
+                .run();
+            }
+          });
+        });
+      }
+      updateSuggestionStatus(ydoc, suggestionId, "rejected");
+    },
+    [ydoc, editor]
+  );
+
+  const handleClickItem = useCallback(
+    (itemId: string) => {
+      if (!editor) return;
+      const sugg = suggestions.find((s) => s.id === itemId);
+      const relPos = sugg?.startRelPos;
+      if (!relPos) return;
+      const abs = Y.createAbsolutePositionFromRelativePosition(
+        Y.decodeRelativePosition(relPos),
+        ydoc
+      );
+      if (abs) {
+        editor.commands.setTextSelection(abs.index + 1);
+        editor.commands.scrollIntoView();
+      }
+    },
+    [editor, suggestions, ydoc]
+  );
+
+  const handleInviteAgent = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agent/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId: id }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert("Agent error: " + err.error);
+      }
+    } catch {
+      alert("Failed to reach agent. Is the server running?");
+    }
+  }, [id]);
+
   const collaborators: Collaborator[] = userName
     ? [{ name: userName, color: "#3f51b5" }]
     : [];
-
-  const handleInviteAgent = () => {
-    console.log("Invite Agent clicked — will be implemented in Task 7");
-  };
 
   if (!userName) {
     return (
@@ -75,7 +201,22 @@ export default function DocumentPage({
         collaborators={collaborators}
         onInviteAgent={handleInviteAgent}
       />
-      <Editor documentId={id} userName={userName} />
+      <div className="flex flex-1 overflow-hidden">
+        <Editor
+          documentId={id}
+          userName={userName}
+          ydoc={ydoc}
+          provider={provider}
+          onEditorReady={setEditor}
+        />
+        <CommentSidebar
+          suggestions={suggestions}
+          comments={comments}
+          onAcceptSuggestion={handleAccept}
+          onRejectSuggestion={handleReject}
+          onClickItem={handleClickItem}
+        />
+      </div>
     </div>
   );
 }
