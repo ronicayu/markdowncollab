@@ -1,3 +1,11 @@
 [     394ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
 [     466ms] [LOG] [HMR] connected @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
 [   16565ms] [WARNING] WebSocket connection to 'ws://100.109.228.117:3000/ws/6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1' failed: WebSocket is closed before the connection is established. @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2247
+[  246748ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  246987ms] [LOG] [Fast Refresh] done in 342ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  261112ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  261218ms] [LOG] [Fast Refresh] done in 208ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  343270ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  343319ms] [LOG] [Fast Refresh] done in 112ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  366968ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[  366999ms] [LOG] [Fast Refresh] done in 68ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431

@@ -204,7 +204,9 @@ export default function DocumentPage({
         onInviteAgent={handleInviteAgent}
       />
       <div className="flex flex-1 overflow-hidden">
-        <OutlineSidebar editor={editor} />
+        <div className="hidden lg:block">
+          <OutlineSidebar editor={editor} />
+        </div>
         <Editor
           documentId={id}
           userName={userName}
@@ -212,13 +214,15 @@ export default function DocumentPage({
           provider={provider}
           onEditorReady={setEditor}
         />
-        <CommentSidebar
-          suggestions={suggestions}
-          comments={comments}
-          onAcceptSuggestion={handleAccept}
-          onRejectSuggestion={handleReject}
-          onClickItem={handleClickItem}
-        />
+        <div className="hidden md:block">
+          <CommentSidebar
+            suggestions={suggestions}
+            comments={comments}
+            onAcceptSuggestion={handleAccept}
+            onRejectSuggestion={handleReject}
+            onClickItem={handleClickItem}
+          />
+        </div>
       </div>
     </div>
   );

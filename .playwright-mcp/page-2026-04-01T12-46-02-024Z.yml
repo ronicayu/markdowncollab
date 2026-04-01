@@ -1,0 +1,13 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]: MC
+        - generic [ref=e6]: Suggesting
+      - generic [ref=e7]:
+        - generic "Swift Hawk" [ref=e9]: SH
+        - button "Invite Agent" [ref=e10]
+    - paragraph [ref=e15]: Test
+  - button "Open Next.js Dev Tools" [ref=e21] [cursor=pointer]:
+    - img [ref=e22]
+  - alert [ref=e25]
