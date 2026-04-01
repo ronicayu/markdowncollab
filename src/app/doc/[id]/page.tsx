@@ -256,12 +256,52 @@ export default function DocumentPage({
 
   const [mobileCommentOpen, setMobileCommentOpen] = useState(false);
   const [mobileCommentText, setMobileCommentText] = useState("");
+  const [savedSelection, setSavedSelection] = useState<{ from: number; to: number } | null>(null);
+
+  function openMobileComment() {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    if (from === to) return;
+    setSavedSelection({ from, to });
+    setMobileCommentOpen(true);
+  }
 
   function handleMobileCommentSubmit() {
-    if (!mobileCommentText.trim()) return;
-    handleAddComment(mobileCommentText.trim());
+    if (!mobileCommentText.trim() || !editor || !userName || !savedSelection) return;
+    const { from, to } = savedSelection;
+
+    const yxml = ydoc.getXmlFragment("default");
+    const startRelPos = Y.encodeRelativePosition(
+      Y.createRelativePositionFromTypeIndex(yxml, from - 1)
+    );
+    const endRelPos = Y.encodeRelativePosition(
+      Y.createRelativePositionFromTypeIndex(yxml, to - 1)
+    );
+
+    const comment: Comment = {
+      id: crypto.randomUUID(),
+      documentId: id,
+      authorName: userName,
+      authorType: "human",
+      content: mobileCommentText.trim(),
+      startRelPos,
+      endRelPos,
+      parentCommentId: null,
+      resolved: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    addComment(ydoc, comment);
+
+    editor
+      .chain()
+      .setTextSelection({ from, to })
+      .setMark("commentMark", { commentId: comment.id })
+      .run();
+
     setMobileCommentText("");
     setMobileCommentOpen(false);
+    setSavedSelection(null);
   }
 
   const handleInviteAgent = useCallback(async () => {
@@ -322,7 +362,7 @@ export default function DocumentPage({
       {/* Mobile: floating comment button when text is selected */}
       {hasSelection && (
         <button
-          onClick={() => setMobileCommentOpen(true)}
+          onClick={openMobileComment}
           className="md:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 active:bg-blue-800"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
