@@ -7,6 +7,7 @@ import Editor from "@/components/Editor";
 import TopBar from "@/components/TopBar";
 import type { Collaborator } from "@/components/TopBar";
 import CommentSidebar from "@/components/CommentSidebar";
+import OutlineSidebar from "@/components/OutlineSidebar";
 import {
   getSuggestions,
   getComments,
@@ -203,6 +204,7 @@ export default function DocumentPage({
         onInviteAgent={handleInviteAgent}
       />
       <div className="flex flex-1 overflow-hidden">
+        <OutlineSidebar editor={editor} />
         <Editor
           documentId={id}
           userName={userName}
