@@ -1,0 +1,22 @@
+[     137ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[     150ms] [LOG] [HMR] connected @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   23659ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:3000/_next/webpack-hmr?id=LURvyR0xZujPO_1_LxtB1' failed:  @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_client_019p-hn._.js:13299
+[   23659ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed:  @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   23659ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed:  @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   23771ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   23783ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   23979ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   23993ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   24393ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   24406ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   24683ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:3000/_next/webpack-hmr?id=LURvyR0xZujPO_1_LxtB1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_client_019p-hn._.js:13299
+[   25226ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   25239ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:1234/78af7288-f977-4805-a930-e089896938f7' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_0mgz88o._.js:2271
+[   25716ms] [ERROR] WebSocket connection to 'ws://100.109.228.117:3000/_next/webpack-hmr?id=LURvyR0xZujPO_1_LxtB1' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_client_019p-hn._.js:13299
+[   26860ms] [LOG] [HMR] connected @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   28827ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   28842ms] [LOG] [HMR] connected @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   40554ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   40787ms] [LOG] [Fast Refresh] done in 341ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   41084ms] [LOG] [Fast Refresh] rebuilding @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[   41154ms] [LOG] [Fast Refresh] done in 180ms @ http://100.109.228.117:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431

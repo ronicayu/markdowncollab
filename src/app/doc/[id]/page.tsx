@@ -67,8 +67,7 @@ export default function DocumentPage({
   const provider = useMemo(
     () =>
       new WebsocketProvider(
-        process.env.NEXT_PUBLIC_WS_URL ||
-          `ws://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:1234`,
+        `ws://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:${process.env.NEXT_PUBLIC_WS_PORT || "1234"}`,
         id,
         ydoc
       ),
