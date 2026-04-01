@@ -1,2 +1,150 @@
 [     685ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
 [     747ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1274939ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1275001ms] [LOG] [Fast Refresh] done in 173ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1569544ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1569754ms] [LOG] [Fast Refresh] done in 239ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1588078ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1588145ms] [LOG] [Fast Refresh] done in 171ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1588246ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1588294ms] [LOG] [Fast Refresh] done in 149ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1600719ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1600816ms] [ERROR] ./projects/markdown-collab/src/app/doc/[id]/page.tsx:221:9
+the name `collaborators` is defined multiple times
+  219 |   }, [id]);
+  220 |
+> 221 |   const collaborators: Collaborator[] = userName
+      |         ^^^^^^^^^^^^^
+  222 |     ? [{ name: userName, color: "#3f51b5" }]
+  223 |     : [];
+  224 |
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component Browser]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component SSR]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:3272
+[ 1601015ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1601134ms] [ERROR] ./projects/markdown-collab/src/app/doc/[id]/page.tsx:221:9
+the name `collaborators` is defined multiple times
+  219 |   }, [id]);
+  220 |
+> 221 |   const collaborators: Collaborator[] = userName
+      |         ^^^^^^^^^^^^^
+  222 |     ? [{ name: userName, color: "#3f51b5" }]
+  223 |     : [];
+  224 |
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component Browser]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component SSR]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:3272
+[ 1601235ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1601361ms] [ERROR] ./projects/markdown-collab/src/app/doc/[id]/page.tsx:221:9
+the name `collaborators` is defined multiple times
+  219 |   }, [id]);
+  220 |
+> 221 |   const collaborators: Collaborator[] = userName
+      |         ^^^^^^^^^^^^^
+  222 |     ? [{ name: userName, color: "#3f51b5" }]
+  223 |     : [];
+  224 |
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component Browser]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component SSR]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:3272
+[ 1601362ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/doc/6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1?_rsc=75trd:0
+[ 1601469ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3000/doc/6373c3ce-bcc7-4137-b5fe-9eb8b6b7efc1:0
+[ 1601558ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0e4n_react-dom_01ohk5~._.js:15305
+[ 1601616ms] Error: ./projects/markdown-collab/src/app/doc/[id]/page.tsx:221:9
+the name `collaborators` is defined multiple times
+  219 |   }, [id]);
+  220 |
+> 221 |   const collaborators: Collaborator[] = userName
+      |         ^^^^^^^^^^^^^
+  222 |     ? [{ name: userName, color: "#3f51b5" }]
+  223 |     : [];
+  224 |
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component Browser]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component SSR]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./projects/markdown-collab/src/app/doc/[id]/page.tsx:221:9)
+    at Object.getCompilationErrors (file:///Users/ronica/projects/markdown-collab/node_modules/next/dist/server/dev/hot-reloader-turbopack.js:1186:59)
+    at DevBundlerService.getCompilationError (file:///Users/ronica/projects/markdown-collab/node_modules/next/dist/server/lib/dev-bundler-service.js:44:55)
+    at DevServer.getCompilationError (file:///Users/ronica/projects/markdown-collab/node_modules/next/dist/server/dev/next-dev-server.js:719:42)
+    at DevServer.findPageComponents (file:///Users/ronica/projects/markdown-collab/node_modules/next/dist/server/dev/next-dev-server.js:689:43)
+    at async DevServer.renderErrorToResponseImpl (file:///Users/ronica/projects/markdown-collab/node_modules/next/dist/server/base-server.js:1745:26)
+[ 1601603ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0j1l8mf._.js:1226
+[ 1601607ms] [ERROR] ./projects/markdown-collab/src/app/doc/[id]/page.tsx:221:9
+the name `collaborators` is defined multiple times
+  219 |   }, [id]);
+  220 |
+> 221 |   const collaborators: Collaborator[] = userName
+      |         ^^^^^^^^^^^^^
+  222 |     ? [{ name: userName, color: "#3f51b5" }]
+  223 |     : [];
+  224 |
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component Browser]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component SSR]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0j1l8mf._.js:1945
+[ 1601661ms] [ERROR] ./projects/markdown-collab/src/app/doc/[id]/page.tsx:221:9
+the name `collaborators` is defined multiple times
+  219 |   }, [id]);
+  220 |
+> 221 |   const collaborators: Collaborator[] = userName
+      |         ^^^^^^^^^^^^^
+  222 |     ? [{ name: userName, color: "#3f51b5" }]
+  223 |     : [];
+  224 |
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component Browser]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Client Component SSR]
+    ./projects/markdown-collab/src/app/doc/[id]/page.tsx [Server Component] @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0j1l8mf._.js:1945
+[ 1601711ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0j1l8mf._.js:1226
+[ 1612425ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0j1l8mf._.js:1226
+[ 1612523ms] [LOG] [Fast Refresh] done in 25ms @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0j1l8mf._.js:1226
+[ 1612683ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431
+[ 1612705ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/0e4n_next_dist_0fykpjn._.js:2431

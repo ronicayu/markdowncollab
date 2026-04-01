@@ -76,9 +76,44 @@ export default function DocumentPage({
 
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [editor, setEditor] = useState<import("@tiptap/core").Editor | null>(
     null
   );
+
+  // Set awareness user info when userName is ready
+  useEffect(() => {
+    if (!userName) return;
+    const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+    provider.awareness.setLocalStateField("user", { name: userName, color });
+  }, [provider, userName]);
+
+  // Track live collaborators from awareness
+  useEffect(() => {
+    const updateCollaborators = () => {
+      const states = provider.awareness.getStates();
+      const users: Collaborator[] = [];
+      states.forEach((state, clientId) => {
+        if (clientId === ydoc.clientID) return; // skip self
+        const user = state.user;
+        if (user?.name) {
+          users.push({ name: user.name, color: user.color || "#6B7280", isAgent: false });
+        }
+      });
+      // Add self first
+      if (userName) {
+        const selfState = states.get(ydoc.clientID);
+        const selfColor = selfState?.user?.color || "#3B82F6";
+        users.unshift({ name: userName + " (you)", color: selfColor });
+      }
+      setCollaborators(users);
+    };
+    provider.awareness.on("change", updateCollaborators);
+    updateCollaborators();
+    return () => {
+      provider.awareness.off("change", updateCollaborators);
+    };
+  }, [provider, ydoc, userName]);
 
   useEffect(() => {
     const suggMap = ydoc.getMap("suggestions");
@@ -182,10 +217,6 @@ export default function DocumentPage({
       alert("Failed to reach agent. Is the server running?");
     }
   }, [id]);
-
-  const collaborators: Collaborator[] = userName
-    ? [{ name: userName, color: "#3f51b5" }]
-    : [];
 
   if (!userName) {
     return (

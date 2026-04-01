@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 export interface Collaborator {
   name: string;
   color: string;
@@ -19,12 +21,21 @@ export default function TopBar({
   collaborators,
   onInviteAgent,
 }: TopBarProps) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyShareLink() {
+    const url = `${window.location.origin}/doc/${documentId}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <div className="flex items-center justify-between border-b border-gray-200 bg-white px-3 py-2 md:px-4">
       <div className="flex items-center gap-2 md:gap-4 min-w-0">
-        <span className="font-mono text-sm md:text-lg font-bold text-gray-900 shrink-0">
+        <a href="/" className="font-mono text-sm md:text-lg font-bold text-gray-900 shrink-0 hover:text-gray-600">
           MC
-        </span>
+        </a>
         <span className="hidden sm:inline text-sm text-gray-500">/</span>
         <span className="hidden sm:inline text-sm font-medium text-gray-700 truncate max-w-[150px] md:max-w-none">
           {title}
@@ -34,45 +45,63 @@ export default function TopBar({
         </span>
       </div>
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
-        <div className="flex -space-x-2">
-          {collaborators.map((collaborator, index) => (
-            <div
-              key={index}
-              className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white"
-              style={{ backgroundColor: collaborator.color }}
-              title={collaborator.name}
-            >
-              {collaborator.isAgent ? (
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47"
-                  />
-                </svg>
-              ) : (
-                collaborator.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)
-              )}
-            </div>
-          ))}
-        </div>
+        {/* Live collaborators */}
+        {collaborators.length > 0 && (
+          <div className="flex -space-x-2">
+            {collaborators.map((collaborator, index) => (
+              <div
+                key={index}
+                className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white"
+                style={{ backgroundColor: collaborator.color }}
+                title={collaborator.name}
+              >
+                {collaborator.isAgent ? (
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082M19 14.5l-2.47-2.47"
+                    />
+                  </svg>
+                ) : (
+                  collaborator.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Share button */}
+        <button
+          onClick={copyShareLink}
+          className="flex items-center gap-1.5 h-8 px-2.5 md:px-3 border border-gray-200 text-gray-700 text-xs md:text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
+          </svg>
+          {copied ? "Copied!" : "Share"}
+        </button>
+
+        {/* Export */}
         <a
           href={`/api/documents/${documentId}/export`}
           className="hidden sm:flex items-center gap-1.5 h-8 px-3 border border-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
         >
           Export .md
         </a>
+
+        {/* Invite Agent */}
         <button
           onClick={onInviteAgent}
           className="rounded-md bg-gray-700 px-2.5 py-1.5 text-xs md:text-sm font-medium text-white transition-colors hover:bg-gray-800"
