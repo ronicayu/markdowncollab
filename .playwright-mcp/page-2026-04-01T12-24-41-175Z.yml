@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]: MarkdownCollab
+        - generic [ref=e6]: /
+        - generic [ref=e7]: 3ea5116b-80d2-4343-81ae-1ffcf692b680
+        - generic [ref=e8]: Suggesting
+      - generic [ref=e9]:
+        - generic "Swift Deer" [ref=e11]: SD
+        - link "Export .md" [ref=e12] [cursor=pointer]:
+          - /url: /api/documents/3ea5116b-80d2-4343-81ae-1ffcf692b680/export
+        - button "Invite Agent" [ref=e13]
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - paragraph [ref=e16]: OUTLINE
+        - paragraph [ref=e17]: No headings yet
+      - paragraph [ref=e21]: Hel
+      - generic [ref=e22]:
+        - heading "Suggestions & Comments" [level=2] [ref=e23]
+        - paragraph [ref=e24]: No suggestions or comments yet. Invite an agent to get started.
+  - button "Open Next.js Dev Tools" [ref=e30] [cursor=pointer]:
+    - img [ref=e31]
+  - alert [ref=e34]

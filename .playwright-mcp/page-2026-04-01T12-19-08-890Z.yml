@@ -1,0 +1,8 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - heading "MarkdownCollab" [level=1] [ref=e5]
+        - button "+ New Document" [ref=e6]
+      - paragraph [ref=e7]: No documents yet. Create one to get started.
+  - alert [ref=e8]

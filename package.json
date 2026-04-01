@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "dev:ws": "YPERSISTENCE=./yjs-data npx y-websocket",
+    "dev:ws": "node server/ws-server.mjs",
     "dev:all": "npx concurrently \"npm run dev\" \"npm run dev:ws\""
   },
   "dependencies": {

@@ -3,7 +3,9 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+// CollaborationCursor v2 is incompatible with tiptap v3 (crashes on provider.awareness.doc)
+// TODO: Re-enable when @tiptap/extension-collaboration-cursor v3 is released
+// import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark } from "@/extensions/comment-mark";
 import type * as Y from "yjs";
@@ -43,13 +45,19 @@ export default function Editor({
   provider,
   onEditorReady,
 }: EditorProps) {
-  const [connected, setConnected] = useState(false);
+  const [connected, setConnected] = useState(
+    () => (provider as unknown as { wsconnected?: boolean }).wsconnected ?? false
+  );
 
   useEffect(() => {
     const onStatus = ({ status }: { status: string }) => {
       setConnected(status === "connected");
     };
     provider.on("status", onStatus);
+    // Check current state in case we missed the event
+    if ((provider as unknown as { wsconnected?: boolean }).wsconnected) {
+      setConnected(true);
+    }
     return () => {
       provider.off("status", onStatus);
     };
@@ -67,13 +75,8 @@ export default function Editor({
       Collaboration.configure({
         document: ydoc,
       }),
-      CollaborationCursor.configure({
-        provider,
-        user: {
-          name: userName,
-          color: cursorColor,
-        },
-      }),
+      // CollaborationCursor disabled due to v2/v3 incompatibility
+      // Cursors will be re-enabled when tiptap ships a v3-compatible version
     ],
     editorProps: {
       attributes: {
@@ -95,13 +98,7 @@ export default function Editor({
       {!connected && (
         <div className="absolute top-2 right-2 z-10 flex items-center gap-2 rounded-full bg-yellow-100 px-3 py-1 text-xs text-yellow-800">
           <span className="inline-block h-2 w-2 rounded-full bg-yellow-500" />
-          Connecting...
-        </div>
-      )}
-      {connected && (
-        <div className="absolute top-2 right-2 z-10 flex items-center gap-2 rounded-full bg-green-100 px-3 py-1 text-xs text-green-800">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-          Connected
+          Reconnecting...
         </div>
       )}
       <EditorContent editor={editor} />
