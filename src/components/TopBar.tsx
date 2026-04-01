@@ -8,12 +8,14 @@ export interface Collaborator {
 
 interface TopBarProps {
   title: string;
+  documentId: string;
   collaborators: Collaborator[];
   onInviteAgent: () => void;
 }
 
 export default function TopBar({
   title,
+  documentId,
   collaborators,
   onInviteAgent,
 }: TopBarProps) {
@@ -63,6 +65,12 @@ export default function TopBar({
             </div>
           ))}
         </div>
+        <a
+          href={`/api/documents/${documentId}/export`}
+          className="flex items-center gap-1.5 h-8 px-3 border border-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+        >
+          Export .md
+        </a>
         <button
           onClick={onInviteAgent}
           className="rounded-md bg-gray-700 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"

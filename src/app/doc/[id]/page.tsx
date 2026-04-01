@@ -198,6 +198,7 @@ export default function DocumentPage({
     <div className="flex h-screen flex-col bg-gray-50">
       <TopBar
         title={id}
+        documentId={id}
         collaborators={collaborators}
         onInviteAgent={handleInviteAgent}
       />
