@@ -15,6 +15,7 @@ import {
   updateSuggestionStatus,
   addComment,
 } from "@/lib/suggestion-store";
+import { toast } from "@/lib/toast";
 import type { Suggestion, Comment } from "@/types";
 
 const ADJECTIVES = [
@@ -342,7 +343,10 @@ export default function DocumentPage({
     setSavedSelection(null);
   }
 
+  const [agentLoading, setAgentLoading] = useState(false);
+
   const handleInviteAgent = useCallback(async () => {
+    setAgentLoading(true);
     try {
       const res = await fetch("/api/agent/invite", {
         method: "POST",
@@ -351,10 +355,17 @@ export default function DocumentPage({
       });
       if (!res.ok) {
         const err = await res.json();
-        alert("Agent error: " + err.error);
+        toast(err.error, "error");
+      } else {
+        const data = await res.json();
+        toast(
+          "Agent generated " + (data.suggestionsCount ?? 0) + " suggestions"
+        );
       }
     } catch {
-      alert("Failed to reach agent. Is the server running?");
+      toast("Failed to reach agent", "error");
+    } finally {
+      setAgentLoading(false);
     }
   }, [id]);
 
@@ -374,6 +385,7 @@ export default function DocumentPage({
         collaborators={collaborators}
         onInviteAgent={handleInviteAgent}
         onTitleChange={handleTitleChange}
+        agentLoading={agentLoading}
       />
       <Toolbar editor={editor} />
       <div className="flex flex-1 overflow-hidden">

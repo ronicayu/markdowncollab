@@ -14,6 +14,7 @@ interface TopBarProps {
   collaborators: Collaborator[];
   onInviteAgent: () => void;
   onTitleChange?: (title: string) => void;
+  agentLoading?: boolean;
 }
 
 export default function TopBar({
@@ -22,6 +23,7 @@ export default function TopBar({
   collaborators,
   onInviteAgent,
   onTitleChange,
+  agentLoading,
 }: TopBarProps) {
   const [copied, setCopied] = useState(false);
   const [editableTitle, setEditableTitle] = useState(title);
@@ -161,9 +163,16 @@ export default function TopBar({
         {/* Invite Agent */}
         <button
           onClick={onInviteAgent}
-          className="rounded-md bg-gray-700 px-2.5 py-1.5 text-xs md:text-sm font-medium text-white transition-colors hover:bg-gray-800"
+          disabled={agentLoading}
+          className="rounded-md bg-gray-700 px-2.5 py-1.5 text-xs md:text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
         >
-          Invite Agent
+          {agentLoading && (
+            <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {agentLoading ? "Working..." : "Invite Agent"}
         </button>
       </div>
     </div>
