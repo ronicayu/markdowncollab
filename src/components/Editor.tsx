@@ -4,8 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Collaboration from "@tiptap/extension-collaboration";
-import { Extension } from "@tiptap/core";
-import { yCursorPlugin } from "y-prosemirror";
+// yCursorPlugin disabled — see note below
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark } from "@/extensions/comment-mark";
 import type * as Y from "yjs";
@@ -30,19 +29,10 @@ function getRandomColor() {
   return CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
 }
 
-const CustomCursorExtension = Extension.create({
-  name: "customCursor",
-  addOptions() {
-    return {
-      provider: null as WebsocketProvider | null,
-    };
-  },
-  addProseMirrorPlugins() {
-    const provider = this.options.provider as WebsocketProvider;
-    if (!provider) return [];
-    return [yCursorPlugin(provider.awareness)];
-  },
-});
+// yCursorPlugin crashes in y-prosemirror 1.x with Tiptap v3 because
+// awareness.doc is undefined during createDecorations. We set awareness
+// user info so collaborator avatars in TopBar work, but skip the cursor
+// rendering plugin until y-prosemirror ships a compatible version.
 
 interface EditorProps {
   documentId: string;
@@ -99,9 +89,7 @@ export default function Editor({
       Collaboration.configure({
         document: ydoc,
       }),
-      CustomCursorExtension.configure({
-        provider,
-      }),
+      // Cursor plugin disabled — see comment above
     ],
     editorProps: {
       attributes: {
