@@ -4,6 +4,7 @@ import { use, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import Editor from "@/components/Editor";
+import Toolbar from "@/components/Toolbar";
 import TopBar from "@/components/TopBar";
 import type { Collaborator } from "@/components/TopBar";
 import CommentSidebar from "@/components/CommentSidebar";
@@ -73,6 +74,34 @@ export default function DocumentPage({
         ydoc
       ),
     [id, ydoc]
+  );
+
+  const [docTitle, setDocTitle] = useState(id);
+
+  // Fetch document title on mount
+  useEffect(() => {
+    fetch(`/api/documents/${id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((doc) => {
+        if (doc?.title) setDocTitle(doc.title);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const handleTitleChange = useCallback(
+    async (newTitle: string) => {
+      setDocTitle(newTitle);
+      try {
+        await fetch(`/api/documents/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: newTitle }),
+        });
+      } catch {
+        // silently fail — title is already set optimistically
+      }
+    },
+    [id]
   );
 
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -340,11 +369,13 @@ export default function DocumentPage({
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       <TopBar
-        title={id}
+        title={docTitle}
         documentId={id}
         collaborators={collaborators}
         onInviteAgent={handleInviteAgent}
+        onTitleChange={handleTitleChange}
       />
+      <Toolbar editor={editor} />
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden lg:block">
           <OutlineSidebar editor={editor} />

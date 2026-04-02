@@ -10,3 +10,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(doc);
 }
+
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const { title } = await req.json();
+  const doc = await prisma.document.update({ where: { id }, data: { title } });
+  return NextResponse.json(doc);
+}

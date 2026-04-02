@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export interface Collaborator {
   name: string;
@@ -13,6 +13,7 @@ interface TopBarProps {
   documentId: string;
   collaborators: Collaborator[];
   onInviteAgent: () => void;
+  onTitleChange?: (title: string) => void;
 }
 
 export default function TopBar({
@@ -20,10 +21,26 @@ export default function TopBar({
   documentId,
   collaborators,
   onInviteAgent,
+  onTitleChange,
 }: TopBarProps) {
   const [copied, setCopied] = useState(false);
+  const [editableTitle, setEditableTitle] = useState(title);
 
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Sync editableTitle when title prop changes (e.g. after fetch)
+  useEffect(() => {
+    setEditableTitle(title);
+  }, [title]);
+
+  function commitTitle() {
+    const trimmed = editableTitle.trim();
+    if (trimmed && trimmed !== title && onTitleChange) {
+      onTitleChange(trimmed);
+    } else {
+      setEditableTitle(title);
+    }
+  }
 
   async function handleShare() {
     const url = `${window.location.origin}/doc/${documentId}`;
@@ -44,9 +61,18 @@ export default function TopBar({
           MC
         </a>
         <span className="hidden sm:inline text-sm text-gray-500">/</span>
-        <span className="hidden sm:inline text-sm font-medium text-gray-700 truncate max-w-[150px] md:max-w-none">
-          {title}
-        </span>
+        <input
+          value={editableTitle}
+          onChange={(e) => setEditableTitle(e.target.value)}
+          onBlur={commitTitle}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          className="hidden sm:inline text-sm font-bold text-gray-700 truncate max-w-[150px] md:max-w-none bg-transparent border-none outline-none focus:ring-1 focus:ring-blue-300 focus:bg-white rounded px-1 -ml-1"
+        />
         <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 shrink-0">
           Editing
         </span>

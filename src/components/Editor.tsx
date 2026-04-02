@@ -2,6 +2,7 @@
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
 import Collaboration from "@tiptap/extension-collaboration";
 // CollaborationCursor v2 is incompatible with tiptap v3 (crashes on provider.awareness.doc)
 // TODO: Re-enable when @tiptap/extension-collaboration-cursor v3 is released
@@ -69,6 +70,9 @@ export default function Editor({
     extensions: [
       StarterKit.configure({
         undoRedo: false,
+      }),
+      Placeholder.configure({
+        placeholder: "Start typing or paste markdown...",
       }),
       SuggestionMark,
       CommentMark,
