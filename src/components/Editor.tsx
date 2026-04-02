@@ -4,9 +4,8 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Collaboration from "@tiptap/extension-collaboration";
-// CollaborationCursor v2 is incompatible with tiptap v3 (crashes on provider.awareness.doc)
-// TODO: Re-enable when @tiptap/extension-collaboration-cursor v3 is released
-// import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { Extension } from "@tiptap/core";
+import { yCursorPlugin } from "y-prosemirror";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark } from "@/extensions/comment-mark";
 import type * as Y from "yjs";
@@ -30,6 +29,20 @@ const CURSOR_COLORS = [
 function getRandomColor() {
   return CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
 }
+
+const CustomCursorExtension = Extension.create({
+  name: "customCursor",
+  addOptions() {
+    return {
+      provider: null as WebsocketProvider | null,
+    };
+  },
+  addProseMirrorPlugins() {
+    const provider = this.options.provider as WebsocketProvider;
+    if (!provider) return [];
+    return [yCursorPlugin(provider.awareness)];
+  },
+});
 
 interface EditorProps {
   documentId: string;
@@ -66,6 +79,13 @@ export default function Editor({
 
   const cursorColor = useMemo(() => getRandomColor(), []);
 
+  useEffect(() => {
+    provider.awareness.setLocalStateField("user", {
+      name: userName,
+      color: cursorColor,
+    });
+  }, [provider, userName, cursorColor]);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -79,8 +99,9 @@ export default function Editor({
       Collaboration.configure({
         document: ydoc,
       }),
-      // CollaborationCursor disabled due to v2/v3 incompatibility
-      // Cursors will be re-enabled when tiptap ships a v3-compatible version
+      CustomCursorExtension.configure({
+        provider,
+      }),
     ],
     editorProps: {
       attributes: {
@@ -99,6 +120,15 @@ export default function Editor({
 
   return (
     <div className="relative flex-1 overflow-auto bg-white">
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 text-xs text-gray-500">
+        <span
+          className={`inline-block h-2 w-2 rounded-full ${
+            connected ? "bg-green-500" : "bg-yellow-500"
+          }`}
+          title={connected ? "Connected" : "Connecting..."}
+        />
+        {connected ? "Connected" : "Connecting..."}
+      </div>
       <EditorContent editor={editor} />
     </div>
   );
