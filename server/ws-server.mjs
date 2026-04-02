@@ -9,7 +9,7 @@ import * as encoding from 'lib0/encoding'
 import * as decoding from 'lib0/decoding'
 
 const host = process.env.HOST || '0.0.0.0'
-const port = parseInt(process.env.WS_PORT || '1234')
+const port = parseInt(process.env.PORT || process.env.WS_PORT || '1234')
 const persistDir = process.env.YPERSISTENCE || './yjs-data'
 
 if (!existsSync(persistDir)) mkdirSync(persistDir, { recursive: true })
