@@ -28,6 +28,10 @@ export default function TopBar({
   agentLoading,
 }: TopBarProps) {
   const [copied, setCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState(`/doc/${documentId}`);
+  useEffect(() => {
+    setShareUrl(`${window.location.origin}/doc/${documentId}`);
+  }, [documentId]);
   const [editableTitle, setEditableTitle] = useState(title);
   const [showShareModal, setShowShareModal] = useState(false);
 
@@ -159,15 +163,14 @@ export default function TopBar({
             <div className="flex gap-2">
               <input
                 readOnly
-                value={`${typeof window !== "undefined" ? window.location.origin : ""}/doc/${documentId}`}
+                value={shareUrl}
                 className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 select-all"
                 onFocus={(e) => e.target.select()}
               />
               <button
                 onClick={async () => {
-                  const url = `${window.location.origin}/doc/${documentId}`;
                   try {
-                    await navigator.clipboard.writeText(url);
+                    await navigator.clipboard.writeText(shareUrl);
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
                   } catch {
