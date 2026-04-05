@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 interface Doc {
   id: string;
@@ -24,6 +25,7 @@ function formatDate(dateStr: string) {
 type Tab = "all" | "recent" | "shared";
 
 export default function Home() {
+  const { data: session } = useSession();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -99,13 +101,32 @@ export default function Home() {
             </button>
           ))}
         </nav>
-        <div className="px-5 py-4 border-t border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-[#B8692A] flex items-center justify-center text-xs font-bold shrink-0">
-              N
+        <div className="px-4 py-4 border-t border-white/10">
+          {session ? (
+            <div className="flex items-center gap-2">
+              {session.user?.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={session.user.image} alt="" className="h-7 w-7 rounded-full shrink-0" />
+              ) : (
+                <div className="h-7 w-7 rounded-full bg-[#B8692A] flex items-center justify-center text-xs font-bold shrink-0">
+                  {session.user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "?"}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-white truncate">{session.user?.name}</p>
+                <button onClick={() => signOut()} className="text-xs text-white/40 hover:text-white/70 transition-colors">
+                  Sign out
+                </button>
+              </div>
             </div>
-            <span className="text-sm text-white/70 truncate">My workspace</span>
-          </div>
+          ) : (
+            <button
+              onClick={() => signIn()}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 transition-colors"
+            >
+              Sign in
+            </button>
+          )}
         </div>
       </aside>
 
