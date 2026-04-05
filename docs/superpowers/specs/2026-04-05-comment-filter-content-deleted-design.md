@@ -26,16 +26,18 @@ Two related improvements to the comment sidebar:
 Add a `activeCommentIds` state (`Set<string>`). Whenever the editor's document changes, walk all nodes and collect every `commentId` attribute from `commentMark` marks. This set is passed down to `CommentSidebar`.
 
 ```
-editor.on("update", () => {
+function collectCommentIds(editor): Set<string> {
   const ids = new Set<string>();
   editor.state.doc.descendants((node) => {
     node.marks.forEach((mark) => {
       if (mark.type.name === "commentMark") ids.add(mark.attrs.commentId);
     });
   });
-  setActiveCommentIds(ids);
-});
+  return ids;
+}
 ```
+
+Attach on both `onEditorReady` (initial population) and the editor's `update` event (incremental updates). Without the `onEditorReady` seed, `activeCommentIds` is empty on first render and every comment would incorrectly appear as content-deleted.
 
 A comment is **content-deleted** when: `!comment.resolved && !activeCommentIds.has(comment.id)`.
 

@@ -53,8 +53,11 @@ body {
 
 /* Comment highlights */
 .ProseMirror mark.comment-highlight {
-  background-color: #FEF3C7;
+  background-color: #FEF3C7 !important;
   border-bottom: 2px solid #F59E0B;
+  text-decoration: underline;
+  text-decoration-color: #F59E0B;
+  text-underline-offset: 2px;
   padding: 1px 0;
   border-radius: 2px;
   cursor: pointer;
