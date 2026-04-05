@@ -35,6 +35,13 @@ export default function FloatingCommentButton({
       return;
     }
 
+    // Don't show for whitespace-only selections
+    const selectedText = editor.state.doc.textBetween(from, to, " ");
+    if (!selectedText.trim()) {
+      setButtonPos(null);
+      return;
+    }
+
     // Check if the selection is inside a code block — skip if so
     const { $from } = editor.state.selection;
     const isInCode =
