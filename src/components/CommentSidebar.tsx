@@ -59,7 +59,14 @@ export default function CommentSidebar({
         <h2 className="text-sm font-semibold text-gray-700 shrink-0">Comments</h2>
         <select
           value={filter}
-          onChange={(e) => setFilter(e.target.value as Filter)}
+          onChange={(e) => {
+            const next = e.target.value as Filter;
+            setFilter(next);
+            if (next === "resolved") {
+              setShowInput(false);
+              setCommentText("");
+            }
+          }}
           className="text-xs border border-[#D4A978] rounded-md px-1.5 py-1 bg-[#FFFEF9] text-gray-600 focus:outline-none focus:border-[#B8692A] cursor-pointer"
         >
           <option value="open">Open</option>
