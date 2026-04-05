@@ -23,6 +23,7 @@ import {
   getComments,
   updateSuggestionStatus,
   addComment,
+  resolveComment,
 } from "@/lib/suggestion-store";
 import { toast } from "@/lib/toast";
 import type { Suggestion, Comment } from "@/types";
@@ -61,6 +62,18 @@ function getUserName(): string {
   const name = generateUserName();
   localStorage.setItem("markdown-collab-username", name);
   return name;
+}
+
+function collectActiveCommentIds(editorInstance: import("@tiptap/core").Editor): Set<string> {
+  const ids = new Set<string>();
+  editorInstance.state.doc.descendants((node) => {
+    node.marks.forEach((mark) => {
+      if (mark.type.name === "commentMark") {
+        ids.add(mark.attrs.commentId as string);
+      }
+    });
+  });
+  return ids;
 }
 
 export default function DocumentPage({
@@ -136,9 +149,11 @@ export default function DocumentPage({
   const [comments, setComments] = useState<Comment[]>([]);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [hasSelection, setHasSelection] = useState(false);
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
   const [editor, setEditor] = useState<import("@tiptap/core").Editor | null>(
     null
   );
+  const [activeCommentIds, setActiveCommentIds] = useState<Set<string>>(new Set());
 
   // Track text selection state for comment button
   // Save last non-collapsed selection so we can use it even after blur
@@ -155,6 +170,23 @@ export default function DocumentPage({
     };
     editor.on("selectionUpdate", onSelectionUpdate);
     return () => { editor.off("selectionUpdate", onSelectionUpdate); };
+  }, [editor]);
+
+  // Detect clicks inside the editor: activate comment marks, clear when clicking elsewhere
+  useEffect(() => {
+    if (!editor) return;
+    const editorEl = editor.view.dom;
+    const handleClick = (e: Event) => {
+      const target = (e.target as HTMLElement).closest("mark[data-comment-id]");
+      if (target) {
+        const commentId = target.getAttribute("data-comment-id");
+        if (commentId) setActiveCommentId(commentId);
+      } else {
+        setActiveCommentId(null);
+      }
+    };
+    editorEl.addEventListener("click", handleClick);
+    return () => { editorEl.removeEventListener("click", handleClick); };
   }, [editor]);
 
   // Set awareness user info when userName is ready
@@ -263,26 +295,45 @@ export default function DocumentPage({
   const handleClickItem = useCallback(
     (itemId: string) => {
       if (!editor) return;
+
+      setActiveCommentId(itemId);
+
+      // Scroll to the marked text in the editor
+      const comm = comments.find((c) => c.id === itemId);
+      if (comm) {
+        const mark = editor.view.dom.querySelector(
+          `mark[data-comment-id="${itemId}"]`
+        );
+        if (mark) {
+          mark.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
+
+      // Fallback for suggestions: scroll via Yjs position
       const sugg = suggestions.find((s) => s.id === itemId);
-      const relPos = sugg?.startRelPos;
-      if (!relPos) return;
-      const abs = Y.createAbsolutePositionFromRelativePosition(
-        Y.decodeRelativePosition(relPos),
+      const startRel = sugg?.startRelPos ?? comm?.startRelPos;
+      if (!startRel) return;
+      const startAbs = Y.createAbsolutePositionFromRelativePosition(
+        Y.decodeRelativePosition(startRel),
         ydoc
       );
-      if (abs) {
-        editor.commands.setTextSelection(abs.index + 1);
+      if (startAbs) {
+        editor.commands.setTextSelection(startAbs.index + 1);
         editor.commands.scrollIntoView();
       }
     },
-    [editor, suggestions, ydoc]
+    [editor, suggestions, comments, ydoc]
   );
 
   const handleAddComment = useCallback(
     (text: string) => {
       if (!editor || !userName) return;
-      const { from, to } = editor.state.selection;
-      if (from === to) return; // no selection
+      // Use saved selection — the live selection may have collapsed when
+      // the user clicked into the sidebar textarea.
+      const sel = lastSelectionRef.current;
+      if (!sel) return;
+      const { from, to } = sel;
 
       const yxml = ydoc.getXmlFragment("default");
       const startRelPos = Y.encodeRelativePosition(
@@ -313,8 +364,36 @@ export default function DocumentPage({
         .setTextSelection({ from, to })
         .setMark("commentMark", { commentId: comment.id })
         .run();
+
+      lastSelectionRef.current = null;
+      toast("Comment added");
     },
     [editor, userName, ydoc, id]
+  );
+
+  const handleResolveComment = useCallback(
+    (commentId: string) => {
+      if (!editor) return;
+      // Remove the highlight mark from the editor
+      const { doc } = editor.state;
+      const markType = editor.schema.marks.commentMark;
+      if (markType) {
+        doc.descendants((node, pos) => {
+          node.marks.forEach((mark) => {
+            if (mark.type === markType && mark.attrs.commentId === commentId) {
+              editor
+                .chain()
+                .setTextSelection({ from: pos, to: pos + node.nodeSize })
+                .unsetMark("commentMark")
+                .run();
+            }
+          });
+        });
+      }
+      resolveComment(ydoc, commentId);
+      toast("Comment resolved");
+    },
+    [editor, ydoc]
   );
 
   const [mobileCommentOpen, setMobileCommentOpen] = useState(false);
@@ -368,6 +447,7 @@ export default function DocumentPage({
     if (mobileTextareaRef.current) mobileTextareaRef.current.value = "";
     setMobileCommentOpen(false);
     setSavedSelection(null);
+    toast("Comment added");
   }
 
   const [agentLoading, setAgentLoading] = useState(false);
@@ -405,7 +485,7 @@ export default function DocumentPage({
   }
 
   return (
-    <div className="flex h-screen flex-col bg-gray-50">
+    <div className="flex h-screen flex-col bg-[#F2E8D5]">
       <TopBar
         title={docTitle}
         documentId={id}
@@ -425,17 +505,25 @@ export default function DocumentPage({
           userName={userName}
           ydoc={ydoc}
           provider={provider}
-          onEditorReady={setEditor}
+          onEditorReady={(e) => {
+            setEditor(e);
+            setActiveCommentIds(collectActiveCommentIds(e));
+            e.on("update", () => setActiveCommentIds(collectActiveCommentIds(e)));
+          }}
+          activeCommentId={activeCommentId}
         />
         <div className="hidden md:block">
           <CommentSidebar
             suggestions={suggestions}
             comments={comments}
+            activeCommentIds={activeCommentIds}
             onAcceptSuggestion={handleAccept}
             onRejectSuggestion={handleReject}
             onClickItem={handleClickItem}
             onAddComment={handleAddComment}
+            onResolveComment={handleResolveComment}
             hasSelection={hasSelection}
+            activeCommentId={activeCommentId}
           />
         </div>
       </div>
@@ -443,7 +531,7 @@ export default function DocumentPage({
       {hasSelection && (
         <button
           onClick={openMobileComment}
-          className="md:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 active:bg-blue-800"
+          className="md:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#B8692A] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#96541F] active:bg-[#7A4318]"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -474,7 +562,7 @@ export default function DocumentPage({
               </button>
               <button
                 onClick={handleMobileCommentSubmit}
-                className="flex-1 text-sm font-medium text-white bg-blue-600 rounded-lg py-2.5 hover:bg-blue-700 active:bg-blue-800"
+                className="flex-1 text-sm font-medium text-white bg-[#B8692A] rounded-lg py-2.5 hover:bg-[#96541F] active:bg-[#7A4318]"
               >
                 Comment
               </button>
