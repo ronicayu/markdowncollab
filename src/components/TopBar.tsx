@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 export interface Collaborator {
   name: string;
@@ -27,6 +28,7 @@ export default function TopBar({
   onTitleChange,
   agentLoading,
 }: TopBarProps) {
+  const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState(`/doc/${documentId}`);
   useEffect(() => {
@@ -141,6 +143,33 @@ export default function TopBar({
           ) : null}
           {agentLoading ? "Working..." : "Invite Agent"}
         </button>
+
+        {/* Auth */}
+        {session ? (
+          <div className="hidden sm:flex items-center gap-2">
+            {session.user?.image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={session.user.image}
+                alt={session.user.name ?? ""}
+                className="h-6 w-6 rounded-full"
+              />
+            )}
+            <button
+              onClick={() => signOut()}
+              className="text-xs text-white/50 hover:text-white transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => signIn("google")}
+            className="hidden sm:flex items-center gap-1.5 h-8 px-3 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm font-medium rounded-md transition-colors"
+          >
+            Sign in
+          </button>
+        )}
 
         {/* Share — primary teal */}
         <button

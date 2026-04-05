@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useSession } from "next-auth/react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 
@@ -84,11 +85,13 @@ export default function DocumentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { data: session } = useSession();
   const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
-    setUserName(getUserName());
-  }, []);
+    // Prefer the Google account name; fall back to a stored/generated guest name
+    setUserName(session?.user?.name ?? getUserName());
+  }, [session]);
 
   const ydoc = useMemo(() => new Y.Doc(), []);
   const provider = useMemo(
