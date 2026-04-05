@@ -116,7 +116,7 @@ export default function CommentCard({
               e.stopPropagation();
               onResolve(comment.id);
             }}
-            className={`text-xs font-medium text-gray-400 hover:text-green-600 transition-colors ${isContentDeleted ? "" : "ml-auto"}`}
+            className={`text-xs font-medium text-gray-400 hover:text-green-600 transition-colors${!isContentDeleted ? " ml-auto" : ""}`}
           >
             Resolve
           </button>

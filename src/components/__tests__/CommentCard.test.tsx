@@ -72,4 +72,34 @@ describe("CommentCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /resolve/i }));
     expect(onResolve).toHaveBeenCalledWith("abc");
   });
+
+  it("calls onClick with comment id when open card body is clicked", () => {
+    const onClick = vi.fn();
+    render(
+      <CommentCard
+        comment={base}
+        onClick={onClick}
+        onResolve={vi.fn()}
+        isActive={false}
+        isContentDeleted={false}
+      />
+    );
+    fireEvent.click(screen.getByText("This needs work"));
+    expect(onClick).toHaveBeenCalledWith("abc");
+  });
+
+  it("does not call onClick when resolved card body is clicked", () => {
+    const onClick = vi.fn();
+    render(
+      <CommentCard
+        comment={{ ...base, resolved: true }}
+        onClick={onClick}
+        onResolve={vi.fn()}
+        isActive={false}
+        isContentDeleted={false}
+      />
+    );
+    fireEvent.click(screen.getByText("This needs work"));
+    expect(onClick).not.toHaveBeenCalled();
+  });
 });
