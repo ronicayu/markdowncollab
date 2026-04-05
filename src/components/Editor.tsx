@@ -77,7 +77,7 @@ export default function Editor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm sm:prose-base max-w-none focus:outline-none min-h-[500px] p-4",
+          "prose prose-base max-w-none focus:outline-none min-h-[500px] p-6",
       },
     },
     immediatelyRender: false,
