@@ -23,6 +23,8 @@
     "@tiptap/react": "^3.22.0",
     "@tiptap/starter-kit": "^3.22.0",
     "@tiptap/y-tiptap": "^3.0.2",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.8.0",
     "lib0": "^0.2.117",
     "mermaid": "^11.14.0",
