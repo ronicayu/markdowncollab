@@ -83,8 +83,14 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
       } catch (err: unknown) {
         if (gen === genRef.current) {
           setSvg(null);
-          const message =
-            err instanceof Error ? err.message : "Invalid Mermaid syntax";
+          // Show a short, user-friendly error. The raw Mermaid error often
+          // includes the full source text which makes the message very long.
+          const raw = err instanceof Error ? err.message : "";
+          const message = raw.startsWith("No diagram type detected")
+            ? "No diagram type detected — check your syntax and make sure the first line is a valid diagram type (e.g. graph TD, sequenceDiagram)."
+            : raw
+            ? raw.split("\n")[0].substring(0, 120)
+            : "Invalid Mermaid syntax";
           setError(message);
         }
       } finally {
