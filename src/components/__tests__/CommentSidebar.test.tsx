@@ -25,6 +25,7 @@ const defaultProps = {
   onClickItem: vi.fn(),
   onAddComment: vi.fn(),
   onResolveComment: vi.fn(),
+  onReplyToComment: vi.fn(),
   hasSelection: false,
   activeCommentId: null,
 };

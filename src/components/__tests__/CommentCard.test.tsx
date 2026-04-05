@@ -23,6 +23,7 @@ describe("CommentCard", () => {
         comment={base}
         onClick={vi.fn()}
         onResolve={vi.fn()}
+        onReply={vi.fn()}
         isActive={false}
         isContentDeleted={false}
       />
@@ -36,6 +37,7 @@ describe("CommentCard", () => {
         comment={base}
         onClick={vi.fn()}
         onResolve={vi.fn()}
+        onReply={vi.fn()}
         isActive={false}
         isContentDeleted={true}
       />
@@ -50,6 +52,7 @@ describe("CommentCard", () => {
         comment={{ ...base, resolved: true }}
         onClick={vi.fn()}
         onResolve={vi.fn()}
+        onReply={vi.fn()}
         isActive={false}
         isContentDeleted={false}
       />
@@ -65,6 +68,7 @@ describe("CommentCard", () => {
         comment={base}
         onClick={vi.fn()}
         onResolve={onResolve}
+        onReply={vi.fn()}
         isActive={false}
         isContentDeleted={false}
       />
@@ -80,6 +84,7 @@ describe("CommentCard", () => {
         comment={base}
         onClick={onClick}
         onResolve={vi.fn()}
+        onReply={vi.fn()}
         isActive={false}
         isContentDeleted={false}
       />
@@ -95,6 +100,7 @@ describe("CommentCard", () => {
         comment={{ ...base, resolved: true }}
         onClick={onClick}
         onResolve={vi.fn()}
+        onReply={vi.fn()}
         isActive={false}
         isContentDeleted={false}
       />

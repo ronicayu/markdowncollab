@@ -27,7 +27,7 @@ function formatTimestamp(iso: string): string {
   if (diffMin < 60) return `${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
-  return date.toLocaleDateString();
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function SuggestionCard({
