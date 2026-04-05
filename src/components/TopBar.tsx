@@ -61,7 +61,7 @@ export default function TopBar({
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <a
           href="/"
-          className="text-sm font-bold text-white/80 hover:text-white shrink-0 transition-colors"
+          className="inline-flex items-center h-9 px-1 text-sm font-bold text-white/80 hover:text-white shrink-0 transition-colors"
         >
           MC
         </a>
