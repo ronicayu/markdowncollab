@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Suggestion, Comment } from "@/types";
 import SuggestionCard from "./SuggestionCard";
 import CommentCard from "./CommentCard";
@@ -19,6 +19,10 @@ interface CommentSidebarProps {
   onReplyToComment: (commentId: string, text: string) => void;
   hasSelection: boolean;
   activeCommentId?: string | null;
+  /** Increment this value to imperatively open the comment form (e.g. from the floating button). */
+  openFormTrigger?: number;
+  /** Called whenever the comment form opens or closes, so the parent can track it. */
+  onFormOpenChange?: (isOpen: boolean) => void;
 }
 
 export default function CommentSidebar({
@@ -33,10 +37,26 @@ export default function CommentSidebar({
   onReplyToComment,
   hasSelection,
   activeCommentId,
+  openFormTrigger,
+  onFormOpenChange,
 }: CommentSidebarProps) {
   const [commentText, setCommentText] = useState("");
   const [showInput, setShowInput] = useState(false);
   const [filter, setFilter] = useState<Filter>("open");
+
+  // Open the comment form whenever the trigger counter increments
+  useEffect(() => {
+    if (openFormTrigger && openFormTrigger > 0 && filter !== "resolved") {
+      setShowInput(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openFormTrigger]);
+
+  // Notify parent when showInput changes
+  useEffect(() => {
+    onFormOpenChange?.(showInput);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showInput]);
 
   const pendingSuggestions = suggestions.filter(
     (s) => s.status === "pending" || s.status === "stale"
@@ -55,6 +75,11 @@ export default function CommentSidebar({
     setShowInput(false);
   }
 
+  function closeForm() {
+    setShowInput(false);
+    setCommentText("");
+  }
+
   return (
     <div className="w-72 shrink-0 overflow-y-auto border-l border-[#E8D8C0] bg-[#F5EBD8] p-3">
       <div className="flex items-center justify-between mb-3 gap-2">
@@ -65,8 +90,7 @@ export default function CommentSidebar({
             const next = e.target.value as Filter;
             setFilter(next);
             if (next === "resolved") {
-              setShowInput(false);
-              setCommentText("");
+              closeForm();
             }
           }}
           className="text-xs border border-[#D4A978] rounded-md px-1.5 py-1 bg-[#FFFEF9] text-gray-600 focus:outline-none focus:border-[#B8692A] cursor-pointer"
@@ -99,8 +123,7 @@ export default function CommentSidebar({
                 handleSubmit();
               }
               if (e.key === "Escape") {
-                setShowInput(false);
-                setCommentText("");
+                closeForm();
               }
             }}
             placeholder="Type your comment..."
@@ -109,7 +132,7 @@ export default function CommentSidebar({
           />
           <div className="flex justify-end gap-2 mt-2">
             <button
-              onClick={() => { setShowInput(false); setCommentText(""); }}
+              onClick={closeForm}
               className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
             >
               Cancel

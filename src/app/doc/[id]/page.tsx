@@ -18,6 +18,7 @@ import TopBar from "@/components/TopBar";
 import type { Collaborator } from "@/components/TopBar";
 import CommentSidebar from "@/components/CommentSidebar";
 import OutlineSidebar from "@/components/OutlineSidebar";
+import FloatingCommentButton from "@/components/FloatingCommentButton";
 import {
   getSuggestions,
   getComments,
@@ -155,6 +156,11 @@ export default function DocumentPage({
     null
   );
   const [activeCommentIds, setActiveCommentIds] = useState<Set<string>>(new Set());
+
+  // Track comment form open state so the floating button hides when the form is open
+  const [commentFormOpen, setCommentFormOpen] = useState(false);
+  // Incrementing counter used to imperatively open the comment form from the floating button
+  const [openFormTrigger, setOpenFormTrigger] = useState(0);
 
   // Track text selection state for comment button
   // Save last non-collapsed selection so we can use it even after blur
@@ -557,6 +563,12 @@ export default function DocumentPage({
           onEditorReady={handleEditorReady}
           activeCommentId={activeCommentId}
         />
+        {/* Floating "+ Comment" button that appears above selected text (desktop) */}
+        <FloatingCommentButton
+          editor={editor}
+          onAddComment={() => setOpenFormTrigger((n) => n + 1)}
+          commentFormOpen={commentFormOpen}
+        />
         <div className="hidden md:block">
           <CommentSidebar
             suggestions={suggestions}
@@ -570,6 +582,8 @@ export default function DocumentPage({
             onReplyToComment={handleReplyToComment}
             hasSelection={hasSelection}
             activeCommentId={activeCommentId}
+            openFormTrigger={openFormTrigger}
+            onFormOpenChange={setCommentFormOpen}
           />
         </div>
       </div>

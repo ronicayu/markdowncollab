@@ -7,6 +7,7 @@ import Collaboration from "@tiptap/extension-collaboration";
 // yCursorPlugin disabled — see note below
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
+import { MermaidBlock } from "@/extensions/mermaid-block";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo } from "react";
@@ -65,7 +66,9 @@ export default function Editor({
     extensions: [
       StarterKit.configure({
         undoRedo: false,
+        codeBlock: false, // replaced by MermaidBlock below
       }),
+      MermaidBlock,
       Placeholder.configure({
         placeholder: "Start typing or paste markdown...",
       }),

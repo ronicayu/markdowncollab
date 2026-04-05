@@ -126,6 +126,41 @@ export default function Toolbar({ editor }: ToolbarProps) {
       isActive: () => editor.isActive("codeBlock"),
     },
     {
+      label: "Mermaid diagram",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+          {/* Simplified flowchart icon */}
+          <rect x="8" y="2" width="8" height="4" rx="1" />
+          <rect x="2" y="17" width="7" height="4" rx="1" />
+          <rect x="15" y="17" width="7" height="4" rx="1" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v5M12 11l-4.5 6M12 11l4.5 6" />
+        </svg>
+      ),
+      action: () => {
+        // Insert a fresh mermaid code block node with starter content.
+        // We can't use setCodeBlock().insertContent() because setCodeBlock
+        // wraps the current paragraph (including its text), and insertContent
+        // then appends onto that existing text, producing garbled syntax.
+        // Instead, insert the complete node at the current position so the
+        // existing paragraph is not disturbed.
+        const { state } = editor;
+        const { $from } = state.selection;
+        // If already inside a mermaid block, do nothing.
+        if ($from.parent.type.name === "codeBlock" && $from.parent.attrs.language === "mermaid") return;
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "codeBlock",
+            attrs: { language: "mermaid" },
+            content: [{ type: "text", text: "graph TD\n  A[Start] --> B[End]" }],
+          })
+          .run();
+      },
+      isActive: () => editor.isActive("codeBlock", { language: "mermaid" }),
+      separator: true,
+    },
+    {
       label: "Horizontal rule",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
