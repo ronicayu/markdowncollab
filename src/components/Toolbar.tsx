@@ -147,7 +147,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
           <button
             onClick={btn.action}
             title={btn.label}
-            className={`h-8 w-8 shrink-0 rounded-md flex items-center justify-center transition-colors ${
+            className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
               btn.isActive()
                 ? "bg-[#0D9488]/10 text-[#0D9488]"
                 : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"

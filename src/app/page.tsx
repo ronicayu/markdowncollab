@@ -64,7 +64,7 @@ export default function Home() {
           ].map(({ label, active }) => (
             <button
               key={label}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+              className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors ${
                 active
                   ? "bg-white/10 text-white font-medium"
                   : "text-white/50 hover:text-white hover:bg-white/5"
