@@ -76,7 +76,7 @@ export default function TopBar({
               (e.target as HTMLInputElement).blur();
             }
           }}
-          className="hidden sm:inline text-sm font-semibold text-white/80 truncate max-w-[150px] md:max-w-none bg-transparent border-none outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/5 rounded px-1 -ml-1 transition-colors placeholder:text-white/30"
+          className="hidden sm:inline h-9 text-sm font-semibold text-white/80 truncate max-w-[150px] md:max-w-none bg-transparent border-none outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/5 rounded px-1 -ml-1 transition-colors placeholder:text-white/30"
         />
         {/* Connected status */}
         <div className="flex items-center gap-1.5 shrink-0">
