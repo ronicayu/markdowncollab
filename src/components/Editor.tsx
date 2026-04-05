@@ -10,8 +10,9 @@ import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
+import SlashCommandMenu from "./SlashCommandMenu";
 
 const CURSOR_COLORS = [
   "#f44336",
@@ -54,6 +55,10 @@ export default function Editor({
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getRandomColor(), []);
+  const [slashMenu, setSlashMenu] = useState<{
+    query: string;
+    pos: { top: number; left: number };
+  } | null>(null);
 
   useEffect(() => {
     provider.awareness.setLocalStateField("user", {
@@ -131,6 +136,49 @@ export default function Editor({
       },
     },
     immediatelyRender: false,
+    onUpdate({ editor: ed }) {
+      const { state, view } = ed;
+      const { $from } = state.selection;
+
+      // Only trigger in paragraph nodes (not code blocks, headings, etc.)
+      if ($from.parent.type.name !== "paragraph") {
+        setSlashMenu(null);
+        return;
+      }
+
+      // Get text in the current block up to the cursor
+      const textBefore = $from.parent.textBetween(0, $from.parentOffset, undefined, "\ufffc");
+
+      // Match a leading "/" optionally followed by word characters
+      const match = textBefore.match(/^\/(\w*)$/);
+      if (match) {
+        const coords = view.coordsAtPos($from.pos);
+        const editorEl = view.dom.closest(".flex-1") as HTMLElement | null;
+        const scrollTop = editorEl?.scrollTop ?? 0;
+        setSlashMenu({
+          query: match[1],
+          pos: {
+            top: coords.bottom - scrollTop,
+            left: coords.left,
+          },
+        });
+      } else {
+        setSlashMenu(null);
+      }
+    },
+    onSelectionUpdate({ editor: ed }) {
+      // Close menu if cursor moves away from a slash position
+      const { state } = ed;
+      const { $from } = state.selection;
+      if ($from.parent.type.name !== "paragraph") {
+        setSlashMenu(null);
+        return;
+      }
+      const textBefore = $from.parent.textBetween(0, $from.parentOffset, undefined, "\ufffc");
+      if (!textBefore.match(/^\/\w*$/)) {
+        setSlashMenu(null);
+      }
+    },
   });
 
   useEffect(() => {
@@ -150,6 +198,14 @@ export default function Editor({
   return (
     <div className="flex-1 overflow-auto bg-[#FFFEF9]">
       <EditorContent editor={editor} />
+      {slashMenu && editor && (
+        <SlashCommandMenu
+          editor={editor}
+          query={slashMenu.query}
+          position={slashMenu.pos}
+          onClose={() => setSlashMenu(null)}
+        />
+      )}
     </div>
   );
 }
