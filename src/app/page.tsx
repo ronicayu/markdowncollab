@@ -30,6 +30,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("all");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -70,6 +72,17 @@ export default function Home() {
       router.push(`/doc/${doc.id}`);
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function deleteDoc(doc: Doc) {
+    setDeletingId(doc.id);
+    setConfirmDelete(null);
+    try {
+      await fetch(`/api/documents/${doc.id}`, { method: "DELETE" });
+      setDocs((prev) => prev.filter((d) => d.id !== doc.id));
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -189,28 +202,79 @@ export default function Home() {
           ) : (
             <div className="space-y-2 max-w-3xl">
               {filteredDocs.map((doc) => (
-                <Link
-                  key={doc.id}
-                  href={`/doc/${doc.id}`}
-                  className="flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-1 h-8 rounded-full bg-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">
-                        {doc.title || "Untitled"}
-                      </p>
+                <div key={doc.id} className="relative group">
+                  <Link
+                    href={`/doc/${doc.id}`}
+                    className="flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-1 h-8 rounded-full bg-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {doc.title || "Untitled"}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-xs text-gray-400 shrink-0 ml-4">
-                    {formatDate(doc.updatedAt)}
-                  </span>
-                </Link>
+                    <span className="text-xs text-gray-400 shrink-0 ml-4 mr-8">
+                      {formatDate(doc.updatedAt)}
+                    </span>
+                  </Link>
+                  {/* Delete button — appears on hover */}
+                  <button
+                    onClick={(e) => { e.preventDefault(); setConfirmDelete(doc); }}
+                    disabled={deletingId === doc.id}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
+                    title="Delete document"
+                  >
+                    {deletingId === doc.id ? (
+                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               ))}
             </div>
           )}
         </main>
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Delete document?</h3>
+            <p className="text-xs text-gray-500 mb-4">
+              &ldquo;{confirmDelete.title || "Untitled"}&rdquo; will be permanently deleted.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteDoc(confirmDelete)}
+                className="px-3 py-1.5 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
