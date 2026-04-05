@@ -164,7 +164,7 @@ export default function TopBar({
           </div>
         ) : (
           <button
-            onClick={() => signIn("google")}
+            onClick={() => signIn()}
             className="hidden sm:flex items-center gap-1.5 h-8 px-3 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm font-medium rounded-md transition-colors"
           >
             Sign in
