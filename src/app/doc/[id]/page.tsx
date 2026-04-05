@@ -371,6 +371,16 @@ export default function DocumentPage({
     [editor, userName, ydoc, id]
   );
 
+  const handleEditorReady = useCallback(
+    (e: import("@tiptap/core").Editor) => {
+      setEditor(e);
+      setActiveCommentIds(collectActiveCommentIds(e));
+      e.on("update", () => setActiveCommentIds(collectActiveCommentIds(e)));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const handleResolveComment = useCallback(
     (commentId: string) => {
       if (!editor) return;
@@ -505,11 +515,7 @@ export default function DocumentPage({
           userName={userName}
           ydoc={ydoc}
           provider={provider}
-          onEditorReady={(e) => {
-            setEditor(e);
-            setActiveCommentIds(collectActiveCommentIds(e));
-            e.on("update", () => setActiveCommentIds(collectActiveCommentIds(e)));
-          }}
+          onEditorReady={handleEditorReady}
           activeCommentId={activeCommentId}
         />
         <div className="hidden md:block">

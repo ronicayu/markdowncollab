@@ -50,9 +50,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-[#FBF7F0]">
+    <div className="flex h-screen bg-[#F2E8D5]">
       {/* Dark sidebar */}
-      <aside className="hidden md:flex w-56 flex-col bg-[#1A1A2E] text-white shrink-0">
+      <aside className="hidden md:flex w-56 flex-col bg-[#111110] text-white shrink-0">
         <div className="px-5 py-5 border-b border-white/10">
           <span className="text-base font-bold tracking-tight">MarkdownCollab</span>
         </div>
@@ -76,7 +76,7 @@ export default function Home() {
         </nav>
         <div className="px-5 py-4 border-t border-white/10">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-[#0D9488] flex items-center justify-center text-xs font-bold shrink-0">
+            <div className="h-8 w-8 rounded-full bg-[#B8692A] flex items-center justify-center text-xs font-bold shrink-0">
               N
             </div>
             <span className="text-sm text-white/70 truncate">My workspace</span>
@@ -87,12 +87,12 @@ export default function Home() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-4 bg-[#FBF7F0] border-b border-black/8 shrink-0">
+        <header className="flex items-center justify-between px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
           <h1 className="text-lg font-semibold text-gray-900">All Documents</h1>
           <button
             onClick={createDoc}
             disabled={creating}
-            className="flex items-center gap-2 bg-[#0D9488] hover:bg-[#0f766e] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {creating ? (
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -113,9 +113,9 @@ export default function Home() {
           {loading ? (
             <div className="space-y-2 max-w-3xl">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-xl px-5 py-4 animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                <div key={i} className="bg-[#FFFEF9] rounded-xl px-5 py-4 animate-pulse">
+                  <div className="h-4 bg-amber-100 rounded w-1/3 mb-2" />
+                  <div className="h-3 bg-amber-50 rounded w-1/2" />
                 </div>
               ))}
             </div>
@@ -124,7 +124,7 @@ export default function Home() {
               <p className="text-gray-400 text-sm mb-4">No documents yet.</p>
               <button
                 onClick={createDoc}
-                className="bg-[#0D9488] hover:bg-[#0f766e] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 Create your first document
               </button>
@@ -135,10 +135,10 @@ export default function Home() {
                 <Link
                   key={doc.id}
                   href={`/doc/${doc.id}`}
-                  className="flex items-center justify-between bg-white rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-gray-200 transition-all group"
+                  className="flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all group"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-1 h-8 rounded-full bg-[#0D9488] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    <div className="w-1 h-8 rounded-full bg-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     <div className="min-w-0">
                       <p className="font-medium text-gray-900 truncate">
                         {doc.title || "Untitled"}

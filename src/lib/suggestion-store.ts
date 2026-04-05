@@ -89,6 +89,19 @@ export function addComment(ydoc: Y.Doc, comment: Comment): void {
   map.set(comment.id, JSON.stringify(serialized));
 }
 
+export function resolveComment(ydoc: Y.Doc, commentId: string): void {
+  const map = getCommentMap(ydoc);
+  const raw = map.get(commentId);
+  if (!raw) return;
+  try {
+    const parsed: SerializedComment = JSON.parse(raw);
+    parsed.resolved = true;
+    map.set(commentId, JSON.stringify(parsed));
+  } catch {
+    // skip malformed entries
+  }
+}
+
 export function getComments(ydoc: Y.Doc): Comment[] {
   const map = getCommentMap(ydoc);
   const results: Comment[] = [];

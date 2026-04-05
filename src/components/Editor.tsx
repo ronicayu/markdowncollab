@@ -6,7 +6,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Collaboration from "@tiptap/extension-collaboration";
 // yCursorPlugin disabled — see note below
 import { SuggestionMark } from "@/extensions/suggestion-mark";
-import { CommentMark } from "@/extensions/comment-mark";
+import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo } from "react";
@@ -40,14 +40,16 @@ interface EditorProps {
   ydoc: Y.Doc;
   provider: WebsocketProvider;
   onEditorReady?: (editor: TiptapEditor) => void;
+  activeCommentId?: string | null;
 }
 
 export default function Editor({
-  documentId,
+  documentId: _documentId,
   userName,
   ydoc,
   provider,
   onEditorReady,
+  activeCommentId,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getRandomColor(), []);
@@ -89,8 +91,16 @@ export default function Editor({
     }
   }, [editor, onEditorReady]);
 
+  // Drive the decoration plugin from React state — survives Tiptap view updates
+  useEffect(() => {
+    if (!editor) return;
+    editor.view.dispatch(
+      editor.view.state.tr.setMeta(commentDecorationKey, activeCommentId ?? null)
+    );
+  }, [editor, activeCommentId]);
+
   return (
-    <div className="flex-1 overflow-auto bg-white">
+    <div className="flex-1 overflow-auto bg-[#FFFEF9]">
       <EditorContent editor={editor} />
     </div>
   );

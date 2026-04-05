@@ -56,7 +56,7 @@ export default function TopBar({
   }
 
   return (
-    <div className="flex items-center justify-between bg-[#1A1A2E] px-3 py-2 md:px-4 shrink-0">
+    <div className="flex items-center justify-between bg-[#111110] px-3 py-2 md:px-4 shrink-0">
       {/* Left: breadcrumb + title */}
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <a
@@ -99,7 +99,7 @@ export default function TopBar({
             {collaborators.slice(0, 4).map((collaborator, index) => (
               <div
                 key={index}
-                className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full border-2 border-[#1A1A2E] text-xs font-semibold text-white"
+                className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full border-2 border-[#111110] text-xs font-semibold text-white"
                 style={{ backgroundColor: collaborator.color }}
                 title={collaborator.name}
               >
@@ -141,7 +141,7 @@ export default function TopBar({
         {/* Share — primary teal */}
         <button
           onClick={handleShare}
-          className="flex items-center gap-1.5 h-8 px-3 bg-[#0D9488] hover:bg-[#0f766e] text-white text-sm font-medium rounded-md transition-colors"
+          className="flex items-center gap-1.5 h-8 px-3 bg-[#B8692A] hover:bg-[#96541F] text-white text-sm font-medium rounded-md transition-colors"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
