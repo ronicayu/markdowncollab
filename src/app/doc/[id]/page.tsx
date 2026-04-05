@@ -3,6 +3,15 @@
 import { use, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
+
+function generateId(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 import Editor from "@/components/Editor";
 import Toolbar from "@/components/Toolbar";
 import TopBar from "@/components/TopBar";
@@ -77,6 +86,23 @@ export default function DocumentPage({
       ),
     [id, ydoc]
   );
+
+  const [connected, setConnected] = useState(
+    () => (provider as unknown as { wsconnected?: boolean }).wsconnected ?? false
+  );
+
+  useEffect(() => {
+    const onStatus = ({ status }: { status: string }) => {
+      setConnected(status === "connected");
+    };
+    provider.on("status", onStatus);
+    if ((provider as unknown as { wsconnected?: boolean }).wsconnected) {
+      setConnected(true);
+    }
+    return () => {
+      provider.off("status", onStatus);
+    };
+  }, [provider]);
 
   const [docTitle, setDocTitle] = useState(id);
 
@@ -267,7 +293,7 @@ export default function DocumentPage({
       );
 
       const comment: Comment = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         documentId: id,
         authorName: userName,
         authorType: "human",
@@ -319,7 +345,7 @@ export default function DocumentPage({
     );
 
     const comment: Comment = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       documentId: id,
       authorName: userName,
       authorType: "human",
@@ -384,6 +410,7 @@ export default function DocumentPage({
         title={docTitle}
         documentId={id}
         collaborators={collaborators}
+        connected={connected}
         onInviteAgent={handleInviteAgent}
         onTitleChange={handleTitleChange}
         agentLoading={agentLoading}

@@ -8,8 +8,10 @@ interface ToolbarProps {
 
 interface ToolbarButton {
   label: string;
+  icon: React.ReactNode;
   action: () => void;
   isActive: () => boolean;
+  separator?: boolean;
 }
 
 export default function Toolbar({ editor }: ToolbarProps) {
@@ -17,81 +19,143 @@ export default function Toolbar({ editor }: ToolbarProps) {
 
   const buttons: ToolbarButton[] = [
     {
-      label: "B",
+      label: "Bold",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+        </svg>
+      ),
       action: () => editor.chain().focus().toggleBold().run(),
       isActive: () => editor.isActive("bold"),
     },
     {
-      label: "I",
+      label: "Italic",
+      icon: <span className="text-sm font-serif italic font-bold">I</span>,
       action: () => editor.chain().focus().toggleItalic().run(),
       isActive: () => editor.isActive("italic"),
     },
     {
-      label: "S",
+      label: "Strikethrough",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M16 6.5C15 5 13.2 4 11 4c-2.8 0-5 1.8-5 4.5 0 1.2.5 2.2 1.3 3" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 17.5C9 19 10.8 20 13 20c2.8 0 5-1.8 5-4.5 0-1-.3-2-.9-2.7" />
+        </svg>
+      ),
       action: () => editor.chain().focus().toggleStrike().run(),
       isActive: () => editor.isActive("strike"),
     },
     {
-      label: "Code",
+      label: "Inline code",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-3 3 3 3M16 9l3 3-3 3" />
+        </svg>
+      ),
       action: () => editor.chain().focus().toggleCode().run(),
       isActive: () => editor.isActive("code"),
+      separator: true,
     },
     {
-      label: "H1",
+      label: "Heading 1",
+      icon: <span className="text-xs font-bold tracking-tight">H1</span>,
       action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
       isActive: () => editor.isActive("heading", { level: 1 }),
     },
     {
-      label: "H2",
+      label: "Heading 2",
+      icon: <span className="text-xs font-bold tracking-tight">H2</span>,
       action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
       isActive: () => editor.isActive("heading", { level: 2 }),
     },
     {
-      label: "H3",
+      label: "Heading 3",
+      icon: <span className="text-xs font-bold tracking-tight">H3</span>,
       action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
       isActive: () => editor.isActive("heading", { level: 3 }),
+      separator: true,
     },
     {
-      label: "Bullet",
+      label: "Bullet list",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <circle cx="5" cy="7" r="1.5" fill="currentColor" stroke="none" />
+          <circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none" />
+          <circle cx="5" cy="17" r="1.5" fill="currentColor" stroke="none" />
+          <path strokeLinecap="round" d="M9 7h10M9 12h10M9 17h10" />
+        </svg>
+      ),
       action: () => editor.chain().focus().toggleBulletList().run(),
       isActive: () => editor.isActive("bulletList"),
     },
     {
-      label: "Ordered",
+      label: "Ordered list",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h10M9 12h10M9 17h10" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h1M4 12h1M4 17h1" />
+          <text x="3.5" y="8" fontSize="5" fill="currentColor" stroke="none">1</text>
+          <text x="3.5" y="13" fontSize="5" fill="currentColor" stroke="none">2</text>
+          <text x="3.5" y="18" fontSize="5" fill="currentColor" stroke="none">3</text>
+        </svg>
+      ),
       action: () => editor.chain().focus().toggleOrderedList().run(),
       isActive: () => editor.isActive("orderedList"),
     },
     {
-      label: "Quote",
+      label: "Blockquote",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+          <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
+        </svg>
+      ),
       action: () => editor.chain().focus().toggleBlockquote().run(),
       isActive: () => editor.isActive("blockquote"),
     },
     {
-      label: "Code Block",
+      label: "Code block",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l-3 3 3 3M15 9l3 3-3 3" />
+        </svg>
+      ),
       action: () => editor.chain().focus().toggleCodeBlock().run(),
       isActive: () => editor.isActive("codeBlock"),
     },
     {
-      label: "HR",
+      label: "Horizontal rule",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" d="M4 12h16" />
+        </svg>
+      ),
       action: () => editor.chain().focus().setHorizontalRule().run(),
       isActive: () => false,
     },
   ];
 
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-1 overflow-x-auto border-b border-gray-200 bg-white px-3 py-1.5">
-      {buttons.map((btn) => (
-        <button
-          key={btn.label}
-          onClick={btn.action}
-          className={`h-8 shrink-0 rounded px-2 text-xs font-medium transition-colors ${
-            btn.isActive()
-              ? "bg-gray-200 text-gray-900"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
-        >
-          {btn.label}
-        </button>
+    <div className="sticky top-0 z-10 flex items-center gap-0.5 overflow-x-auto border-b border-gray-200 bg-white px-3 py-1.5">
+      {buttons.map((btn, i) => (
+        <div key={btn.label} className="flex items-center">
+          {btn.separator && i > 0 && (
+            <div className="w-px h-5 bg-gray-200 mx-1.5" />
+          )}
+          <button
+            onClick={btn.action}
+            title={btn.label}
+            className={`h-8 w-8 shrink-0 rounded-md flex items-center justify-center transition-colors ${
+              btn.isActive()
+                ? "bg-[#0D9488]/10 text-[#0D9488]"
+                : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+            }`}
+          >
+            {btn.icon}
+          </button>
+        </div>
       ))}
     </div>
   );

@@ -9,7 +9,7 @@ import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark } from "@/extensions/comment-mark";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 
 const CURSOR_COLORS = [
@@ -49,23 +49,6 @@ export default function Editor({
   provider,
   onEditorReady,
 }: EditorProps) {
-  const [connected, setConnected] = useState(
-    () => (provider as unknown as { wsconnected?: boolean }).wsconnected ?? false
-  );
-
-  useEffect(() => {
-    const onStatus = ({ status }: { status: string }) => {
-      setConnected(status === "connected");
-    };
-    provider.on("status", onStatus);
-    // Check current state in case we missed the event
-    if ((provider as unknown as { wsconnected?: boolean }).wsconnected) {
-      setConnected(true);
-    }
-    return () => {
-      provider.off("status", onStatus);
-    };
-  }, [provider]);
 
   const cursorColor = useMemo(() => getRandomColor(), []);
 
@@ -107,16 +90,7 @@ export default function Editor({
   }, [editor, onEditorReady]);
 
   return (
-    <div className="relative flex-1 overflow-auto bg-white">
-      <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5 text-xs text-gray-500">
-        <span
-          className={`inline-block h-2 w-2 rounded-full ${
-            connected ? "bg-green-500" : "bg-yellow-500"
-          }`}
-          title={connected ? "Connected" : "Connecting..."}
-        />
-        {connected ? "Connected" : "Connecting..."}
-      </div>
+    <div className="flex-1 overflow-auto bg-white">
       <EditorContent editor={editor} />
     </div>
   );
