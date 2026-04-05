@@ -32,6 +32,15 @@ function ensureMermaidInitialized(onReady: () => void): void {
 /** Monotonically increasing counter for unique mermaid render element IDs. */
 let idCounter = 0;
 
+/** Remove any lingering temporary Mermaid render containers from the document. */
+function cleanupMermaidContainers(renderId: string) {
+  const el = document.getElementById(renderId);
+  if (el) el.remove();
+  // Also clean up the parent container Mermaid sometimes creates
+  const parent = document.getElementById(`d${renderId}`);
+  if (parent) parent.remove();
+}
+
 export default function MermaidNodeView({ node, selected }: NodeViewProps) {
   const code = node.textContent ?? "";
 
@@ -46,6 +55,8 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
 
   // A generation counter lets us discard results from superseded renders.
   const genRef = useRef(0);
+  // Debounce timer ref — we delay rendering by 300ms while the user types.
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const renderDiagram = useCallback(() => {
     const gen = ++genRef.current;
@@ -60,10 +71,10 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
         return;
       }
 
+      const renderId = `mermaid-render-${++idCounter}`;
       try {
         const mermaid = (await import("mermaid")).default;
         // Each render needs a globally unique DOM ID.
-        const renderId = `mermaid-render-${++idCounter}`;
         const result = await mermaid.render(renderId, currentCode);
         if (gen === genRef.current) {
           setSvg(result.svg);
@@ -76,13 +87,25 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
             err instanceof Error ? err.message : "Invalid Mermaid syntax";
           setError(message);
         }
+      } finally {
+        // Always clean up the temporary render container Mermaid appends to
+        // the document. Without this, each failed render leaves behind a ghost
+        // element with duplicate error content visible on the page.
+        cleanupMermaidContainers(renderId);
       }
     });
   }, []);
 
-  // Re-render whenever the diagram source changes.
+  // Re-render whenever the diagram source changes, debounced to avoid firing
+  // on every keystroke while the user is actively editing the source.
   useEffect(() => {
-    renderDiagram();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      renderDiagram();
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [code, renderDiagram]);
 
   // When the node is deselected while editing, close the editor panel.
