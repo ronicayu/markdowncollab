@@ -52,8 +52,27 @@ export default function OutlineSidebar({ editor }: OutlineSidebarProps) {
             <button
               key={i}
               onClick={() => {
-                editor?.commands.setTextSelection(h.pos);
-                editor?.commands.scrollIntoView();
+                if (!editor) return;
+                // Move cursor to the heading node (pos+1 to be inside the node)
+                editor.commands.setTextSelection(h.pos + 1);
+                // First try to scroll the corresponding DOM element into view
+                const editorDom = editor.view.dom;
+                // Find the heading element by iterating ProseMirror node views
+                // via the DOM — headings render as h1–h6 elements
+                const headingTag = `h${h.level}`;
+                const headingEls = editorDom.querySelectorAll(headingTag);
+                // Match by text content
+                let matched: Element | null = null;
+                headingEls.forEach((el) => {
+                  if (el.textContent?.trim() === h.text.trim() && !matched) {
+                    matched = el;
+                  }
+                });
+                if (matched) {
+                  (matched as Element).scrollIntoView({ behavior: "smooth", block: "center" });
+                } else {
+                  editor.commands.scrollIntoView();
+                }
               }}
               className="block w-full text-left text-sm text-gray-600 hover:text-gray-900 truncate py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors"
               style={{ paddingLeft: `${(h.level - 1) * 12 + 8}px` }}

@@ -156,12 +156,29 @@ export default function TopBar({
           <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-sm font-semibold text-gray-900 mb-2">Share this document</h3>
             <p className="text-xs text-gray-500 mb-3">Copy the link and send it to your collaborators:</p>
-            <input
-              readOnly
-              value={`${typeof window !== "undefined" ? window.location.origin : ""}/doc/${documentId}`}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 select-all"
-              onFocus={(e) => e.target.select()}
-            />
+            <div className="flex gap-2">
+              <input
+                readOnly
+                value={`${typeof window !== "undefined" ? window.location.origin : ""}/doc/${documentId}`}
+                className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 select-all"
+                onFocus={(e) => e.target.select()}
+              />
+              <button
+                onClick={async () => {
+                  const url = `${window.location.origin}/doc/${documentId}`;
+                  try {
+                    await navigator.clipboard.writeText(url);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  } catch {
+                    // clipboard not available
+                  }
+                }}
+                className="shrink-0 text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+              >
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
             <div className="flex justify-end mt-3">
               <button onClick={() => setShowShareModal(false)} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
                 Close

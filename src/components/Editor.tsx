@@ -81,6 +81,51 @@ export default function Editor({
         class:
           "prose prose-base max-w-none focus:outline-none min-h-[500px] p-6",
       },
+      // Convert plain-text markdown-style lists when pasted so that
+      // "- item1\n- item2\n- item3" becomes a proper <ul> list.
+      // transformPastedHTML receives the HTML string that ProseMirror will parse.
+      // When only plain text is on the clipboard, Tiptap generates HTML wrapping
+      // each line in <p> tags like: <p>- item1</p><p>- item2</p>
+      // We intercept and rebuild as a proper <ul>.
+      handlePaste(view, event) {
+        const text = event.clipboardData?.getData('text/plain') || '';
+        const lines = text.split('\n').filter(l => l.trim() !== '');
+        const allBullets = lines.length > 0 && lines.every(l => /^[-*]\s/.test(l));
+        if (allBullets) {
+          const items = lines.map(l => l.replace(/^[-*]\s/, '').trim());
+          const { schema } = view.state;
+          const bulletListType = schema.nodes.bulletList;
+          const listItemType = schema.nodes.listItem;
+          const paragraphType = schema.nodes.paragraph;
+          if (bulletListType && listItemType && paragraphType) {
+            const listItems = items.map(item =>
+              listItemType.create(null, paragraphType.create(null, item ? schema.text(item) : []))
+            );
+            const bulletList = bulletListType.create(null, listItems);
+            const { tr } = view.state;
+            const insertTr = tr.replaceSelectionWith(bulletList);
+            view.dispatch(insertTr);
+            return true;
+          }
+        }
+        return false;
+      },
+      transformPastedHTML(html: string, _view?: unknown): string {
+        // Check if the pasted HTML consists entirely of paragraphs that look like
+        // markdown list items (e.g. produced by plain-text paste conversion).
+        const bulletParagraphRegex = /^(<p>\s*[-+*]\s[^<]*<\/p>\s*)+$/;
+        if (!bulletParagraphRegex.test(html.trim())) return html;
+
+        // Extract paragraph content and build a <ul>
+        const itemRegex = /<p>\s*[-+*]\s([\s\S]*?)<\/p>/g;
+        let result = "<ul>";
+        let match: RegExpExecArray | null;
+        while ((match = itemRegex.exec(html)) !== null) {
+          result += `<li><p>${match[1]}</p></li>`;
+        }
+        result += "</ul>";
+        return result;
+      },
     },
     immediatelyRender: false,
   });

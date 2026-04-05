@@ -24,6 +24,7 @@ import {
   updateSuggestionStatus,
   addComment,
   resolveComment,
+  addReplyToComment,
 } from "@/lib/suggestion-store";
 import { toast } from "@/lib/toast";
 import type { Suggestion, Comment } from "@/types";
@@ -384,26 +385,64 @@ export default function DocumentPage({
   const handleResolveComment = useCallback(
     (commentId: string) => {
       if (!editor) return;
-      // Remove the highlight mark from the editor
+      // Collect all ranges that have this comment mark first, then remove them
+      // in a single transaction to avoid stale positions from iterating while mutating.
       const { doc } = editor.state;
       const markType = editor.schema.marks.commentMark;
       if (markType) {
+        // Gather ranges that carry this comment mark
+        const ranges: { from: number; to: number }[] = [];
         doc.descendants((node, pos) => {
+          if (!node.isInline) return;
           node.marks.forEach((mark) => {
             if (mark.type === markType && mark.attrs.commentId === commentId) {
-              editor
-                .chain()
-                .setTextSelection({ from: pos, to: pos + node.nodeSize })
-                .unsetMark("commentMark")
-                .run();
+              ranges.push({ from: pos, to: pos + node.nodeSize });
             }
           });
         });
+
+        if (ranges.length > 0) {
+          // Merge adjacent/overlapping ranges and apply in one transaction
+          ranges.sort((a, b) => a.from - b.from);
+          const merged: { from: number; to: number }[] = [ranges[0]];
+          for (let i = 1; i < ranges.length; i++) {
+            const last = merged[merged.length - 1];
+            if (ranges[i].from <= last.to) {
+              last.to = Math.max(last.to, ranges[i].to);
+            } else {
+              merged.push({ ...ranges[i] });
+            }
+          }
+
+          // Build a single transaction that removes the mark from all ranges
+          let tr = editor.state.tr;
+          for (const { from, to } of merged) {
+            tr = tr.removeMark(from, to, markType);
+          }
+          // Map the current selection through the transaction to avoid
+          // "TextSelection endpoint not pointing into a node with inline content"
+          // warnings when marks are removed and positions shift.
+          tr = tr.setSelection(tr.selection.map(tr.doc, tr.mapping));
+          editor.view.dispatch(tr);
+        }
       }
       resolveComment(ydoc, commentId);
       toast("Comment resolved");
     },
     [editor, ydoc]
+  );
+
+  const handleReplyToComment = useCallback(
+    (commentId: string, text: string) => {
+      if (!userName) return;
+      addReplyToComment(ydoc, commentId, {
+        id: generateId(),
+        text,
+        author: userName,
+        createdAt: new Date().toISOString(),
+      });
+    },
+    [ydoc, userName]
   );
 
   const [mobileCommentOpen, setMobileCommentOpen] = useState(false);
@@ -528,6 +567,7 @@ export default function DocumentPage({
             onClickItem={handleClickItem}
             onAddComment={handleAddComment}
             onResolveComment={handleResolveComment}
+            onReplyToComment={handleReplyToComment}
             hasSelection={hasSelection}
             activeCommentId={activeCommentId}
           />

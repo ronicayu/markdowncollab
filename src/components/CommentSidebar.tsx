@@ -16,6 +16,7 @@ interface CommentSidebarProps {
   onClickItem: (id: string) => void;
   onAddComment: (text: string) => void;
   onResolveComment: (id: string) => void;
+  onReplyToComment: (commentId: string, text: string) => void;
   hasSelection: boolean;
   activeCommentId?: string | null;
 }
@@ -29,6 +30,7 @@ export default function CommentSidebar({
   onClickItem,
   onAddComment,
   onResolveComment,
+  onReplyToComment,
   hasSelection,
   activeCommentId,
 }: CommentSidebarProps) {
@@ -153,6 +155,7 @@ export default function CommentSidebar({
               comment={c}
               onClick={onClickItem}
               onResolve={onResolveComment}
+              onReply={onReplyToComment}
               isActive={c.id === activeCommentId}
               isContentDeleted={!c.resolved && !activeCommentIds.has(c.id)}
             />

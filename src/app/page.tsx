@@ -21,10 +21,13 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+type Tab = "all" | "recent" | "shared";
+
 export default function Home() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("all");
   const router = useRouter();
 
   useEffect(() => {
@@ -33,6 +36,25 @@ export default function Home() {
       .then(setDocs)
       .finally(() => setLoading(false));
   }, []);
+
+  const filteredDocs = (() => {
+    if (activeTab === "recent") {
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000; // last 7 days
+      return docs
+        .filter((d) => new Date(d.updatedAt).getTime() >= cutoff)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    }
+    if (activeTab === "shared") {
+      return []; // no sharing backend yet
+    }
+    return docs;
+  })();
+
+  const headingLabel: Record<Tab, string> = {
+    all: "All Documents",
+    recent: "Recent",
+    shared: "Shared with me",
+  };
 
   async function createDoc() {
     setCreating(true);
@@ -57,15 +79,18 @@ export default function Home() {
           <span className="text-base font-bold tracking-tight">MarkdownCollab</span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {[
-            { label: "All Documents", active: true },
-            { label: "Recent" },
-            { label: "Shared with me" },
-          ].map(({ label, active }) => (
+          {(
+            [
+              { label: "All Documents", tab: "all" as Tab },
+              { label: "Recent", tab: "recent" as Tab },
+              { label: "Shared with me", tab: "shared" as Tab },
+            ] as { label: string; tab: Tab }[]
+          ).map(({ label, tab }) => (
             <button
-              key={label}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
               className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors ${
-                active
+                activeTab === tab
                   ? "bg-white/10 text-white font-medium"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
@@ -88,7 +113,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
         <header className="flex items-center justify-between px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
-          <h1 className="text-lg font-semibold text-gray-900">All Documents</h1>
+          <h1 className="text-lg font-semibold text-gray-900">{headingLabel[activeTab]}</h1>
           <button
             onClick={createDoc}
             disabled={creating}
@@ -119,19 +144,30 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : docs.length === 0 ? (
+          ) : activeTab === "shared" ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              <p className="text-gray-400 text-sm mb-4">No documents yet.</p>
-              <button
-                onClick={createDoc}
-                className="bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                Create your first document
-              </button>
+              <p className="text-gray-400 text-sm">No documents have been shared with you yet.</p>
+              <p className="text-gray-300 text-xs mt-1">Documents shared by collaborators will appear here.</p>
+            </div>
+          ) : filteredDocs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              {activeTab === "recent" ? (
+                <p className="text-gray-400 text-sm">No documents updated in the last 7 days.</p>
+              ) : (
+                <>
+                  <p className="text-gray-400 text-sm mb-4">No documents yet.</p>
+                  <button
+                    onClick={createDoc}
+                    className="bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Create your first document
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-2 max-w-3xl">
-              {docs.map((doc) => (
+              {filteredDocs.map((doc) => (
                 <Link
                   key={doc.id}
                   href={`/doc/${doc.id}`}

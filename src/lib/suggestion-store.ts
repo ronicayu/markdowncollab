@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import type { Suggestion, Comment } from "@/types";
+import type { Suggestion, Comment, CommentReply } from "@/types";
 
 export function getSuggestionMap(ydoc: Y.Doc): Y.Map<string> {
   return ydoc.getMap<string>("suggestions");
@@ -118,4 +118,22 @@ export function getComments(ydoc: Y.Doc): Comment[] {
     }
   });
   return results;
+}
+
+export function addReplyToComment(
+  ydoc: Y.Doc,
+  commentId: string,
+  reply: CommentReply
+): void {
+  const map = getCommentMap(ydoc);
+  const raw = map.get(commentId);
+  if (!raw) return;
+  try {
+    const parsed: SerializedComment = JSON.parse(raw);
+    if (!parsed.replies) parsed.replies = [];
+    parsed.replies.push(reply);
+    map.set(commentId, JSON.stringify(parsed));
+  } catch {
+    // skip malformed entries
+  }
 }

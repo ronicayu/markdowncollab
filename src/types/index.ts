@@ -14,6 +14,13 @@ export interface Suggestion {
   resolvedAt: string | null;
 }
 
+export interface CommentReply {
+  id: string;
+  text: string;
+  author: string;
+  createdAt: string;
+}
+
 export interface Comment {
   id: string;
   documentId: string;
@@ -25,6 +32,7 @@ export interface Comment {
   parentCommentId: string | null;
   resolved: boolean;
   createdAt: string;
+  replies?: CommentReply[];
 }
 
 export interface Collaborator {
