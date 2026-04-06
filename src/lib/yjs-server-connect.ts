@@ -46,6 +46,7 @@ export function connectYjsServer(
 
     function cleanup() {
       clearTimeout(timeout);
+      ydoc.off("update", onDocUpdate);
       awarenessProtocol.removeAwarenessStates(
         awareness,
         [ydoc.clientID],
@@ -117,14 +118,15 @@ export function connectYjsServer(
     });
 
     // Forward local doc updates to server
-    ydoc.on("update", (update: Uint8Array) => {
+    const onDocUpdate = (update: Uint8Array) => {
       if (ws.readyState === WebSocket.OPEN) {
         const encoder = encoding.createEncoder();
         encoding.writeVarUint(encoder, MSG_SYNC);
         syncProtocol.writeUpdate(encoder, update);
         ws.send(encoding.toUint8Array(encoder));
       }
-    });
+    };
+    ydoc.on("update", onDocUpdate);
 
     ws.on("error", (err) => {
       if (!synced) {

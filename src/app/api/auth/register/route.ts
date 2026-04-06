@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
-
-// Use a fresh client — the global singleton in lib/prisma may predate
-// the User model migration if the dev server was running during the migration.
-const db = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,13 +13,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
-    const existing = await db.user.findUnique({ where: { email: email.toLowerCase() } });
+    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (existing) {
       return NextResponse.json({ error: "Email already registered" }, { status: 409 });
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    await db.user.create({
+    await prisma.user.create({
       data: { name: name.trim(), email: email.toLowerCase(), password: hashed },
     });
 
