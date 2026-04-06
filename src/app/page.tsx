@@ -389,6 +389,7 @@ export default function Home() {
                             className="font-medium text-gray-900 bg-white border border-[#B8692A] rounded px-1.5 py-0.5 outline-none w-full"
                           />
                         ) : (
+                          <>
                           <p
                             className="font-medium text-gray-900 truncate"
                             onDoubleClick={(e) => {
@@ -408,6 +409,7 @@ export default function Home() {
                               {doc.role === "editor" ? "Editor" : "Viewer"}
                             </span>
                           )}
+                          </>
                         )}
                       </div>
                     </div>

@@ -49,3 +49,7 @@ yjs-data/
 dev.db
 documents/
 .playwright-mcp/
+test.db
+test.db-journal
+playwright-report/
+test-results/
