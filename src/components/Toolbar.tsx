@@ -5,6 +5,7 @@ import type { Editor } from "@tiptap/core";
 
 interface ToolbarProps {
   editor: Editor | null;
+  onToggleShortcutsHelp?: () => void;
 }
 
 interface ToolbarButton {
@@ -23,7 +24,7 @@ function formatShortcut(shortcut: string, mac: boolean): string {
     .replace(/Shift/g, mac ? "\u21E7" : "Shift");
 }
 
-export default function Toolbar({ editor }: ToolbarProps) {
+export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps) {
   const [isMac, setIsMac] = useState(false);
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
@@ -234,6 +235,19 @@ export default function Toolbar({ editor }: ToolbarProps) {
           </button>
         </div>
       ))}
+      {/* Separator before help button */}
+      <div className="w-px h-5 bg-gray-200 mx-1.5" />
+      <button
+        onClick={onToggleShortcutsHelp}
+        title={`Keyboard shortcuts (${isMac ? "\u2318" : "Ctrl"}+/)`}
+        className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <circle cx="12" cy="12" r="10" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+          <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+        </svg>
+      </button>
     </div>
     {/* Scroll fade hint for mobile */}
     <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
