@@ -86,6 +86,15 @@ const COMMANDS: Command[] = [
     keywords: ["divider", "hr", "rule", "line"],
     action: (editor) => editor.chain().focus().setHorizontalRule().run(),
   },
+  {
+    id: "table",
+    label: "Table",
+    description: "Insert a 3x3 table",
+    icon: "▦",
+    keywords: ["table", "grid", "spreadsheet"],
+    action: (editor) =>
+      editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+  },
 ];
 
 interface SlashCommandMenuProps {
