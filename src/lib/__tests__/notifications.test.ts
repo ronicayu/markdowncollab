@@ -3,14 +3,14 @@ import { createNotification, buildNotificationMessage } from "../notifications";
 
 // Mock Prisma client
 vi.mock("@/lib/prisma", () => ({
-  default: {
+  prisma: {
     notification: {
       create: vi.fn().mockResolvedValue({ id: "notif-1" }),
     },
   },
 }));
 
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 describe("buildNotificationMessage", () => {
   it("builds comment message", () => {
