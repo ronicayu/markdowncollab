@@ -146,3 +146,20 @@ export async function resetDatabase(): Promise<void> {
     }
   );
 }
+
+/**
+ * Make a document publicly accessible by removing ownership.
+ * This is needed because the WS server checks access via JWT,
+ * but the client does not send a JWT token. Documents with
+ * null ownerId are accessible to everyone.
+ */
+export async function makeDocPublic(docId: string): Promise<void> {
+  const { execSync } = await import("child_process");
+  const { resolve } = await import("path");
+  // Prisma resolves file:./test.db relative to prisma/ directory
+  const dbPath = resolve(process.cwd(), "prisma", "test.db");
+  execSync(
+    `sqlite3 "${dbPath}" "UPDATE Document SET ownerId = NULL WHERE id = '${docId}';"`,
+    { cwd: process.cwd(), stdio: "pipe" }
+  );
+}
