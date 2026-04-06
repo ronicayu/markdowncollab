@@ -9,6 +9,8 @@ interface Doc {
   id: string;
   title: string;
   updatedAt: string;
+  role?: string;
+  ownerId?: string | null;
 }
 
 function formatDate(dateStr: string) {
@@ -23,7 +25,7 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-type Tab = "all" | "recent";
+type Tab = "all" | "recent" | "shared";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -56,6 +58,9 @@ export default function Home() {
         .filter((d) => new Date(d.updatedAt).getTime() >= cutoff)
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     }
+    if (activeTab === "shared") {
+      result = docs.filter((d) => d.role && d.role !== "owner" && d.ownerId !== null);
+    }
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((d) => (d.title || "Untitled").toLowerCase().includes(q));
@@ -71,6 +76,7 @@ export default function Home() {
   const headingLabel: Record<Tab, string> = {
     all: "All Documents",
     recent: "Recent",
+    shared: "Shared with me",
   };
 
   async function createDoc() {
@@ -150,6 +156,7 @@ export default function Home() {
             [
               { label: "All Documents", tab: "all" as Tab },
               { label: "Recent", tab: "recent" as Tab },
+              { label: "Shared with me", tab: "shared" as Tab },
             ] as { label: string; tab: Tab }[]
           ).map(({ label, tab }) => (
             <button
@@ -232,6 +239,7 @@ export default function Home() {
               [
                 { label: "All", tab: "all" as Tab },
                 { label: "Recent", tab: "recent" as Tab },
+                { label: "Shared", tab: "shared" as Tab },
               ] as { label: string; tab: Tab }[]
             ).map(({ label, tab }) => (
               <button
@@ -379,6 +387,15 @@ export default function Home() {
                           >
                             {doc.title || "Untitled"}
                           </p>
+                          {doc.role && doc.role !== "owner" && doc.ownerId && (
+                            <span className={`inline-flex items-center ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
+                              doc.role === "editor"
+                                ? "bg-blue-50 text-blue-600"
+                                : "bg-gray-100 text-gray-500"
+                            }`}>
+                              {doc.role === "editor" ? "Editor" : "Viewer"}
+                            </span>
+                          )}
                         )}
                       </div>
                     </div>
