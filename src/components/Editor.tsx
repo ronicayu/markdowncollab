@@ -43,7 +43,6 @@ interface EditorProps {
   provider: WebsocketProvider;
   onEditorReady?: (editor: TiptapEditor) => void;
   activeCommentId?: string | null;
-  lastSaved?: string | null;
 }
 
 export default function Editor({
@@ -53,7 +52,6 @@ export default function Editor({
   provider,
   onEditorReady,
   activeCommentId,
-  lastSaved,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getRandomColor(), []);
@@ -62,6 +60,9 @@ export default function Editor({
     pos: { top: number; left: number };
   } | null>(null);
   const [wordCount, setWordCount] = useState({ words: 0, chars: 0 });
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     provider.awareness.setLocalStateField("user", {
@@ -69,6 +70,29 @@ export default function Editor({
       color: cursorColor,
     });
   }, [provider, userName, cursorColor]);
+
+  // Track save status from Yjs sync events
+  useEffect(() => {
+    let saveTimer: ReturnType<typeof setTimeout>;
+    const onUpdate = () => {
+      setSaveStatus("saving");
+      clearTimeout(saveTimer);
+      // The WS provider sends updates immediately; the server persists after a debounce.
+      // Mark as "saved" after 1.5s (matches the server's save debounce).
+      saveTimer = setTimeout(() => {
+        setSaveStatus("saved");
+        setLastSyncTime(Date.now());
+      }, 1500);
+    };
+    ydoc.on("update", onUpdate);
+    return () => { ydoc.off("update", onUpdate); clearTimeout(saveTimer); };
+  }, [ydoc]);
+
+  // Tick the clock every 30s so "Saved Xm ago" updates
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -208,7 +232,17 @@ export default function Editor({
       <EditorContent editor={editor} />
       <div className="sticky bottom-0 flex justify-between px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
         <span>
-          {lastSaved ? `Saved ${new Date(lastSaved).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : ""}
+          {saveStatus === "saving" ? (
+            "Saving..."
+          ) : lastSyncTime ? (
+            (() => {
+              const ago = Math.floor((now - lastSyncTime) / 1000);
+              if (ago < 10) return "Saved just now";
+              if (ago < 60) return `Saved ${ago}s ago`;
+              if (ago < 3600) return `Saved ${Math.floor(ago / 60)}m ago`;
+              return `Saved ${new Date(lastSyncTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+            })()
+          ) : ""}
         </span>
         <span>{wordCount.words} words · {wordCount.chars} characters</span>
       </div>

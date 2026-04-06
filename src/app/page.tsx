@@ -35,6 +35,8 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const router = useRouter();
@@ -84,6 +86,18 @@ export default function Home() {
     } finally {
       setCreating(false);
     }
+  }
+
+  async function commitRename(docId: string) {
+    const trimmed = editTitle.trim();
+    setEditingId(null);
+    if (!trimmed) return;
+    await fetch(`/api/documents/${docId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: trimmed }),
+    });
+    setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, title: trimmed } : d));
   }
 
   async function duplicateDoc(doc: Doc) {
@@ -148,6 +162,9 @@ export default function Home() {
               }`}
             >
               {label}
+              {tab === "all" && docs.length > 0 && (
+                <span className="ml-1.5 text-xs text-white/30">{docs.length}</span>
+              )}
             </button>
           ))}
         </nav>
@@ -338,9 +355,31 @@ export default function Home() {
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-1 h-8 rounded-full bg-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-900 truncate">
-                          {doc.title || "Untitled"}
-                        </p>
+                        {editingId === doc.id ? (
+                          <input
+                            autoFocus
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onBlur={() => commitRename(doc.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                              if (e.key === "Escape") setEditingId(null);
+                            }}
+                            onClick={(e) => e.preventDefault()}
+                            className="font-medium text-gray-900 bg-white border border-[#B8692A] rounded px-1.5 py-0.5 outline-none w-full"
+                          />
+                        ) : (
+                          <p
+                            className="font-medium text-gray-900 truncate"
+                            onDoubleClick={(e) => {
+                              e.preventDefault();
+                              setEditingId(doc.id);
+                              setEditTitle(doc.title || "Untitled");
+                            }}
+                          >
+                            {doc.title || "Untitled"}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <span className="text-xs text-gray-400 shrink-0 ml-4 mr-16">
