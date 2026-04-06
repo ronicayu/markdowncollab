@@ -18,7 +18,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Only the document owner can remove shares" }, { status: 403 });
   }
 
-  await prisma.documentShare.delete({ where: { id: shareId } });
+  await prisma.documentShare.delete({ where: { id: shareId, documentId: id } });
 
   return NextResponse.json({ ok: true });
 }
