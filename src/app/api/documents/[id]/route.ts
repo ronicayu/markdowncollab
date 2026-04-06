@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/access-control";
-import { unlink } from "fs/promises";
+import { unlink, rm } from "fs/promises";
 import { join } from "path";
 
 const YJS_DIR = process.env.YPERSISTENCE || "./yjs-data";
@@ -59,9 +59,11 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   }
 
   await prisma.document.delete({ where: { id } });
+  const UPLOADS_DIR = process.env.UPLOADS_DIR || "./uploads";
   await Promise.allSettled([
     unlink(join(YJS_DIR, `${id}.bin`)),
     unlink(join(MD_DIR, `${id}.md`)),
+    rm(join(UPLOADS_DIR, id), { recursive: true, force: true }),
   ]);
   return NextResponse.json({ ok: true });
 }
