@@ -242,7 +242,9 @@ export default function Home() {
             </div>
           ) : filteredDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              {activeTab === "recent" ? (
+              {search.trim() ? (
+                <p className="text-gray-400 text-sm">No documents matching &ldquo;{search}&rdquo;</p>
+              ) : activeTab === "recent" ? (
                 <p className="text-gray-400 text-sm">No documents updated in the last 7 days.</p>
               ) : (
                 <>
