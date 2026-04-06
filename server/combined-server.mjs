@@ -18,6 +18,13 @@ import { PrismaClient } from "@prisma/client";
 
 const wsDbClient = new PrismaClient();
 
+/**
+ * NOTE: This access control logic is duplicated from src/lib/access-control.ts.
+ * The source of truth is src/lib/access-control.ts (checkDocumentAccess).
+ * This copy exists because the WS server runs in a plain Node.js context (.mjs)
+ * and cannot import TypeScript modules directly. If you change access control
+ * rules, update BOTH files.
+ */
 async function checkWsAccess(documentId, userId, userEmail, shareToken) {
   const doc = await wsDbClient.document.findUnique({ where: { id: documentId } });
   if (!doc) return { hasAccess: false, role: null };
@@ -515,22 +522,34 @@ app.prepare().then(() => {
       // Parse token from query string
       const urlObj = new URL(req.url, `http://${req.headers.host}`);
       const shareToken = urlObj.searchParams.get("token");
-      const jwtToken = urlObj.searchParams.get("jwt");
 
       let userId = null;
       let userEmail = null;
 
-      // Verify JWT if provided
-      if (jwtToken) {
+      // Read the NextAuth session cookie from the upgrade request headers.
+      // NextAuth JWT strategy stores the session in a cookie named
+      // "next-auth.session-token" (dev) or "__Secure-next-auth.session-token" (prod).
+      const cookieHeader = req.headers.cookie || "";
+      const cookies = Object.fromEntries(
+        cookieHeader.split(";").map((c) => {
+          const [k, ...v] = c.trim().split("=");
+          return [k, v.join("=")];
+        })
+      );
+      const sessionToken =
+        cookies["next-auth.session-token"] ||
+        cookies["__Secure-next-auth.session-token"];
+
+      if (sessionToken) {
         try {
           const secret = process.env.NEXTAUTH_SECRET;
           if (secret) {
-            const decoded = jwt.verify(jwtToken, secret);
+            const decoded = jwt.verify(sessionToken, secret);
             userId = decoded.id || decoded.sub || null;
             userEmail = decoded.email || null;
           }
         } catch {
-          // Invalid JWT — continue without user context
+          // Invalid or expired session cookie — continue without user context
         }
       }
 
