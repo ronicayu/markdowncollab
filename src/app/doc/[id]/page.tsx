@@ -123,6 +123,7 @@ export default function DocumentPage({
   }, [provider]);
 
   const [docTitle, setDocTitle] = useState(id);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   // Fetch document title on mount
   useEffect(() => {
@@ -130,6 +131,7 @@ export default function DocumentPage({
       .then((res) => (res.ok ? res.json() : null))
       .then((doc) => {
         if (doc?.title) setDocTitle(doc.title);
+        if (doc?.updatedAt) setLastSaved(doc.updatedAt);
       })
       .catch(() => {});
   }, [id]);
@@ -565,6 +567,7 @@ export default function DocumentPage({
           provider={provider}
           onEditorReady={handleEditorReady}
           activeCommentId={activeCommentId}
+          lastSaved={lastSaved}
         />
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
         <FloatingCommentButton

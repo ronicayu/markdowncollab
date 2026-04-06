@@ -34,6 +34,7 @@ export default function Home() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "name">("date");
   const router = useRouter();
 
   useEffect(() => {
@@ -54,6 +55,11 @@ export default function Home() {
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((d) => (d.title || "Untitled").toLowerCase().includes(q));
+    }
+    if (sortBy === "name") {
+      result = [...result].sort((a, b) => (a.title || "Untitled").localeCompare(b.title || "Untitled"));
+    } else {
+      result = [...result].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     }
     return result;
   })();
@@ -210,14 +216,24 @@ export default function Home() {
         {/* Top bar */}
         <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
           <h1 className="text-lg font-semibold text-gray-900 shrink-0">{headingLabel[activeTab]}</h1>
-          <div className="flex-1 max-w-xs">
+          <div className="flex items-center gap-2 flex-1 max-w-sm">
             <input
               type="text"
               placeholder="Search documents..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-black/10 bg-white/60 px-3 py-1.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              className="flex-1 min-w-0 rounded-lg border border-black/10 bg-white/60 px-3 py-1.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
             />
+            <button
+              onClick={() => setSortBy(sortBy === "date" ? "name" : "date")}
+              className="shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg border border-black/10 bg-white/60 text-xs text-gray-500 hover:text-gray-700 hover:border-black/20 transition-colors"
+              title={`Sort by ${sortBy === "date" ? "name" : "date"}`}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h12M3 17h6" />
+              </svg>
+              <span className="hidden sm:inline">{sortBy === "date" ? "Date" : "Name"}</span>
+            </button>
           </div>
           <button
             onClick={createDoc}

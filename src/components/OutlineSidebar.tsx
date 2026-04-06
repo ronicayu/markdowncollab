@@ -15,6 +15,7 @@ interface OutlineSidebarProps {
 
 export default function OutlineSidebar({ editor }: OutlineSidebarProps) {
   const [headings, setHeadings] = useState<Heading[]>([]);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     if (!editor) return;
@@ -41,9 +42,36 @@ export default function OutlineSidebar({ editor }: OutlineSidebarProps) {
     };
   }, [editor]);
 
+  if (collapsed) {
+    return (
+      <div className="border-r border-[#E8D8C0] bg-[#F5EBD8] p-2 flex flex-col items-center">
+        <button
+          onClick={() => setCollapsed(false)}
+          className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+          title="Show outline"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-52 border-r border-[#E8D8C0] bg-[#F5EBD8] p-4 overflow-y-auto">
-      <p className="text-xs font-semibold text-gray-400 tracking-widest mb-3">OUTLINE</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold text-gray-400 tracking-widest">OUTLINE</p>
+        <button
+          onClick={() => setCollapsed(true)}
+          className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+          title="Hide outline"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
       {headings.length === 0 ? (
         <p className="text-xs text-gray-400">No headings yet</p>
       ) : (
@@ -53,15 +81,10 @@ export default function OutlineSidebar({ editor }: OutlineSidebarProps) {
               key={i}
               onClick={() => {
                 if (!editor) return;
-                // Move cursor to the heading node (pos+1 to be inside the node)
                 editor.commands.setTextSelection(h.pos + 1);
-                // First try to scroll the corresponding DOM element into view
                 const editorDom = editor.view.dom;
-                // Find the heading element by iterating ProseMirror node views
-                // via the DOM — headings render as h1–h6 elements
                 const headingTag = `h${h.level}`;
                 const headingEls = editorDom.querySelectorAll(headingTag);
-                // Match by text content
                 let matched: Element | null = null;
                 headingEls.forEach((el) => {
                   if (el.textContent?.trim() === h.text.trim() && !matched) {

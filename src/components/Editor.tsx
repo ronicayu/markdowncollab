@@ -43,6 +43,7 @@ interface EditorProps {
   provider: WebsocketProvider;
   onEditorReady?: (editor: TiptapEditor) => void;
   activeCommentId?: string | null;
+  lastSaved?: string | null;
 }
 
 export default function Editor({
@@ -52,6 +53,7 @@ export default function Editor({
   provider,
   onEditorReady,
   activeCommentId,
+  lastSaved,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getRandomColor(), []);
@@ -204,8 +206,11 @@ export default function Editor({
   return (
     <div className="flex-1 overflow-auto bg-[#FFFEF9] relative">
       <EditorContent editor={editor} />
-      <div className="sticky bottom-0 flex justify-end px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
-        {wordCount.words} words · {wordCount.chars} characters
+      <div className="sticky bottom-0 flex justify-between px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
+        <span>
+          {lastSaved ? `Saved ${new Date(lastSaved).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}` : ""}
+        </span>
+        <span>{wordCount.words} words · {wordCount.chars} characters</span>
       </div>
       {slashMenu && editor && (
         <SlashCommandMenu
