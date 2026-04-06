@@ -93,6 +93,16 @@ export default function DocumentPage({
     setUserName(session?.user?.name ?? getUserName());
   }, [session]);
 
+  // Read template content from sessionStorage (set by document list page)
+  useEffect(() => {
+    const key = `template:${id}`;
+    const content = sessionStorage.getItem(key);
+    if (content) {
+      sessionStorage.removeItem(key);
+      setTemplateContent(content);
+    }
+  }, [id]);
+
   const ydoc = useMemo(() => new Y.Doc(), []);
   const provider = useMemo(() => {
     let wsUrl = process.env.NEXT_PUBLIC_WS_URL ||
@@ -127,6 +137,7 @@ export default function DocumentPage({
     };
   }, [provider]);
 
+  const [templateContent, setTemplateContent] = useState<string | null>(null);
   const [docTitle, setDocTitle] = useState(id);
   const [userRole, setUserRole] = useState<"owner" | "editor" | "viewer" | null>(null);
   // Fetch document title and role on mount
@@ -575,6 +586,7 @@ export default function DocumentPage({
           onEditorReady={handleEditorReady}
           activeCommentId={activeCommentId}
           editable={userRole !== "viewer"}
+          initialContent={templateContent}
         />
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
         <FloatingCommentButton

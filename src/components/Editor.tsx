@@ -7,6 +7,7 @@ import Collaboration from "@tiptap/extension-collaboration";
 // yCursorPlugin disabled — see note below
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
+import { Markdown } from "tiptap-markdown";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
@@ -44,6 +45,7 @@ interface EditorProps {
   onEditorReady?: (editor: TiptapEditor) => void;
   activeCommentId?: string | null;
   editable?: boolean;
+  initialContent?: string | null;
 }
 
 export default function Editor({
@@ -54,9 +56,11 @@ export default function Editor({
   onEditorReady,
   activeCommentId,
   editable = true,
+  initialContent,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getRandomColor(), []);
+  const [templateApplied, setTemplateApplied] = useState(false);
   const [slashMenu, setSlashMenu] = useState<{
     query: string;
     pos: { top: number; left: number };
@@ -111,6 +115,11 @@ export default function Editor({
       CommentMark,
       Collaboration.configure({
         document: ydoc,
+      }),
+      Markdown.configure({
+        html: true,
+        transformPastedText: false,
+        transformCopiedText: false,
       }),
       // Cursor plugin disabled — see comment above
     ],
@@ -227,6 +236,20 @@ export default function Editor({
       onEditorReady(editor);
     }
   }, [editor, onEditorReady]);
+
+  // Inject template content into empty document
+  useEffect(() => {
+    if (!editor || !initialContent || templateApplied) return;
+    // Wait for Yjs to sync before checking emptiness
+    const timer = setTimeout(() => {
+      const text = editor.state.doc.textContent.trim();
+      if (!text) {
+        editor.commands.setContent(initialContent);
+      }
+      setTemplateApplied(true);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [editor, initialContent, templateApplied]);
 
   // Drive the decoration plugin from React state — survives Tiptap view updates
   useEffect(() => {
