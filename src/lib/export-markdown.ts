@@ -44,6 +44,9 @@ export function xmlFragmentToMarkdown(fragment: Y.XmlFragment): string {
         md += `\`\`\`${language}\n${getElementText(child)}\n\`\`\`\n\n`;
       } else if (tag === "horizontalRule") {
         md += "---\n\n";
+      } else if (tag === "table") {
+        md += tableToMarkdown(child);
+        md += "\n";
       } else {
         // Unknown block — just extract text
         const text = getElementText(child);
@@ -126,6 +129,68 @@ function listToMarkdown(
         }
       }
     }
+  }
+
+  return md;
+}
+
+/**
+ * Convert a Tiptap table XmlElement to pipe-delimited markdown.
+ * Expects children: tableRow elements, each containing tableHeader or tableCell elements.
+ * Each cell contains a paragraph element with text.
+ */
+function tableToMarkdown(table: Y.XmlElement): string {
+  const rows: string[][] = [];
+  let headerRowIndex = -1;
+
+  for (let i = 0; i < table.length; i++) {
+    const row = table.get(i);
+    if (!(row instanceof Y.XmlElement) || row.nodeName !== "tableRow") continue;
+
+    const cells: string[] = [];
+    let isHeaderRow = false;
+
+    for (let j = 0; j < row.length; j++) {
+      const cell = row.get(j);
+      if (!(cell instanceof Y.XmlElement)) continue;
+
+      if (cell.nodeName === "tableHeader") {
+        isHeaderRow = true;
+      }
+
+      // Extract text from cell (cells contain paragraph elements)
+      cells.push(getElementText(cell).replace(/\n/g, " ").trim());
+    }
+
+    if (isHeaderRow && headerRowIndex === -1) {
+      headerRowIndex = rows.length;
+    }
+    rows.push(cells);
+  }
+
+  if (rows.length === 0) return "";
+
+  // Determine column count from the widest row
+  const colCount = Math.max(...rows.map((r) => r.length));
+
+  let md = "";
+  for (let i = 0; i < rows.length; i++) {
+    const cells = rows[i];
+    // Pad row to colCount
+    while (cells.length < colCount) cells.push("");
+    md += "| " + cells.join(" | ") + " |\n";
+
+    // Insert separator after header row
+    if (i === headerRowIndex) {
+      md += "| " + cells.map(() => "---").join(" | ") + " |\n";
+    }
+  }
+
+  // If no header row was detected, insert separator after first row
+  if (headerRowIndex === -1 && rows.length > 0) {
+    const firstRowLine = md.split("\n")[0] + "\n";
+    const separator = "| " + rows[0].map(() => "---").join(" | ") + " |\n";
+    md = firstRowLine + separator + md.split("\n").slice(1).join("\n");
   }
 
   return md;
