@@ -16,13 +16,14 @@ function formatDate(dateStr: string) {
   const now = new Date();
   const diff = now.getTime() - d.getTime();
   const days = Math.floor(diff / 86400000);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  if (days === 0) return `Today, ${time}`;
+  if (days === 1) return `Yesterday, ${time}`;
   if (days < 7) return `${days}d ago`;
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-type Tab = "all" | "recent" | "shared";
+type Tab = "all" | "recent";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -49,8 +50,6 @@ export default function Home() {
       result = docs
         .filter((d) => new Date(d.updatedAt).getTime() >= cutoff)
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    } else if (activeTab === "shared") {
-      return [];
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -62,7 +61,6 @@ export default function Home() {
   const headingLabel: Record<Tab, string> = {
     all: "All Documents",
     recent: "Recent",
-    shared: "Shared with me",
   };
 
   async function createDoc() {
@@ -103,7 +101,6 @@ export default function Home() {
             [
               { label: "All Documents", tab: "all" as Tab },
               { label: "Recent", tab: "recent" as Tab },
-              { label: "Shared with me", tab: "shared" as Tab },
             ] as { label: string; tab: Tab }[]
           ).map(({ label, tab }) => (
             <button
@@ -183,7 +180,6 @@ export default function Home() {
               [
                 { label: "All", tab: "all" as Tab },
                 { label: "Recent", tab: "recent" as Tab },
-                { label: "Shared", tab: "shared" as Tab },
               ] as { label: string; tab: Tab }[]
             ).map(({ label, tab }) => (
               <button
@@ -243,11 +239,6 @@ export default function Home() {
                   <div className="h-3 bg-amber-50 rounded w-1/2" />
                 </div>
               ))}
-            </div>
-          ) : activeTab === "shared" ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <p className="text-gray-400 text-sm">No documents have been shared with you yet.</p>
-              <p className="text-gray-300 text-xs mt-1">Documents shared by collaborators will appear here.</p>
             </div>
           ) : filteredDocs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
