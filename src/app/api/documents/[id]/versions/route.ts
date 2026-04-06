@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkDocumentAccess } from "@/lib/access-control";
 import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { createSnapshot } from "@/lib/version-snapshot";
+
+async function getSessionInfo() {
+  const session = await getServerSession(authOptions);
+  return {
+    userId: (session?.user as any)?.id as string | undefined,
+    userEmail: session?.user?.email ?? undefined,
+    userName: session?.user?.name ?? undefined,
+  };
+}
 
 const PAGE_SIZE = 20;
 
@@ -10,6 +22,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const { userId, userEmail } = await getSessionInfo();
+
+  const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null);
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const url = new URL(req.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));
   const skip = (page - 1) * PAGE_SIZE;
@@ -39,6 +58,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const { userId, userEmail, userName } = await getSessionInfo();
+
+  const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null, undefined, "editor");
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const wsUrl = process.env.WS_URL || "ws://localhost:3000/ws";
   let cleanup: (() => void) | null = null;
 
@@ -64,7 +90,7 @@ export async function POST(
       documentId: id,
       title: name || dbDoc.title,
       type: "manual",
-      createdByName: body.createdByName || "Anonymous",
+      createdByName: body.createdByName || userName || "Anonymous",
     });
 
     return NextResponse.json(version, { status: 201 });

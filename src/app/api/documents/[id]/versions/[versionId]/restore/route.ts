@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkDocumentAccess } from "@/lib/access-control";
 import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { createSnapshot, restoreSnapshot } from "@/lib/version-snapshot";
 
@@ -8,6 +11,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string; versionId: string }> }
 ) {
   const { id, versionId } = await params;
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string | undefined;
+  const userEmail = session?.user?.email ?? undefined;
+
+  const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null, undefined, "editor");
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const wsUrl = process.env.WS_URL || "ws://localhost:3000/ws";
   let cleanup: (() => void) | null = null;
 
