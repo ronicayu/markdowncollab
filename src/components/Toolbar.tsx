@@ -187,7 +187,8 @@ export default function Toolbar({ editor }: ToolbarProps) {
   ];
 
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-0.5 overflow-x-auto border-b border-gray-200 bg-white px-3 py-1.5">
+    <div className="sticky top-0 z-10 border-b border-gray-200 bg-white relative">
+    <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1.5 scrollbar-none">
       {buttons.map((btn, i) => (
         <div key={btn.label} className="flex items-center">
           {btn.separator && i > 0 && (
@@ -206,6 +207,9 @@ export default function Toolbar({ editor }: ToolbarProps) {
           </button>
         </div>
       ))}
+    </div>
+    {/* Scroll fade hint for mobile */}
+    <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
     </div>
   );
 }

@@ -43,6 +43,7 @@ export default function CommentSidebar({
   const [commentText, setCommentText] = useState("");
   const [showInput, setShowInput] = useState(false);
   const [filter, setFilter] = useState<Filter>("open");
+  const [collapsed, setCollapsed] = useState(true);
 
   // Open the comment form whenever the trigger counter increments
   useEffect(() => {
@@ -57,6 +58,12 @@ export default function CommentSidebar({
     onFormOpenChange?.(showInput);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showInput]);
+
+  // Auto-expand when comments/suggestions appear, or when form opens
+  const hasContent = comments.length > 0 || suggestions.length > 0;
+  useEffect(() => {
+    if (hasContent || showInput) setCollapsed(false);
+  }, [hasContent, showInput]);
 
   const pendingSuggestions = suggestions.filter(
     (s) => s.status === "pending" || s.status === "stale"
@@ -80,10 +87,39 @@ export default function CommentSidebar({
     setCommentText("");
   }
 
+  if (collapsed) {
+    return (
+      <div className="shrink-0 border-l border-[#E8D8C0] bg-[#F5EBD8] p-2 flex flex-col items-center">
+        <button
+          onClick={() => setCollapsed(false)}
+          className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+          title="Show comments"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-72 shrink-0 overflow-y-auto border-l border-[#E8D8C0] bg-[#F5EBD8] p-3">
       <div className="flex items-center justify-between mb-3 gap-2">
-        <h2 className="text-sm font-semibold text-gray-700 shrink-0">Comments</h2>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <h2 className="text-sm font-semibold text-gray-700">Comments</h2>
+          {!hasContent && !showInput && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="p-0.5 rounded text-gray-400 hover:text-gray-600"
+              title="Hide comments"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+        </div>
         <select
           value={filter}
           onChange={(e) => {
