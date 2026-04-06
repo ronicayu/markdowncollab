@@ -5,7 +5,7 @@ import type { Suggestion, Comment } from "@/types";
 import SuggestionCard from "./SuggestionCard";
 import CommentCard from "./CommentCard";
 import MentionAutocomplete, { type MentionUser } from "./MentionAutocomplete";
-import { formatMention } from "@/lib/mention-utils";
+import { formatMention, notifyMentions } from "@/lib/mention-utils";
 
 type Filter = "open" | "resolved" | "all";
 
@@ -26,6 +26,8 @@ interface CommentSidebarProps {
   /** Called whenever the comment form opens or closes, so the parent can track it. */
   onFormOpenChange?: (isOpen: boolean) => void;
   documentId?: string;
+  currentUserName?: string;
+  currentUserId?: string;
 }
 
 export default function CommentSidebar({
@@ -43,6 +45,8 @@ export default function CommentSidebar({
   openFormTrigger,
   onFormOpenChange,
   documentId,
+  currentUserName,
+  currentUserId,
 }: CommentSidebarProps) {
   const [commentText, setCommentText] = useState("");
   const [showInput, setShowInput] = useState(false);
@@ -94,7 +98,12 @@ export default function CommentSidebar({
 
   function handleSubmit() {
     if (!commentText.trim()) return;
-    onAddComment(commentText.trim());
+    const text = commentText.trim();
+    onAddComment(text);
+    // Fire-and-forget mention notifications
+    if (documentId && currentUserName) {
+      notifyMentions(documentId, text, currentUserName, currentUserId);
+    }
     setCommentText("");
     setShowInput(false);
   }

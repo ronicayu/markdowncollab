@@ -625,6 +625,8 @@ export default function DocumentPage({
             openFormTrigger={openFormTrigger}
             onFormOpenChange={setCommentFormOpen}
             documentId={id}
+            currentUserName={userName ?? undefined}
+            currentUserId={(session?.user as any)?.id}
           />
         </div>
         {versionHistoryOpen && (
