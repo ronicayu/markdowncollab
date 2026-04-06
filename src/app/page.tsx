@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
+import TemplatePicker from "@/components/TemplatePicker";
 
 interface Doc {
   id: string;
@@ -41,6 +42,7 @@ export default function Home() {
   const [editTitle, setEditTitle] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -79,15 +81,22 @@ export default function Home() {
     shared: "Shared with me",
   };
 
-  async function createDoc() {
+  async function createDocFromTemplate(templateId: string) {
     setCreating(true);
+    setShowTemplatePicker(false);
     try {
       const res = await fetch("/api/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "Untitled" }),
+        body: JSON.stringify({
+          title: "Untitled",
+          templateId: templateId === "blank" ? undefined : templateId,
+        }),
       });
       const doc = await res.json();
+      if (doc.templateContent) {
+        sessionStorage.setItem(`template:${doc.id}`, doc.templateContent);
+      }
       router.push(`/doc/${doc.id}`);
     } finally {
       setCreating(false);
@@ -280,7 +289,7 @@ export default function Home() {
             </button>
           </div>
           <button
-            onClick={createDoc}
+            onClick={() => setShowTemplatePicker(true)}
             disabled={creating}
             className="flex items-center gap-2 bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -320,7 +329,7 @@ export default function Home() {
                 <>
                   <p className="text-gray-400 text-sm mb-4">No documents yet.</p>
                   <button
-                    onClick={createDoc}
+                    onClick={() => setShowTemplatePicker(true)}
                     className="bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                   >
                     Create your first document
@@ -438,6 +447,12 @@ export default function Home() {
           )}
         </main>
       </div>
+
+      <TemplatePicker
+        open={showTemplatePicker}
+        onClose={() => setShowTemplatePicker(false)}
+        onSelect={createDocFromTemplate}
+      />
 
       {/* Delete confirmation modal */}
       {confirmDelete && (
