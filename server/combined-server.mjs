@@ -156,6 +156,10 @@ function xmlFragmentToMarkdown(fragment) {
         md += `\`\`\`${language}\n${getElementText(child)}\n\`\`\`\n\n`;
       } else if (tag === "horizontalRule") {
         md += "---\n\n";
+      } else if (tag === "image") {
+        const src = child.getAttribute("src") || "";
+        const alt = child.getAttribute("alt") || "";
+        md += `![${alt}](${src})\n\n`;
       } else if (tag === "table") {
         md += tableToMarkdown(child);
         md += "\n";
