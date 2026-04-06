@@ -59,6 +59,7 @@ export default function Editor({
     query: string;
     pos: { top: number; left: number };
   } | null>(null);
+  const [wordCount, setWordCount] = useState({ words: 0, chars: 0 });
 
   useEffect(() => {
     provider.awareness.setLocalStateField("user", {
@@ -137,6 +138,11 @@ export default function Editor({
     },
     immediatelyRender: false,
     onUpdate({ editor: ed }) {
+      // Word count
+      const text = ed.state.doc.textContent;
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      setWordCount({ words, chars: text.length });
+
       const { state, view } = ed;
       const { $from } = state.selection;
 
@@ -196,8 +202,11 @@ export default function Editor({
   }, [editor, activeCommentId]);
 
   return (
-    <div className="flex-1 overflow-auto bg-[#FFFEF9]">
+    <div className="flex-1 overflow-auto bg-[#FFFEF9] relative">
       <EditorContent editor={editor} />
+      <div className="sticky bottom-0 flex justify-end px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
+        {wordCount.words} words · {wordCount.chars} characters
+      </div>
       {slashMenu && editor && (
         <SlashCommandMenu
           editor={editor}

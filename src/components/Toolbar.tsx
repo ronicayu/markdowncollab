@@ -67,18 +67,21 @@ export default function Toolbar({ editor }: ToolbarProps) {
     },
     {
       label: "Heading 1",
+      shortcut: "Mod+Alt+1",
       icon: <span className="text-xs font-bold tracking-tight">H1</span>,
       action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
       isActive: () => editor.isActive("heading", { level: 1 }),
     },
     {
       label: "Heading 2",
+      shortcut: "Mod+Alt+2",
       icon: <span className="text-xs font-bold tracking-tight">H2</span>,
       action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
       isActive: () => editor.isActive("heading", { level: 2 }),
     },
     {
       label: "Heading 3",
+      shortcut: "Mod+Alt+3",
       icon: <span className="text-xs font-bold tracking-tight">H3</span>,
       action: () => editor.chain().focus().toggleHeading({ level: 3 }).run(),
       isActive: () => editor.isActive("heading", { level: 3 }),
@@ -86,6 +89,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
     },
     {
       label: "Bullet list",
+      shortcut: "Mod+Shift+8",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
           <circle cx="5" cy="7" r="1.5" fill="currentColor" stroke="none" />
@@ -99,6 +103,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
     },
     {
       label: "Ordered list",
+      shortcut: "Mod+Shift+7",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h10M9 12h10M9 17h10" />
@@ -113,6 +118,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
     },
     {
       label: "Blockquote",
+      shortcut: "Mod+Shift+B",
       icon: (
         <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
           <path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z" />
@@ -123,6 +129,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
     },
     {
       label: "Code block",
+      shortcut: "Mod+Alt+C",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
           <rect x="2" y="4" width="20" height="16" rx="2" />

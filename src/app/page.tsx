@@ -78,6 +78,16 @@ export default function Home() {
     }
   }
 
+  async function duplicateDoc(doc: Doc) {
+    const res = await fetch("/api/documents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: `${doc.title || "Untitled"} (copy)` }),
+    });
+    const newDoc = await res.json();
+    setDocs((prev) => [newDoc, ...prev]);
+  }
+
   async function deleteDoc(doc: Doc) {
     setDeletingId(doc.id);
     setConfirmDelete(null);
@@ -274,28 +284,39 @@ export default function Home() {
                         </p>
                       </div>
                     </div>
-                    <span className="text-xs text-gray-400 shrink-0 ml-4 mr-8">
+                    <span className="text-xs text-gray-400 shrink-0 ml-4 mr-16">
                       {formatDate(doc.updatedAt)}
                     </span>
                   </Link>
-                  {/* Delete button — appears on hover */}
-                  <button
-                    onClick={(e) => { e.preventDefault(); setConfirmDelete(doc); }}
-                    disabled={deletingId === doc.id}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
-                    title="Delete document"
-                  >
-                    {deletingId === doc.id ? (
-                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                    ) : (
+                  {/* Duplicate + Delete buttons — appear on hover */}
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.preventDefault(); duplicateDoc(doc); }}
+                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+                      title="Duplicate document"
+                    >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
-                    )}
-                  </button>
+                    </button>
+                    <button
+                      onClick={(e) => { e.preventDefault(); setConfirmDelete(doc); }}
+                      disabled={deletingId === doc.id}
+                      className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
+                      title="Delete document"
+                    >
+                      {deletingId === doc.id ? (
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                      ) : (
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
