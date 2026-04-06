@@ -232,6 +232,34 @@ function listToMarkdown(listElement, prefix, indent) {
   return md;
 }
 
+/**
+ * Create a notification in the database.
+ * Called from Yjs map observers when comments/suggestions change.
+ */
+async function createNotificationFromServer({ userId, type, documentId, documentTitle, actorName, actorId, message }) {
+  // Don't notify the actor about their own action
+  if (actorId && actorId === userId) return;
+  try {
+    await wsDbClient.notification.create({
+      data: { userId, type, documentId, documentTitle, actorName, actorId, message },
+    });
+  } catch (err) {
+    console.error("Failed to create notification:", err.message);
+  }
+}
+
+/**
+ * Look up document owner (creator) from the database.
+ */
+async function getDocumentOwner(documentId) {
+  try {
+    const doc = await wsDbClient.document.findUnique({ where: { id: documentId } });
+    return doc;
+  } catch {
+    return null;
+  }
+}
+
 function getDoc(docName) {
   if (docs.has(docName)) return docs.get(docName);
   const doc = new Y.Doc();
@@ -286,6 +314,101 @@ function getDoc(docName) {
   // Track edits for snapshot timing
   doc.on("update", () => {
     entry.hasEdits = true;
+  });
+
+  // Observe comments Y.Map for new comments/replies
+  const commentsMap = doc.getMap("comments");
+  const knownCommentIds = new Set(commentsMap.keys());
+
+  commentsMap.observe(async (event) => {
+    for (const [key, change] of event.changes.keys) {
+      if (change.action === "add" && !knownCommentIds.has(key)) {
+        knownCommentIds.add(key);
+        try {
+          const comment = commentsMap.get(key);
+          if (!comment || typeof comment !== "object") continue;
+          const commentData = comment.toJSON ? comment.toJSON() : comment;
+          const docRecord = await getDocumentOwner(docName);
+          const docTitle = docRecord?.title || "Untitled";
+          const actorName = commentData.authorName || "Someone";
+
+          // Determine notification type: reply vs new comment
+          const type = commentData.parentCommentId ? "reply" : "comment";
+          const message = type === "reply"
+            ? `${actorName} replied to your comment on ${docTitle}`
+            : `${actorName} commented on ${docTitle}`;
+
+          if (type === "reply" && commentData.parentCommentId) {
+            // Find the parent comment author to notify
+            const parentComment = commentsMap.get(commentData.parentCommentId);
+            if (parentComment) {
+              const parentData = parentComment.toJSON ? parentComment.toJSON() : parentComment;
+              if (parentData.authorId && parentData.authorId !== commentData.authorId) {
+                await createNotificationFromServer({
+                  userId: parentData.authorId,
+                  type: "reply",
+                  documentId: docName,
+                  documentTitle: docTitle,
+                  actorName,
+                  actorId: commentData.authorId || null,
+                  message,
+                });
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error processing comment notification:", err.message);
+        }
+      }
+    }
+  });
+
+  // Observe suggestions Y.Map for new suggestions and status changes
+  const suggestionsMap = doc.getMap("suggestions");
+  const knownSuggestionStates = new Map();
+  for (const [key] of suggestionsMap.entries()) {
+    const sug = suggestionsMap.get(key);
+    const sugData = sug && sug.toJSON ? sug.toJSON() : sug;
+    knownSuggestionStates.set(key, sugData?.status || "pending");
+  }
+
+  suggestionsMap.observe(async (event) => {
+    for (const [key, change] of event.changes.keys) {
+      try {
+        const sug = suggestionsMap.get(key);
+        if (!sug) continue;
+        const sugData = sug.toJSON ? sug.toJSON() : sug;
+        const docRecord = await getDocumentOwner(docName);
+        const docTitle = docRecord?.title || "Untitled";
+
+        if (change.action === "add") {
+          const actorName = sugData.authorName || "Someone";
+          knownSuggestionStates.set(key, sugData.status || "pending");
+        } else if (change.action === "update") {
+          const prevStatus = knownSuggestionStates.get(key);
+          const newStatus = sugData.status;
+          knownSuggestionStates.set(key, newStatus);
+
+          if (prevStatus === "pending" && (newStatus === "accepted" || newStatus === "rejected")) {
+            // Notify the suggestion author that their suggestion was acted on
+            if (sugData.authorId) {
+              const message = `Your suggestion on ${docTitle} was ${newStatus}`;
+              await createNotificationFromServer({
+                userId: sugData.authorId,
+                type: "suggestion",
+                documentId: docName,
+                documentTitle: docTitle,
+                actorName: "Editor",
+                actorId: null,
+                message,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error processing suggestion notification:", err.message);
+      }
+    }
   });
 
   docs.set(docName, entry);
