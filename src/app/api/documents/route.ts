@@ -62,12 +62,22 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
 
-  const { title } = await req.json();
+  const { title, templateId } = await req.json();
   const doc = await prisma.document.create({
     data: {
       title: title || "Untitled",
       ownerId: userId ?? null,
     },
   });
-  return NextResponse.json({ ...doc, role: "owner" }, { status: 201 });
+
+  let templateContent: string | null = null;
+  if (templateId) {
+    const { getTemplateById, substituteVariables } = await import("@/lib/templates");
+    const template = getTemplateById(templateId);
+    if (template && template.content) {
+      templateContent = substituteVariables(template.content);
+    }
+  }
+
+  return NextResponse.json({ ...doc, role: "owner", templateContent }, { status: 201 });
 }
