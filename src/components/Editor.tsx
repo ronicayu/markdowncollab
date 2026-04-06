@@ -14,6 +14,8 @@ import type { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import SlashCommandMenu from "./SlashCommandMenu";
+import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
+import SearchBar from "./SearchBar";
 
 const CURSOR_COLORS = [
   "#f44336",
@@ -65,6 +67,9 @@ export default function Editor({
     query: string;
     pos: { top: number; left: number };
   } | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [showReplace, setShowReplace] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [wordCount, setWordCount] = useState({ words: 0, chars: 0 });
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
@@ -113,6 +118,7 @@ export default function Editor({
       }),
       SuggestionMark,
       CommentMark,
+      SearchReplace,
       Collaboration.configure({
         document: ydoc,
       }),
@@ -223,6 +229,12 @@ export default function Editor({
         setSlashMenu(null);
       }
     },
+    onTransaction() {
+      // Force re-render so SearchBar picks up latest match count/index
+      // from the ProseMirror plugin state. The useEditor hook already
+      // triggers re-renders on transactions, so this is a no-op callback
+      // ensuring the hook is aware we depend on transaction updates.
+    },
   });
 
   useEffect(() => {
@@ -251,6 +263,24 @@ export default function Editor({
     return () => clearTimeout(timer);
   }, [editor, initialContent, templateApplied]);
 
+  // Keyboard shortcuts for find/replace
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key === "f") {
+        e.preventDefault();
+        setSearchOpen(true);
+        setShowReplace(false);
+      } else if (mod && e.key === "h") {
+        e.preventDefault();
+        setSearchOpen(true);
+        setShowReplace(true);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Drive the decoration plugin from React state — survives Tiptap view updates
   useEffect(() => {
     if (!editor) return;
@@ -259,8 +289,41 @@ export default function Editor({
     );
   }, [editor, activeCommentId]);
 
+  const searchState = editor
+    ? searchReplacePluginKey.getState(editor.state)
+    : null;
+
+  const handleQueryChange = (query: string) => {
+    setSearchQuery(query);
+    editor?.commands.setSearchQuery(query);
+  };
+
+  const handleClose = () => {
+    setSearchOpen(false);
+    setSearchQuery("");
+    editor?.commands.clearSearch();
+    editor?.commands.focus();
+  };
+
   return (
     <div className="flex-1 overflow-auto bg-[#FFFEF9] relative">
+      {searchOpen && editor && (
+        <SearchBar
+          query={searchQuery}
+          matchCount={searchState?.matches.length ?? 0}
+          currentIndex={searchState?.currentIndex ?? 0}
+          caseSensitive={searchState?.caseSensitive ?? false}
+          showReplace={showReplace}
+          onQueryChange={handleQueryChange}
+          onFindNext={() => editor.commands.findNext()}
+          onFindPrevious={() => editor.commands.findPrevious()}
+          onReplace={(replacement) => editor.commands.replaceCurrent(replacement)}
+          onReplaceAll={(replacement) => editor.commands.replaceAll(replacement)}
+          onToggleCaseSensitive={() => editor.commands.toggleCaseSensitive()}
+          onToggleReplace={() => setShowReplace((v) => !v)}
+          onClose={handleClose}
+        />
+      )}
       <EditorContent editor={editor} />
       <div className="sticky bottom-0 flex justify-between px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
         <span>
