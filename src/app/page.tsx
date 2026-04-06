@@ -346,14 +346,14 @@ export default function Home() {
                     type="checkbox"
                     checked={selected.has(doc.id)}
                     onChange={() => toggleSelect(doc.id)}
-                    className="shrink-0 h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity checked:opacity-100 cursor-pointer"
+                    className="shrink-0 h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A] md:opacity-0 md:group-hover:opacity-100 transition-opacity checked:!opacity-100 cursor-pointer"
                   />
                   <Link
                     href={`/doc/${doc.id}`}
                     className="flex-1 flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-1 h-8 rounded-full bg-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      <div className="w-1 h-8 rounded-full bg-[#B8692A] md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0" />
                       <div className="min-w-0">
                         {editingId === doc.id ? (
                           <input
@@ -387,7 +387,7 @@ export default function Home() {
                     </span>
                   </Link>
                   {/* Duplicate + Delete buttons — appear on hover */}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => { e.preventDefault(); duplicateDoc(doc); }}
                       className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
