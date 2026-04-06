@@ -12,6 +12,7 @@ model Document {
   title      String             @default("Untitled")
   ownerId    String?
   visibility String             @default("private")
+  templateId String?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
   shares     DocumentShare[]
