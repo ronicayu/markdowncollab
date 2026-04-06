@@ -31,6 +31,7 @@ import {
   addReplyToComment,
 } from "@/lib/suggestion-store";
 import { toast } from "@/lib/toast";
+import { getUserColor } from "@/lib/cursor-utils";
 import type { Suggestion, Comment } from "@/types";
 
 const ADJECTIVES = [
@@ -221,7 +222,7 @@ export default function DocumentPage({
   // Set awareness user info when userName is ready
   useEffect(() => {
     if (!userName) return;
-    const color = `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+    const color = getUserColor(userName);
     provider.awareness.setLocalStateField("user", { name: userName, color });
   }, [provider, userName]);
 
