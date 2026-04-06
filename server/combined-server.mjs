@@ -13,6 +13,32 @@ import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as encoding from "lib0/encoding";
 import * as decoding from "lib0/decoding";
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
+
+const wsDbClient = new PrismaClient();
+
+async function checkWsAccess(documentId, userId, userEmail, shareToken) {
+  const doc = await wsDbClient.document.findUnique({ where: { id: documentId } });
+  if (!doc) return { hasAccess: false, role: null };
+  if (!doc.ownerId) return { hasAccess: true, role: "editor" };
+  if (userId && doc.ownerId === userId) return { hasAccess: true, role: "owner" };
+
+  if (userId) {
+    const byUser = await wsDbClient.documentShare.findFirst({ where: { documentId, userId } });
+    if (byUser) return { hasAccess: true, role: byUser.role };
+  }
+  if (userEmail) {
+    const byEmail = await wsDbClient.documentShare.findFirst({ where: { documentId, email: userEmail.toLowerCase() } });
+    if (byEmail) return { hasAccess: true, role: byEmail.role };
+  }
+  if (shareToken) {
+    const byToken = await wsDbClient.documentShare.findFirst({ where: { documentId, shareToken } });
+    if (byToken) return { hasAccess: true, role: byToken.role };
+  }
+  if (doc.visibility === "anyone_with_link") return { hasAccess: true, role: "viewer" };
+  return { hasAccess: false, role: null };
+}
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOST || "0.0.0.0";
@@ -198,9 +224,9 @@ function getDoc(docName) {
 const wss = new WebSocketServer({ noServer: true });
 
 wss.on("connection", (ws, req) => {
-  // Room name from URL: /ws/room-name
+  // Room name from URL: /ws/room-name (strip query params)
   const urlPath = req.url || "/ws/default";
-  const docName = urlPath.replace(/^\/ws\//, "") || "default";
+  const docName = urlPath.replace(/^\/ws\//, "").split("?")[0] || "default";
   const { doc, awareness, conns: docConns } = getDoc(docName);
   docConns.add(ws);
 
@@ -277,9 +303,45 @@ app.prepare().then(() => {
   });
 
   // Route WebSocket upgrades: /ws/* -> Yjs, everything else -> Next.js
-  server.on("upgrade", (req, socket, head) => {
+  server.on("upgrade", async (req, socket, head) => {
     if (req.url?.startsWith("/ws/")) {
+      // Extract document ID from URL
+      const docName = req.url.replace(/^\/ws\//, "").split("?")[0] || "default";
+
+      // Parse token from query string
+      const urlObj = new URL(req.url, `http://${req.headers.host}`);
+      const shareToken = urlObj.searchParams.get("token");
+      const jwtToken = urlObj.searchParams.get("jwt");
+
+      let userId = null;
+      let userEmail = null;
+
+      // Verify JWT if provided
+      if (jwtToken) {
+        try {
+          const secret = process.env.NEXTAUTH_SECRET;
+          if (secret) {
+            const decoded = jwt.verify(jwtToken, secret);
+            userId = decoded.id || decoded.sub || null;
+            userEmail = decoded.email || null;
+          }
+        } catch {
+          // Invalid JWT — continue without user context
+        }
+      }
+
+      // Check access
+      const access = await checkWsAccess(docName, userId, userEmail, shareToken);
+      if (!access.hasAccess) {
+        socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+
       wss.handleUpgrade(req, socket, head, (ws) => {
+        // Attach role to the ws object so we can use it for awareness
+        ws._userRole = access.role;
+        ws._userId = userId;
         wss.emit("connection", ws, req);
       });
     }
