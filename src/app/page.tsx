@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
+import NotificationBell from "@/components/NotificationBell";
 
 interface Doc {
   id: string;
@@ -221,6 +222,7 @@ export default function Home() {
             <span className="text-base font-bold tracking-tight">MarkdownCollab</span>
             {session ? (
               <div className="flex items-center gap-2">
+                <NotificationBell />
                 {session.user?.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={session.user.image} alt="" className="h-7 w-7 rounded-full shrink-0" />
@@ -288,6 +290,7 @@ export default function Home() {
               <span className="hidden sm:inline">{sortBy === "date" ? "Date" : "Name"}</span>
             </button>
           </div>
+          {session && <NotificationBell />}
           <button
             onClick={() => setShowTemplatePicker(true)}
             disabled={creating}
