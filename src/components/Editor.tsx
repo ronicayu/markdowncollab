@@ -9,6 +9,7 @@ import { getUserColor } from "@/lib/cursor-utils";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { Markdown } from "tiptap-markdown";
+import Image from "@tiptap/extension-image";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
@@ -36,7 +37,7 @@ interface EditorProps {
 }
 
 export default function Editor({
-  documentId: _documentId,
+  documentId,
   userName,
   ydoc,
   provider,
@@ -60,6 +61,27 @@ export default function Editor({
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
+
+  async function uploadImage(file: File): Promise<string | null> {
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const res = await fetch(`/api/documents/${documentId}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        console.error("Upload failed:", err.error);
+        return null;
+      }
+      const data = await res.json();
+      return data.url;
+    } catch (err) {
+      console.error("Upload error:", err);
+      return null;
+    }
+  }
 
   useEffect(() => {
     provider.awareness.setLocalStateField("user", {
@@ -120,6 +142,10 @@ export default function Editor({
       TableRow,
       TableCell,
       TableHeader,
+      Image.configure({
+        allowBase64: false,
+        HTMLAttributes: { class: "editor-image" },
+      }),
       CollaborationCursor.configure({
         provider,
         user: {
@@ -140,6 +166,32 @@ export default function Editor({
       // each line in <p> tags like: <p>- item1</p><p>- item2</p>
       // We intercept and rebuild as a proper <ul>.
       handlePaste(view, event) {
+        // Handle image paste
+        const pasteItems = event.clipboardData?.items;
+        if (pasteItems) {
+          for (const item of Array.from(pasteItems)) {
+            if (item.type.startsWith("image/")) {
+              event.preventDefault();
+              const file = item.getAsFile();
+              if (!file) return true;
+
+              uploadImage(file).then((url) => {
+                if (url) {
+                  const { schema } = view.state;
+                  const imageNode = schema.nodes.image;
+                  if (imageNode) {
+                    const node = imageNode.create({ src: url });
+                    const tr = view.state.tr.replaceSelectionWith(node);
+                    view.dispatch(tr);
+                  }
+                }
+              });
+              return true;
+            }
+          }
+        }
+
+        // Handle plain-text markdown-style list paste (existing logic)
         const text = event.clipboardData?.getData('text/plain') || '';
         const lines = text.split('\n').filter(l => l.trim() !== '');
         const allBullets = lines.length > 0 && lines.every(l => /^[-*]\s/.test(l));
