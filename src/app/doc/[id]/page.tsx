@@ -18,6 +18,7 @@ import Toolbar from "@/components/Toolbar";
 import TopBar from "@/components/TopBar";
 import type { Collaborator } from "@/components/TopBar";
 import CommentSidebar from "@/components/CommentSidebar";
+import VersionHistoryPanel from "@/components/VersionHistoryPanel";
 import OutlineSidebar from "@/components/OutlineSidebar";
 import FloatingCommentButton from "@/components/FloatingCommentButton";
 import {
@@ -527,6 +528,12 @@ export default function DocumentPage({
     toast("Comment added");
   }
 
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+
+  function toggleVersionHistory() {
+    setVersionHistoryOpen((prev) => !prev);
+  }
+
   const [agentLoading, setAgentLoading] = useState(false);
 
   const handleInviteAgent = useCallback(async () => {
@@ -572,6 +579,8 @@ export default function DocumentPage({
         onTitleChange={userRole === "viewer" ? undefined : handleTitleChange}
         agentLoading={agentLoading}
         userRole={userRole}
+        onToggleVersionHistory={toggleVersionHistory}
+        versionHistoryOpen={versionHistoryOpen}
       />
       {userRole !== "viewer" && <Toolbar editor={editor} />}
       <div className="flex flex-1 overflow-hidden">
@@ -611,6 +620,14 @@ export default function DocumentPage({
             onFormOpenChange={setCommentFormOpen}
           />
         </div>
+        {versionHistoryOpen && (
+          <VersionHistoryPanel
+            documentId={id}
+            isOpen={versionHistoryOpen}
+            onClose={() => setVersionHistoryOpen(false)}
+            userName={userName}
+          />
+        )}
       </div>
       {/* Mobile: floating comment button when text is selected */}
       {hasSelection && (
