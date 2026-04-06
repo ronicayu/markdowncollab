@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
+import ShareDialog from "@/components/ShareDialog";
 
 export interface Collaborator {
   name: string;
@@ -17,6 +18,7 @@ interface TopBarProps {
   onInviteAgent: () => void;
   onTitleChange?: (title: string) => void;
   agentLoading?: boolean;
+  userRole?: "owner" | "editor" | "viewer" | null;
 }
 
 export default function TopBar({
@@ -27,6 +29,7 @@ export default function TopBar({
   onInviteAgent,
   onTitleChange,
   agentLoading,
+  userRole,
 }: TopBarProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
@@ -50,14 +53,21 @@ export default function TopBar({
     }
   }
 
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
   async function handleShare() {
-    const url = `${window.location.origin}/doc/${documentId}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setShowShareModal(true);
+    if (userRole === "owner") {
+      setShareDialogOpen(true);
+    } else {
+      // Non-owners: just copy the URL
+      const url = `${window.location.origin}/doc/${documentId}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        setShowShareModal(true);
+      }
     }
   }
 
@@ -95,6 +105,11 @@ export default function TopBar({
             {connected ? "Connected" : "Connecting..."}
           </span>
         </div>
+        {userRole === "viewer" && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+            View only
+          </span>
+        )}
       </div>
 
       {/* Right: collaborators + actions */}
@@ -197,6 +212,13 @@ export default function TopBar({
           <span className="hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
         </button>
       </div>
+
+      {/* Share dialog for owners */}
+      <ShareDialog
+        documentId={documentId}
+        isOpen={shareDialogOpen}
+        onClose={() => setShareDialogOpen(false)}
+      />
 
       {/* Share modal fallback */}
       {showShareModal && (
