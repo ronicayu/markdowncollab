@@ -14,8 +14,25 @@ vi.mock("@/lib/prisma", () => {
   return { prisma: mockPrisma };
 });
 
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  authOptions: {},
+}));
+
+vi.mock("@/lib/access-control", () => ({
+  checkDocumentAccess: vi.fn(),
+}));
+
+import { getServerSession } from "next-auth";
+import { checkDocumentAccess } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
 import { GET, POST } from "./route";
+
+const mockGetSession = vi.mocked(getServerSession);
+const mockCheckAccess = vi.mocked(checkDocumentAccess);
 
 const mockPrisma = prisma as unknown as {
   documentVersion: {
@@ -35,7 +52,11 @@ function makeRequest(url: string, options?: RequestInit) {
 const params = Promise.resolve({ id: "doc-1" });
 
 describe("GET /api/documents/[id]/versions", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: "user-1", email: "test@example.com" } } as any);
+    mockCheckAccess.mockResolvedValue({ hasAccess: true, role: "owner" });
+  });
 
   it("returns paginated version list", async () => {
     const versions = [
@@ -82,7 +103,11 @@ describe("GET /api/documents/[id]/versions", () => {
 });
 
 describe("POST /api/documents/[id]/versions (manual snapshot)", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: "user-1", email: "test@example.com" } } as any);
+    mockCheckAccess.mockResolvedValue({ hasAccess: true, role: "editor" });
+  });
 
   it("returns 501 (manual snapshot created via API with Yjs connection)", async () => {
     // The POST endpoint will need a Yjs connection to get current doc state.

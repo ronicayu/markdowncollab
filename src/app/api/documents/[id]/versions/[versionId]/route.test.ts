@@ -10,8 +10,25 @@ vi.mock("@/lib/prisma", () => {
   return { prisma: mockPrisma };
 });
 
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  authOptions: {},
+}));
+
+vi.mock("@/lib/access-control", () => ({
+  checkDocumentAccess: vi.fn(),
+}));
+
+import { getServerSession } from "next-auth";
+import { checkDocumentAccess } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
 import { GET } from "./route";
+
+const mockGetSession = vi.mocked(getServerSession);
+const mockCheckAccess = vi.mocked(checkDocumentAccess);
 
 const mockPrisma = prisma as unknown as {
   documentVersion: {
@@ -22,7 +39,11 @@ const mockPrisma = prisma as unknown as {
 const params = Promise.resolve({ id: "doc-1", versionId: "ver-1" });
 
 describe("GET /api/documents/[id]/versions/[versionId]", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({ user: { id: "user-1", email: "test@example.com" } } as any);
+    mockCheckAccess.mockResolvedValue({ hasAccess: true, role: "viewer" });
+  });
 
   it("returns 404 when version not found", async () => {
     mockPrisma.documentVersion.findUnique.mockResolvedValue(null);
