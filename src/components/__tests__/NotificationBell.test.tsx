@@ -44,6 +44,30 @@ describe("NotificationBell", () => {
     });
   });
 
+  it("re-fetches count when tab becomes visible", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ unread: 0 }),
+    });
+    render(<NotificationBell />);
+
+    // Wait for initial fetch
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    // Simulate tab becoming visible
+    Object.defineProperty(document, "visibilityState", {
+      value: "visible",
+      writable: true,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it("opens dropdown when clicked", async () => {
     mockFetch
       .mockResolvedValueOnce({
