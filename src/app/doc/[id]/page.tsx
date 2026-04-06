@@ -15,6 +15,7 @@ function generateId(): string {
 }
 import Editor from "@/components/Editor";
 import Toolbar from "@/components/Toolbar";
+import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import TopBar from "@/components/TopBar";
 import type { Collaborator } from "@/components/TopBar";
 import CommentSidebar from "@/components/CommentSidebar";
@@ -528,6 +529,9 @@ export default function DocumentPage({
     toast("Comment added");
   }
 
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const toggleShortcutsHelp = useCallback(() => setShortcutsOpen((prev) => !prev), []);
+
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
 
   function toggleVersionHistory() {
@@ -582,7 +586,7 @@ export default function DocumentPage({
         onToggleVersionHistory={toggleVersionHistory}
         versionHistoryOpen={versionHistoryOpen}
       />
-      {userRole !== "viewer" && <Toolbar editor={editor} />}
+      {userRole !== "viewer" && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden lg:block">
           <OutlineSidebar editor={editor} />
@@ -596,6 +600,7 @@ export default function DocumentPage({
           activeCommentId={activeCommentId}
           editable={userRole !== "viewer"}
           initialContent={templateContent}
+          onToggleShortcutsHelp={toggleShortcutsHelp}
         />
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
         <FloatingCommentButton
@@ -686,6 +691,10 @@ export default function DocumentPage({
           </div>
         </div>
       )}
+      <KeyboardShortcutsDialog
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
     </div>
   );
 }
