@@ -48,6 +48,7 @@ interface EditorProps {
   activeCommentId?: string | null;
   editable?: boolean;
   initialContent?: string | null;
+  onToggleShortcutsHelp?: () => void;
 }
 
 export default function Editor({
@@ -59,6 +60,7 @@ export default function Editor({
   activeCommentId,
   editable = true,
   initialContent,
+  onToggleShortcutsHelp,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getRandomColor(), []);
@@ -280,6 +282,19 @@ export default function Editor({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Register Cmd+/ (Ctrl+/ on non-Mac) to toggle shortcuts help
+  useEffect(() => {
+    if (!onToggleShortcutsHelp) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault();
+        onToggleShortcutsHelp();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onToggleShortcutsHelp]);
 
   // Drive the decoration plugin from React state — survives Tiptap view updates
   useEffect(() => {
