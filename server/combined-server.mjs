@@ -4,7 +4,6 @@
  * Everything else goes to Next.js.
  */
 import { createServer } from "http";
-import { parse } from "url";
 import next from "next";
 import { WebSocketServer } from "ws";
 import * as Y from "yjs";
@@ -269,8 +268,7 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     try {
-      const parsedUrl = parse(req.url, true);
-      await handle(req, res, parsedUrl);
+      await handle(req, res);
     } catch (err) {
       console.error("Error handling request", err);
       res.statusCode = 500;
@@ -288,8 +286,24 @@ app.prepare().then(() => {
     // Let Next.js handle its own WebSocket upgrades (HMR)
   });
 
+  // Prevent ECONNRESET from crashing the server
+  server.on("clientError", (err, socket) => {
+    if (err.code === "ECONNRESET") {
+      socket.destroy();
+      return;
+    }
+    socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+  });
+
   server.listen(port, hostname, () => {
     console.log(`MarkdownCollab running on http://${hostname}:${port}`);
     console.log(`WebSocket server at ws://${hostname}:${port}/ws/`);
   });
+});
+
+// Catch unhandled connection resets globally so they don't crash the process
+process.on("uncaughtException", (err) => {
+  if (err.code === "ECONNRESET" || err.code === "EPIPE") return;
+  console.error("Uncaught exception:", err);
+  process.exit(1);
 });
