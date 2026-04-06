@@ -4,7 +4,8 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Collaboration from "@tiptap/extension-collaboration";
-// yCursorPlugin disabled — see note below
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { getUserColor } from "@/lib/cursor-utils";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { Markdown } from "tiptap-markdown";
@@ -21,27 +22,6 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import SearchBar from "./SearchBar";
 
-const CURSOR_COLORS = [
-  "#f44336",
-  "#e91e63",
-  "#9c27b0",
-  "#673ab7",
-  "#3f51b5",
-  "#2196f3",
-  "#03a9f4",
-  "#009688",
-  "#4caf50",
-  "#ff9800",
-];
-
-function getRandomColor() {
-  return CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
-}
-
-// yCursorPlugin crashes in y-prosemirror 1.x with Tiptap v3 because
-// awareness.doc is undefined during createDecorations. We set awareness
-// user info so collaborator avatars in TopBar work, but skip the cursor
-// rendering plugin until y-prosemirror ships a compatible version.
 
 interface EditorProps {
   documentId: string;
@@ -67,7 +47,7 @@ export default function Editor({
   onToggleShortcutsHelp,
 }: EditorProps) {
 
-  const cursorColor = useMemo(() => getRandomColor(), []);
+  const cursorColor = useMemo(() => getUserColor(userName), [userName]);
   const [templateApplied, setTemplateApplied] = useState(false);
   const [slashMenu, setSlashMenu] = useState<{
     query: string;
@@ -140,7 +120,13 @@ export default function Editor({
       TableRow,
       TableCell,
       TableHeader,
-      // Cursor plugin disabled — see comment above
+      CollaborationCursor.configure({
+        provider,
+        user: {
+          name: userName,
+          color: cursorColor,
+        },
+      }),
     ],
     editorProps: {
       attributes: {
