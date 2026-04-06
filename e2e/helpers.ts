@@ -156,6 +156,10 @@ export async function resetDatabase(): Promise<void> {
 export async function makeDocPublic(docId: string): Promise<void> {
   const { execSync } = await import("child_process");
   const { resolve } = await import("path");
+  // Validate docId is a safe UUID-like string to prevent SQL injection
+  if (!/^[a-zA-Z0-9_-]+$/.test(docId)) {
+    throw new Error(`Invalid document ID: ${docId}`);
+  }
   // Prisma resolves file:./test.db relative to prisma/ directory
   const dbPath = resolve(process.cwd(), "prisma", "test.db");
   execSync(
