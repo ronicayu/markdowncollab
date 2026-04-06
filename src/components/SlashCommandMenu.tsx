@@ -87,6 +87,45 @@ const COMMANDS: Command[] = [
     action: (editor) => editor.chain().focus().setHorizontalRule().run(),
   },
   {
+    id: "image",
+    label: "Image",
+    description: "Upload an image",
+    icon: "\uD83D\uDDBC",
+    keywords: ["image", "picture", "photo", "upload", "img"],
+    action: (editor) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/png,image/jpeg,image/gif,image/webp,image/svg+xml";
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+
+        // Extract document ID from URL: /doc/{id}
+        const docId = window.location.pathname.split("/doc/")[1]?.split("/")[0] || "";
+        if (!docId) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const res = await fetch(`/api/documents/${docId}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+          if (!res.ok) {
+            console.error("Upload failed");
+            return;
+          }
+          const data = await res.json();
+          editor.chain().focus().setImage({ src: data.url }).run();
+        } catch (err) {
+          console.error("Upload error:", err);
+        }
+      };
+      input.click();
+    },
+  },
+  {
     id: "table",
     label: "Table",
     description: "Insert a 3x3 table",
