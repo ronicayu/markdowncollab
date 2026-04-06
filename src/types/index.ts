@@ -40,3 +40,23 @@ export interface Collaborator {
   color: string;
   type: "human" | "agent";
 }
+
+export interface DocumentVersion {
+  id: string;
+  documentId: string;
+  title: string;
+  createdByName: string | null;
+  type: "auto" | "manual" | "restore";
+  createdAt: string;
+}
+
+export interface VersionPreview extends DocumentVersion {
+  markdown: string;
+}
+
+export interface VersionListResponse {
+  versions: DocumentVersion[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
