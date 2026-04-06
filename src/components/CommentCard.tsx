@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Comment } from "@/types";
+import { renderMentionText } from "@/lib/mention-utils";
 
 interface CommentCardProps {
   comment: Comment;
@@ -101,7 +102,15 @@ export default function CommentCard({
       </div>
 
       <p className={`mb-2 text-sm ${comment.resolved ? "text-gray-400" : "text-gray-600"}`}>
-        {comment.content}
+        {renderMentionText(comment.content).map((part, i) =>
+          part.type === "mention" ? (
+            <span key={i} className="text-[#b4783c] font-semibold">
+              @{part.content}
+            </span>
+          ) : (
+            <span key={i}>{part.content}</span>
+          )
+        )}
       </p>
 
       {/* Replies */}
@@ -113,7 +122,17 @@ export default function CommentCard({
                 {reply.author}
               </span>
               <span className="ml-1.5 text-gray-400">{formatTimestamp(reply.createdAt)}</span>
-              <p className={`mt-0.5 ${comment.resolved ? "text-gray-400" : "text-gray-600"}`}>{reply.text}</p>
+              <p className={`mt-0.5 ${comment.resolved ? "text-gray-400" : "text-gray-600"}`}>
+                {renderMentionText(reply.text).map((part, i) =>
+                  part.type === "mention" ? (
+                    <span key={i} className="text-[#b4783c] font-semibold">
+                      @{part.content}
+                    </span>
+                  ) : (
+                    <span key={i}>{part.content}</span>
+                  )
+                )}
+              </p>
             </div>
           ))}
         </div>
