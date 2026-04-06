@@ -71,8 +71,8 @@ export async function checkDocumentAccess(
     }
   }
 
-  // Fallback: anyone_with_link visibility grants viewer access
-  if (doc.visibility === "anyone_with_link") {
+  // Fallback: anyone_with_link visibility grants viewer access, but only to authenticated users
+  if (doc.visibility === "anyone_with_link" && userId) {
     return meetsRequiredRole("viewer", requiredRole);
   }
 
