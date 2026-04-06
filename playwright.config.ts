@@ -33,6 +33,7 @@ export default defineConfig({
       DATABASE_URL: "file:./test.db",
       NEXTAUTH_SECRET: "test-secret-for-e2e",
       NEXTAUTH_URL: BASE_URL,
+      WS_URL: `ws://localhost:${E2E_PORT}/ws`,
     },
   },
 });
