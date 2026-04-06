@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectYjsServer } from "@/lib/yjs-server-connect";
-import { cleanMarkdown } from "@/lib/export-markdown";
+import { xmlFragmentToMarkdown } from "@/lib/export-markdown";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,8 +11,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const conn = await connectYjsServer(wsUrl, id);
     cleanup = conn.cleanup;
     const yxml = conn.ydoc.getXmlFragment("default");
-    const html = yxml.toJSON();
-    const markdown = cleanMarkdown(html);
+    const markdown = xmlFragmentToMarkdown(yxml);
 
     return new NextResponse(markdown, {
       headers: {
