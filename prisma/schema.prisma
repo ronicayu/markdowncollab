@@ -8,10 +8,28 @@ datasource db {
 }
 
 model Document {
-  id        String   @id @default(uuid())
-  title     String   @default("Untitled")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String          @id @default(uuid())
+  title      String          @default("Untitled")
+  ownerId    String?
+  visibility String          @default("private")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  shares     DocumentShare[]
+}
+
+model DocumentShare {
+  id         String   @id @default(uuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String?
+  email      String?
+  role       String   @default("viewer")
+  shareToken String?  @unique
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, userId])
+  @@unique([documentId, email])
+  @@index([shareToken])
 }
 
 model User {
