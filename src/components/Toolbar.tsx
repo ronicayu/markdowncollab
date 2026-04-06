@@ -195,6 +195,22 @@ export default function Toolbar({ editor }: ToolbarProps) {
       action: () => editor.chain().focus().setHorizontalRule().run(),
       isActive: () => false,
     },
+    {
+      label: "Find & Replace",
+      shortcut: "Mod+F",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <circle cx="11" cy="11" r="7" />
+          <path strokeLinecap="round" d="M21 21l-4.35-4.35" />
+        </svg>
+      ),
+      action: () => {
+        // Dispatch synthetic Cmd+F to trigger the global handler in Editor
+        document.dispatchEvent(new KeyboardEvent("keydown", { key: "f", metaKey: true, bubbles: true }));
+      },
+      isActive: () => false,
+      separator: true,
+    },
   ];
 
   return (
