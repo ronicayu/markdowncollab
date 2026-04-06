@@ -32,6 +32,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
+  const [search, setSearch] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -42,16 +43,20 @@ export default function Home() {
   }, []);
 
   const filteredDocs = (() => {
+    let result = docs;
     if (activeTab === "recent") {
-      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000; // last 7 days
-      return docs
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      result = docs
         .filter((d) => new Date(d.updatedAt).getTime() >= cutoff)
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    } else if (activeTab === "shared") {
+      return [];
     }
-    if (activeTab === "shared") {
-      return []; // no sharing backend yet
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((d) => (d.title || "Untitled").toLowerCase().includes(q));
     }
-    return docs;
+    return result;
   })();
 
   const headingLabel: Record<Tab, string> = {
@@ -88,7 +93,7 @@ export default function Home() {
 
   return (
     <div className="flex h-screen bg-[#F2E8D5]">
-      {/* Dark sidebar */}
+      {/* Dark sidebar — desktop only */}
       <aside className="hidden md:flex w-56 flex-col bg-[#111110] text-white shrink-0">
         <div className="px-5 py-5 border-b border-white/10">
           <span className="text-base font-bold tracking-tight">MarkdownCollab</span>
@@ -145,9 +150,69 @@ export default function Home() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mobile header — small screens only */}
+        <div className="md:hidden bg-[#111110] text-white shrink-0">
+          <div className="flex items-center justify-between px-4 py-3">
+            <span className="text-base font-bold tracking-tight">MarkdownCollab</span>
+            {session ? (
+              <div className="flex items-center gap-2">
+                {session.user?.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={session.user.image} alt="" className="h-7 w-7 rounded-full shrink-0" />
+                ) : (
+                  <div className="h-7 w-7 rounded-full bg-[#B8692A] flex items-center justify-center text-xs font-bold shrink-0">
+                    {session.user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "?"}
+                  </div>
+                )}
+                <button onClick={() => signOut()} className="text-xs text-white/50 hover:text-white/70 transition-colors">
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => signIn()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 transition-colors"
+              >
+                Sign in
+              </button>
+            )}
+          </div>
+          {/* Mobile tab bar */}
+          <div className="flex px-2 pb-2 gap-1">
+            {(
+              [
+                { label: "All", tab: "all" as Tab },
+                { label: "Recent", tab: "recent" as Tab },
+                { label: "Shared", tab: "shared" as Tab },
+              ] as { label: string; tab: Tab }[]
+            ).map(({ label, tab }) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 text-center px-2 py-2 rounded-md text-sm transition-colors ${
+                  activeTab === tab
+                    ? "bg-white/10 text-white font-medium"
+                    : "text-white/50 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
-          <h1 className="text-lg font-semibold text-gray-900">{headingLabel[activeTab]}</h1>
+        <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
+          <h1 className="text-lg font-semibold text-gray-900 shrink-0">{headingLabel[activeTab]}</h1>
+          <div className="flex-1 max-w-xs">
+            <input
+              type="text"
+              placeholder="Search documents..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-black/10 bg-white/60 px-3 py-1.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+            />
+          </div>
           <button
             onClick={createDoc}
             disabled={creating}

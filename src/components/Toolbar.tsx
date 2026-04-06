@@ -8,11 +8,14 @@ interface ToolbarProps {
 
 interface ToolbarButton {
   label: string;
+  shortcut?: string;
   icon: React.ReactNode;
   action: () => void;
   isActive: () => boolean;
   separator?: boolean;
 }
+
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
 
 export default function Toolbar({ editor }: ToolbarProps) {
   if (!editor) return null;
@@ -20,6 +23,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
   const buttons: ToolbarButton[] = [
     {
       label: "Bold",
+      shortcut: "Mod+B",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} className="h-4 w-4">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z" />
@@ -31,12 +35,14 @@ export default function Toolbar({ editor }: ToolbarProps) {
     },
     {
       label: "Italic",
+      shortcut: "Mod+I",
       icon: <span className="text-sm font-serif italic font-bold">I</span>,
       action: () => editor.chain().focus().toggleItalic().run(),
       isActive: () => editor.isActive("italic"),
     },
     {
       label: "Strikethrough",
+      shortcut: "Mod+Shift+S",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
@@ -49,6 +55,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
     },
     {
       label: "Inline code",
+      shortcut: "Mod+E",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-3 3 3 3M16 9l3 3-3 3" />
@@ -181,7 +188,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
           )}
           <button
             onClick={btn.action}
-            title={btn.label}
+            title={btn.shortcut ? `${btn.label} (${btn.shortcut.replace(/Mod/g, isMac ? "\u2318" : "Ctrl")})` : btn.label}
             className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
               btn.isActive()
                 ? "bg-[#B8692A]/10 text-[#B8692A]"
