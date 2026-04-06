@@ -35,6 +35,8 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -92,6 +94,23 @@ export default function Home() {
     });
     const newDoc = await res.json();
     setDocs((prev) => [newDoc, ...prev]);
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  async function bulkDelete() {
+    setBulkDeleting(true);
+    const ids = [...selected];
+    await Promise.all(ids.map((id) => fetch(`/api/documents/${id}`, { method: "DELETE" })));
+    setDocs((prev) => prev.filter((d) => !selected.has(d.id)));
+    setSelected(new Set());
+    setBulkDeleting(false);
   }
 
   async function deleteDoc(doc: Doc) {
@@ -286,11 +305,35 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-2 max-w-3xl">
+              {selected.size > 0 && (
+                <div className="flex items-center gap-3 bg-[#111110] text-white rounded-xl px-4 py-3 mb-2">
+                  <span className="text-sm">{selected.size} selected</span>
+                  <button
+                    onClick={bulkDelete}
+                    disabled={bulkDeleting}
+                    className="text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
+                  >
+                    {bulkDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                  <button
+                    onClick={() => setSelected(new Set())}
+                    className="text-sm text-white/50 hover:text-white ml-auto"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
               {filteredDocs.map((doc) => (
-                <div key={doc.id} className="relative group">
+                <div key={doc.id} className="relative group flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(doc.id)}
+                    onChange={() => toggleSelect(doc.id)}
+                    className="shrink-0 h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity checked:opacity-100 cursor-pointer"
+                  />
                   <Link
                     href={`/doc/${doc.id}`}
-                    className="flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
+                    className="flex-1 flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-1 h-8 rounded-full bg-[#B8692A] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />

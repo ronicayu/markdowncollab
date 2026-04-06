@@ -101,6 +101,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || apiKey === "your-key-here") {
+      return NextResponse.json(
+        { error: "Anthropic API key not configured. Set ANTHROPIC_API_KEY in .env to use the AI agent." },
+        { status: 503 }
+      );
+    }
+
     // Connect to Yjs room server-side
     const connection = await connectYjsServer(WS_URL, documentId, {
       name: "Claude",
