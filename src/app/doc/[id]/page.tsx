@@ -94,16 +94,21 @@ export default function DocumentPage({
   }, [session]);
 
   const ydoc = useMemo(() => new Y.Doc(), []);
-  const provider = useMemo(
-    () =>
-      new WebsocketProvider(
-        process.env.NEXT_PUBLIC_WS_URL ||
-          `ws://${typeof window !== "undefined" ? window.location.host : "localhost:3000"}/ws`,
-        id,
-        ydoc
-      ),
-    [id, ydoc]
-  );
+  const provider = useMemo(() => {
+    let wsUrl = process.env.NEXT_PUBLIC_WS_URL ||
+      `ws://${typeof window !== "undefined" ? window.location.host : "localhost:3000"}/ws`;
+
+    // Append share token from URL if present
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get("token");
+      if (token) {
+        wsUrl += (wsUrl.includes("?") ? "&" : "?") + `token=${encodeURIComponent(token)}`;
+      }
+    }
+
+    return new WebsocketProvider(wsUrl, id, ydoc);
+  }, [id, ydoc]);
 
   const [connected, setConnected] = useState(
     () => (provider as unknown as { wsconnected?: boolean }).wsconnected ?? false
