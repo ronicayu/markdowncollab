@@ -15,6 +15,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import SlashCommandMenu from "./SlashCommandMenu";
 import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
+import Table from "@tiptap/extension-table";
+import TableRow from "@tiptap/extension-table-row";
+import TableCell from "@tiptap/extension-table-cell";
+import TableHeader from "@tiptap/extension-table-header";
 import SearchBar from "./SearchBar";
 
 const CURSOR_COLORS = [
@@ -129,6 +133,13 @@ export default function Editor({
         transformPastedText: false,
         transformCopiedText: false,
       }),
+      Table.configure({
+        resizable: false,
+        HTMLAttributes: { class: "editor-table" },
+      }),
+      TableRow,
+      TableCell,
+      TableHeader,
       // Cursor plugin disabled — see comment above
     ],
     editorProps: {
