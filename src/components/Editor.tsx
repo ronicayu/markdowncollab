@@ -78,7 +78,7 @@ export default function Editor({
       }),
       MermaidBlock,
       Placeholder.configure({
-        placeholder: "Start typing or paste markdown...",
+        placeholder: "Start typing, or press / for commands...",
       }),
       SuggestionMark,
       CommentMark,

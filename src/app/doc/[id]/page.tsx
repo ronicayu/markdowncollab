@@ -388,6 +388,8 @@ export default function DocumentPage({
       setEditor(e);
       setActiveCommentIds(collectActiveCommentIds(e));
       e.on("update", () => setActiveCommentIds(collectActiveCommentIds(e)));
+      // Auto-focus the editor so the user can start typing immediately
+      setTimeout(() => e.commands.focus("end"), 100);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
