@@ -71,7 +71,7 @@ export default function TopBar({
         >
           MC
         </a>
-        <span className="hidden sm:inline text-white/25 text-sm">/</span>
+        <span className="text-white/25 text-sm">/</span>
         <input
           value={editableTitle}
           onChange={(e) => setEditableTitle(e.target.value)}
@@ -82,7 +82,7 @@ export default function TopBar({
               (e.target as HTMLInputElement).blur();
             }
           }}
-          className="hidden sm:inline h-9 text-sm font-semibold text-white/80 truncate max-w-[150px] md:max-w-none bg-transparent border-none outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/5 rounded px-1 -ml-1 transition-colors placeholder:text-white/30"
+          className="h-9 text-sm font-semibold text-white/80 truncate max-w-[100px] sm:max-w-[150px] md:max-w-none bg-transparent border-none outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/5 rounded px-1 -ml-1 transition-colors placeholder:text-white/30 min-w-0"
         />
         {/* Connected status */}
         <div className="flex items-center gap-1.5 shrink-0">
@@ -98,7 +98,7 @@ export default function TopBar({
       </div>
 
       {/* Right: collaborators + actions */}
-      <div className="flex items-center gap-2 md:gap-3 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
         {/* Collaborator avatars */}
         {collaborators.length > 0 && (
           <div className="flex -space-x-2">
@@ -121,32 +121,41 @@ export default function TopBar({
           </div>
         )}
 
-        {/* Export — ghost */}
+        {/* Export — icon-only on mobile, text on sm+ */}
         <a
           href={`/api/documents/${documentId}/export`}
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+          title="Export"
         >
-          Export
+          <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          <span className="hidden sm:inline">Export</span>
         </a>
 
-        {/* Invite Agent — ghost */}
+        {/* Invite Agent — icon-only on mobile, text on sm+ */}
         <button
           onClick={onInviteAgent}
           disabled={agentLoading}
-          className="hidden sm:flex items-center gap-1.5 h-8 px-3 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm font-medium rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm font-medium rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Invite Agent"
         >
           {agentLoading ? (
             <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-          ) : null}
-          {agentLoading ? "Working..." : "Invite Agent"}
+          ) : (
+            <svg className="h-3.5 w-3.5 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082" />
+            </svg>
+          )}
+          <span className="hidden sm:inline">{agentLoading ? "Working..." : "Invite Agent"}</span>
         </button>
 
         {/* Auth */}
         {session ? (
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             {session.user?.image && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -159,27 +168,33 @@ export default function TopBar({
               onClick={() => signOut()}
               className="text-xs text-white/50 hover:text-white transition-colors"
             >
-              Sign out
+              <span className="hidden sm:inline">Sign out</span>
+              <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
             </button>
           </div>
         ) : (
           <button
             onClick={() => signIn()}
-            className="hidden sm:flex items-center gap-1.5 h-8 px-3 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm font-medium rounded-md transition-colors"
+            className="flex items-center gap-1.5 h-8 px-2 sm:px-3 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm font-medium rounded-md transition-colors"
           >
-            Sign in
+            <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+            </svg>
+            <span className="hidden sm:inline">Sign in</span>
           </button>
         )}
 
-        {/* Share — primary teal */}
+        {/* Share — primary */}
         <button
           onClick={handleShare}
-          className="flex items-center gap-1.5 h-8 px-3 bg-[#B8692A] hover:bg-[#96541F] text-white text-sm font-medium rounded-md transition-colors"
+          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 bg-[#B8692A] hover:bg-[#96541F] text-white text-sm font-medium rounded-md transition-colors"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
           </svg>
-          {copied ? "Copied!" : "Share"}
+          <span className="hidden sm:inline">{copied ? "Copied!" : "Share"}</span>
         </button>
       </div>
 

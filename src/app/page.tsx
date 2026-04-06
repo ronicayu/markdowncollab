@@ -228,7 +228,8 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
             )}
-            {creating ? "Creating..." : "New Document"}
+            <span className="hidden sm:inline">{creating ? "Creating..." : "New Document"}</span>
+            <span className="sm:hidden">{creating ? "..." : "New"}</span>
           </button>
         </header>
 
