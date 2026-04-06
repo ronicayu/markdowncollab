@@ -145,9 +145,7 @@ describe("checkDocumentAccess", () => {
       updatedAt: new Date(),
     } as any);
     mockShareFindFirst
-      .mockResolvedValueOnce(null) // by userId
-      .mockResolvedValueOnce(null) // by email
-      .mockResolvedValueOnce({     // by shareToken
+      .mockResolvedValueOnce({     // by shareToken (userId and email are null, so those checks are skipped)
         id: "share-3",
         documentId: docId,
         userId: null,
