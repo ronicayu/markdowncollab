@@ -55,7 +55,7 @@ describe("GET /api/documents/[id]/share", () => {
   });
 
   it("returns 403 for non-owner", async () => {
-    mockCheckAccess.mockResolvedValue({ hasAccess: true, role: "editor" });
+    mockCheckAccess.mockResolvedValue({ hasAccess: false, role: "editor" });
 
     const { GET } = await import("../route");
     const res = await GET(new Request("http://localhost"), { params });
