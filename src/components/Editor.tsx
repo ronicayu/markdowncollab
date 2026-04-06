@@ -43,6 +43,7 @@ interface EditorProps {
   provider: WebsocketProvider;
   onEditorReady?: (editor: TiptapEditor) => void;
   activeCommentId?: string | null;
+  editable?: boolean;
 }
 
 export default function Editor({
@@ -52,6 +53,7 @@ export default function Editor({
   provider,
   onEditorReady,
   activeCommentId,
+  editable = true,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getRandomColor(), []);
@@ -95,6 +97,7 @@ export default function Editor({
   }, []);
 
   const editor = useEditor({
+    editable,
     extensions: [
       StarterKit.configure({
         undoRedo: false,
@@ -212,6 +215,12 @@ export default function Editor({
       }
     },
   });
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(editable);
+    }
+  }, [editor, editable]);
 
   useEffect(() => {
     if (editor && onEditorReady) {

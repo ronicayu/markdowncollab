@@ -123,12 +123,14 @@ export default function DocumentPage({
   }, [provider]);
 
   const [docTitle, setDocTitle] = useState(id);
-  // Fetch document title on mount
+  const [userRole, setUserRole] = useState<"owner" | "editor" | "viewer" | null>(null);
+  // Fetch document title and role on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((doc) => {
         if (doc?.title) setDocTitle(doc.title);
+        if (doc?.role) setUserRole(doc.role);
       })
       .catch(() => {});
   }, [id]);
@@ -551,10 +553,11 @@ export default function DocumentPage({
         collaborators={collaborators}
         connected={connected}
         onInviteAgent={handleInviteAgent}
-        onTitleChange={handleTitleChange}
+        onTitleChange={userRole === "viewer" ? undefined : handleTitleChange}
         agentLoading={agentLoading}
+        userRole={userRole}
       />
-      <Toolbar editor={editor} />
+      {userRole !== "viewer" && <Toolbar editor={editor} />}
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden lg:block">
           <OutlineSidebar editor={editor} />
@@ -566,7 +569,7 @@ export default function DocumentPage({
           provider={provider}
           onEditorReady={handleEditorReady}
           activeCommentId={activeCommentId}
-
+          editable={userRole !== "viewer"}
         />
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
         <FloatingCommentButton
