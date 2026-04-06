@@ -25,9 +25,13 @@ vi.mock("@/lib/access-control", () => ({
   checkDocumentAccess: vi.fn(),
 }));
 
-vi.mock("fs/promises", () => ({
-  unlink: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock("fs/promises", async (importOriginal) => {
+  const actual = await importOriginal() as any;
+  return {
+    ...actual,
+    unlink: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 import { getServerSession } from "next-auth";
 import { checkDocumentAccess } from "@/lib/access-control";
