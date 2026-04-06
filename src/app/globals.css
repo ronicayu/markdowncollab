@@ -129,3 +129,15 @@ body {
   white-space: nowrap;
   pointer-events: none;
 }
+
+/* Find & Replace highlights */
+.search-match {
+  background-color: #fde68a; /* yellow-200 */
+  border-radius: 2px;
+}
+
+.search-match-current {
+  background-color: #fb923c; /* orange-400 */
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px #ea580c; /* orange-600 ring */
+}
