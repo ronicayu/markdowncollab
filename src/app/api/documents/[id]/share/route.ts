@@ -54,13 +54,24 @@ export async function POST(
     return NextResponse.json({ error: "Role must be viewer or editor" }, { status: 400 });
   }
 
-  const share = await prisma.documentShare.create({
-    data: {
-      documentId: id,
-      email: email.toLowerCase(),
-      role,
-    },
-  });
+  try {
+    const share = await prisma.documentShare.create({
+      data: {
+        documentId: id,
+        email: email.toLowerCase(),
+        role,
+      },
+    });
 
-  return NextResponse.json(share, { status: 201 });
+    return NextResponse.json(share, { status: 201 });
+  } catch (error: any) {
+    // Prisma unique constraint violation
+    if (error?.code === "P2002") {
+      return NextResponse.json(
+        { error: "This document is already shared with that email" },
+        { status: 409 }
+      );
+    }
+    throw error;
+  }
 }
