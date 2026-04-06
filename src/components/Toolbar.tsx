@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import type { Editor } from "@tiptap/core";
 
 interface ToolbarProps {
@@ -15,9 +16,19 @@ interface ToolbarButton {
   separator?: boolean;
 }
 
-const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+function formatShortcut(shortcut: string, mac: boolean): string {
+  return shortcut
+    .replace(/Mod/g, mac ? "\u2318" : "Ctrl")
+    .replace(/Alt/g, mac ? "\u2325" : "Alt")
+    .replace(/Shift/g, mac ? "\u21E7" : "Shift");
+}
 
 export default function Toolbar({ editor }: ToolbarProps) {
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
+  }, []);
+
   if (!editor) return null;
 
   const buttons: ToolbarButton[] = [
@@ -196,7 +207,7 @@ export default function Toolbar({ editor }: ToolbarProps) {
           )}
           <button
             onClick={btn.action}
-            title={btn.shortcut ? `${btn.label} (${btn.shortcut.replace(/Mod/g, isMac ? "\u2318" : "Ctrl")})` : btn.label}
+            title={btn.shortcut ? `${btn.label} (${formatShortcut(btn.shortcut, isMac)})` : btn.label}
             className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
               btn.isActive()
                 ? "bg-[#B8692A]/10 text-[#B8692A]"
