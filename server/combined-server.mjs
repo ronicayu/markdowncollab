@@ -56,6 +56,55 @@ if (!existsSync(markdownDir)) mkdirSync(markdownDir, { recursive: true });
 
 const docs = new Map();
 
+async function createAutoSnapshot(docName, doc) {
+  try {
+    const Y = await import("yjs");
+    const state = Y.encodeStateAsUpdate(doc);
+    const snapshot = Buffer.from(state);
+
+    // Look up the document title from the database
+    const dbDoc = await wsDbClient.document.findUnique({
+      where: { id: docName },
+      select: { title: true },
+    });
+    const title = dbDoc?.title || "Untitled";
+
+    await wsDbClient.documentVersion.create({
+      data: {
+        documentId: docName,
+        snapshot,
+        title,
+        type: "auto",
+        createdBy: null,
+        createdByName: "System",
+      },
+    });
+
+    // Prune old auto snapshots (keep last 50)
+    const count = await wsDbClient.documentVersion.count({
+      where: { documentId: docName, type: "auto" },
+    });
+    if (count > 50) {
+      const excess = count - 50;
+      const oldest = await wsDbClient.documentVersion.findMany({
+        where: { documentId: docName, type: "auto" },
+        orderBy: { createdAt: "asc" },
+        take: excess,
+        select: { id: true },
+      });
+      if (oldest.length > 0) {
+        await wsDbClient.documentVersion.deleteMany({
+          where: { id: { in: oldest.map((v) => v.id) } },
+        });
+      }
+    }
+
+    console.log(`Auto-snapshot created for ${docName}`);
+  } catch (err) {
+    console.error(`Failed to create auto-snapshot for ${docName}:`, err.message);
+  }
+}
+
 /**
  * Convert a Yjs XmlFragment (ProseMirror doc) to markdown.
  * Walks the tree and produces clean markdown text.
@@ -213,10 +262,32 @@ function getDoc(docName) {
       } catch (err) {
         console.error(`Error saving markdown for ${docName}:`, err.message);
       }
+
+      // Auto-snapshot every 30 minutes of active editing
+      const docEntry = docs.get(docName);
+      if (docEntry && docEntry.hasEdits) {
+        const elapsed = Date.now() - docEntry.lastSnapshotTime;
+        if (elapsed >= 30 * 60 * 1000) {
+          docEntry.lastSnapshotTime = Date.now();
+          docEntry.hasEdits = false;
+          createAutoSnapshot(docName, doc);
+        }
+      }
     }, 1000);
   });
 
   const entry = { doc, awareness, conns: new Set() };
+
+  // --- Auto-snapshot tracking ---
+  const SNAPSHOT_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+  entry.lastSnapshotTime = Date.now();
+  entry.hasEdits = false;
+
+  // Track edits for snapshot timing
+  doc.on("update", () => {
+    entry.hasEdits = true;
+  });
+
   docs.set(docName, entry);
   return entry;
 }
@@ -284,6 +355,16 @@ wss.on("connection", (ws, req) => {
   ws.on("close", () => {
     docConns.delete(ws);
     awarenessProtocol.removeAwarenessStates(awareness, [doc.clientID], null);
+
+    // Auto-snapshot when last client disconnects
+    if (docConns.size === 0) {
+      const docEntry = docs.get(docName);
+      if (docEntry && docEntry.hasEdits) {
+        docEntry.hasEdits = false;
+        docEntry.lastSnapshotTime = Date.now();
+        createAutoSnapshot(docName, doc);
+      }
+    }
   });
 });
 
