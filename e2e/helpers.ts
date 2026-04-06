@@ -75,7 +75,7 @@ export async function createDocument(
   await page.waitForLoadState("networkidle");
 
   // Click "New Document" button to open template picker
-  await page.click("button:has-text('New Document')");
+  await page.click("button:has-text('New Document'), button:has-text('New')");
 
   // Wait for template picker modal
   await page.waitForSelector('[data-testid="template-picker-backdrop"]', {
@@ -93,14 +93,13 @@ export async function createDocument(
   const docId = url.split("/doc/")[1]?.split("?")[0] || "";
 
   if (title) {
-    // Clear and type the new title in the TopBar title input
-    const titleInput = page.locator(
-      'input.font-semibold'
-    ).first();
-    await titleInput.fill(title);
-    await titleInput.press("Enter");
-    // Wait for the title to be saved
-    await page.waitForTimeout(500);
+    // Rename the document via the API (more reliable than UI interaction)
+    await page.request.put(`/api/documents/${docId}`, {
+      data: { title },
+    });
+    // Reload to see the new title
+    await page.reload();
+    await page.waitForLoadState("networkidle");
   }
 
   return docId;
