@@ -53,3 +53,4 @@ test.db
 test.db-journal
 playwright-report/
 test-results/
+uploads/
