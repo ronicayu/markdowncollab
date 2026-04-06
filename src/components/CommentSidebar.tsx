@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Suggestion, Comment } from "@/types";
 import SuggestionCard from "./SuggestionCard";
 import CommentCard from "./CommentCard";
+import MentionAutocomplete, { type MentionUser } from "./MentionAutocomplete";
+import { formatMention } from "@/lib/mention-utils";
 
 type Filter = "open" | "resolved" | "all";
 
@@ -23,6 +25,7 @@ interface CommentSidebarProps {
   openFormTrigger?: number;
   /** Called whenever the comment form opens or closes, so the parent can track it. */
   onFormOpenChange?: (isOpen: boolean) => void;
+  documentId?: string;
 }
 
 export default function CommentSidebar({
@@ -39,11 +42,25 @@ export default function CommentSidebar({
   activeCommentId,
   openFormTrigger,
   onFormOpenChange,
+  documentId,
 }: CommentSidebarProps) {
   const [commentText, setCommentText] = useState("");
   const [showInput, setShowInput] = useState(false);
   const [filter, setFilter] = useState<Filter>("open");
   const [collapsed, setCollapsed] = useState(true);
+  const [mentionUsers, setMentionUsers] = useState<MentionUser[]>([]);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentions, setShowMentions] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fetch collaborators for mention autocomplete
+  useEffect(() => {
+    if (!documentId) return;
+    fetch(`/api/documents/${documentId}/collaborators`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((users: MentionUser[]) => setMentionUsers(users))
+      .catch(() => {});
+  }, [documentId]);
 
   // Open the comment form whenever the trigger counter increments
   useEffect(() => {
@@ -85,6 +102,30 @@ export default function CommentSidebar({
   function closeForm() {
     setShowInput(false);
     setCommentText("");
+  }
+
+  function handleMentionSelect(user: MentionUser) {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = commentText.slice(0, cursorPos);
+    const atIndex = textBeforeCursor.lastIndexOf("@");
+    if (atIndex === -1) return;
+
+    const mention = formatMention(user.name, user.id);
+    const before = commentText.slice(0, atIndex);
+    const after = commentText.slice(cursorPos);
+    const newText = before + mention + " " + after;
+    setCommentText(newText);
+    setShowMentions(false);
+
+    // Restore focus
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = atIndex + mention.length + 1;
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
   }
 
   if (collapsed) {
@@ -149,23 +190,46 @@ export default function CommentSidebar({
       {showInput && (
         <div className="mb-3 rounded-lg border border-[#D4A978] bg-[#FFFEF9] p-3">
           <p className="text-xs text-gray-500 mb-2">Comment on selected text:</p>
-          <textarea
-            autoFocus
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
-              }
-              if (e.key === "Escape") {
-                closeForm();
-              }
-            }}
-            placeholder="Type your comment..."
-            className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-[#B8692A]"
-            rows={2}
-          />
+          <div className="relative">
+            <MentionAutocomplete
+              users={mentionUsers}
+              query={mentionQuery}
+              onSelect={handleMentionSelect}
+              onDismiss={() => setShowMentions(false)}
+              visible={showMentions}
+            />
+            <textarea
+              ref={textareaRef}
+              autoFocus
+              value={commentText}
+              onChange={(e) => {
+                const value = e.target.value;
+                setCommentText(value);
+                const cursorPos = e.target.selectionStart;
+                const textBeforeCursor = value.slice(0, cursorPos);
+                const atMatch = textBeforeCursor.match(/@(\w*)$/);
+                if (atMatch) {
+                  setMentionQuery(atMatch[1]);
+                  setShowMentions(true);
+                } else {
+                  setShowMentions(false);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (showMentions) return; // Let autocomplete handle keys
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+                if (e.key === "Escape") {
+                  closeForm();
+                }
+              }}
+              placeholder="Type your comment... Use @ to mention"
+              className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-[#B8692A]"
+              rows={2}
+            />
+          </div>
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={closeForm}

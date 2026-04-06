@@ -28,6 +28,7 @@ const defaultProps = {
   onReplyToComment: vi.fn(),
   hasSelection: false,
   activeCommentId: null,
+  documentId: "doc1",
 };
 
 describe("CommentSidebar filter", () => {

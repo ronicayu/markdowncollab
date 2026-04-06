@@ -624,6 +624,7 @@ export default function DocumentPage({
             activeCommentId={activeCommentId}
             openFormTrigger={openFormTrigger}
             onFormOpenChange={setCommentFormOpen}
+            documentId={id}
           />
         </div>
         {versionHistoryOpen && (
