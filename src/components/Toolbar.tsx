@@ -197,6 +197,18 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       isActive: () => false,
     },
     {
+      label: "Table",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <rect x="3" y="3" width="18" height="18" rx="1" />
+          <path strokeLinecap="round" d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+      isActive: () => editor.isActive("table"),
+      separator: true,
+    },
+    {
       label: "Find & Replace",
       shortcut: "Mod+F",
       icon: (
