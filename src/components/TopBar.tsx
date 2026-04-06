@@ -19,6 +19,8 @@ interface TopBarProps {
   onTitleChange?: (title: string) => void;
   agentLoading?: boolean;
   userRole?: "owner" | "editor" | "viewer" | null;
+  onToggleVersionHistory?: () => void;
+  versionHistoryOpen?: boolean;
 }
 
 export default function TopBar({
@@ -30,6 +32,8 @@ export default function TopBar({
   onTitleChange,
   agentLoading,
   userRole,
+  onToggleVersionHistory,
+  versionHistoryOpen,
 }: TopBarProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
@@ -147,6 +151,22 @@ export default function TopBar({
           </svg>
           <span className="hidden sm:inline">Export</span>
         </a>
+
+        {/* Version History toggle */}
+        <button
+          onClick={onToggleVersionHistory}
+          className={`flex items-center gap-1.5 h-8 px-2 sm:px-3 text-sm font-medium transition-colors rounded-md ${
+            versionHistoryOpen
+              ? "text-white bg-white/15"
+              : "text-white/60 hover:text-white hover:bg-white/8"
+          }`}
+          title="Version history"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="hidden sm:inline">History</span>
+        </button>
 
         {/* Invite Agent — icon-only on mobile, text on sm+ */}
         <button
