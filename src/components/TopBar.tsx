@@ -43,10 +43,20 @@ export default function TopBar({
   }, [documentId]);
   const [editableTitle, setEditableTitle] = useState(title);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
     setEditableTitle(title);
   }, [title]);
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    function handleClick() {
+      setExportOpen(false);
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [exportOpen]);
 
   function commitTitle() {
     const trimmed = editableTitle.trim();
@@ -140,17 +150,40 @@ export default function TopBar({
           </div>
         )}
 
-        {/* Export — icon-only on mobile, text on sm+ */}
-        <a
-          href={`/api/documents/${documentId}/export`}
-          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
-          title="Export"
-        >
-          <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-          </svg>
-          <span className="hidden sm:inline">Export</span>
-        </a>
+        {/* Export dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setExportOpen((v) => !v)}
+            className="flex items-center gap-1.5 h-8 px-2 sm:px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+            title="Export"
+          >
+            <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span className="hidden sm:inline">Export</span>
+            <svg className="hidden sm:block h-3 w-3 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {exportOpen && (
+            <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 py-1">
+              <a
+                href={`/api/documents/${documentId}/export`}
+                onClick={() => setExportOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+              >
+                <span>Markdown (.md)</span>
+              </a>
+              <a
+                href={`/api/documents/${documentId}/export/pdf`}
+                onClick={() => setExportOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+              >
+                <span>PDF (.pdf)</span>
+              </a>
+            </div>
+          )}
+        </div>
 
         {/* Version History toggle */}
         <button
