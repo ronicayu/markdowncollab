@@ -47,7 +47,7 @@ const params = Promise.resolve({ id: "doc-1" });
 describe("POST /api/documents/[id]/share-link", () => {
   it("enables link sharing and returns a token", async () => {
     mockCheckAccess.mockResolvedValue({ hasAccess: true, role: "owner" });
-    mockShareCreate.mockImplementation(async ({ data }: any) => ({
+    (mockShareCreate as any).mockImplementation(async ({ data }: any) => ({
       id: "share-link-1",
       documentId: "doc-1",
       userId: null,

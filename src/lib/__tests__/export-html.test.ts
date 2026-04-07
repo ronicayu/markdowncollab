@@ -13,7 +13,7 @@ describe("xmlFragmentToHtml", () => {
   it("converts a heading to <h1>", () => {
     const frag = buildFragment((f) => {
       const h = new Y.XmlElement("heading");
-      h.setAttribute("level", 1);
+      h.setAttribute("level", "1");
       h.insert(0, [new Y.XmlText("Hello World")]);
       f.insert(0, [h]);
     });
@@ -25,7 +25,7 @@ describe("xmlFragmentToHtml", () => {
     const frag = buildFragment((f) => {
       for (let level = 1; level <= 6; level++) {
         const h = new Y.XmlElement("heading");
-        h.setAttribute("level", level);
+        h.setAttribute("level", String(level));
         h.insert(0, [new Y.XmlText(`Level ${level}`)]);
         f.insert(f.length, [h]);
       }

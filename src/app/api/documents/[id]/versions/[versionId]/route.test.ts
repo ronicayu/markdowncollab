@@ -58,7 +58,7 @@ describe("GET /api/documents/[id]/versions/[versionId]", () => {
     const doc = new Y.Doc();
     const yxml = doc.getXmlFragment("default");
     const heading = new Y.XmlElement("heading");
-    heading.setAttribute("level", 1);
+    heading.setAttribute("level", "1");
     heading.insert(0, [new Y.XmlText("Hello")]);
     yxml.insert(0, [heading]);
 
