@@ -91,6 +91,11 @@ export default function Home() {
     lastEditedAt: string;
   } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [searchTagFilter, setSearchTagFilter] = useState("");
+  const [searchFolderFilter, setSearchFolderFilter] = useState("");
+  const [searchDateFrom, setSearchDateFrom] = useState("");
+  const [searchDateTo, setSearchDateTo] = useState("");
+  const [showSearchFilters, setShowSearchFilters] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -278,7 +283,7 @@ export default function Home() {
     setNewTagName("");
   }
 
-  // Debounced full-text search
+  // Debounced full-text search with filters
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     const q = search.trim();
@@ -289,7 +294,12 @@ export default function Home() {
     }
     setSearchLoading(true);
     searchTimerRef.current = setTimeout(() => {
-      fetch(`/api/documents/search?q=${encodeURIComponent(q)}`)
+      const params = new URLSearchParams({ q });
+      if (searchTagFilter) params.set("tag", searchTagFilter);
+      if (searchFolderFilter) params.set("folderId", searchFolderFilter);
+      if (searchDateFrom) params.set("dateFrom", searchDateFrom);
+      if (searchDateTo) params.set("dateTo", searchDateTo);
+      fetch(`/api/documents/search?${params.toString()}`)
         .then((r) => r.json())
         .then((data) => {
           if (Array.isArray(data)) setSearchResults(data);
@@ -301,7 +311,7 @@ export default function Home() {
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, [search]);
+  }, [search, searchTagFilter, searchFolderFilter, searchDateFrom, searchDateTo]);
 
   async function toggleStar(docId: string, e: React.MouseEvent) {
     e.preventDefault();
@@ -783,6 +793,20 @@ export default function Home() {
               </svg>
               <span className="hidden sm:inline">{sortBy === "date" ? "Date" : "Name"}</span>
             </button>
+            <button
+              onClick={() => setShowSearchFilters((v) => !v)}
+              className={`shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs transition-colors ${
+                showSearchFilters || searchTagFilter || searchFolderFilter || searchDateFrom || searchDateTo
+                  ? "border-[#B8692A]/40 bg-amber-50 text-[#B8692A]"
+                  : "border-black/10 bg-white/60 text-gray-500 hover:text-gray-700 hover:border-black/20"
+              }`}
+              title="Toggle search filters"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+              </svg>
+              <span className="hidden sm:inline">Filters</span>
+            </button>
           </div>
           {session && <NotificationBell />}
           <input
@@ -828,6 +852,66 @@ export default function Home() {
             <span className="sm:hidden">{creating ? "..." : "New"}</span>
           </button>
         </header>
+
+        {/* Search filters row */}
+        {showSearchFilters && (
+          <div className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-[#F2E8D5] border-b border-black/5 flex-wrap">
+            <select
+              value={searchTagFilter}
+              onChange={(e) => setSearchTagFilter(e.target.value)}
+              className="rounded-lg border border-black/10 bg-white/60 px-2 py-1.5 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
+            >
+              <option value="">All tags</option>
+              {allTags.map((tag) => (
+                <option key={tag.id} value={tag.name}>{tag.name}</option>
+              ))}
+            </select>
+            <select
+              value={searchFolderFilter}
+              onChange={(e) => setSearchFolderFilter(e.target.value)}
+              className="rounded-lg border border-black/10 bg-white/60 px-2 py-1.5 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
+            >
+              <option value="">All folders</option>
+              {(function flattenFolders(nodes: Folder[], depth: number): React.ReactNode[] {
+                return nodes.flatMap((f) => [
+                  <option key={f.id} value={f.id}>{"  ".repeat(depth) + f.name}</option>,
+                  ...flattenFolders(f.children, depth + 1),
+                ]);
+              })(folders, 0)}
+            </select>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-400">From</span>
+              <input
+                type="date"
+                value={searchDateFrom}
+                onChange={(e) => setSearchDateFrom(e.target.value)}
+                className="rounded-lg border border-black/10 bg-white/60 px-2 py-1 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
+              />
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-gray-400">To</span>
+              <input
+                type="date"
+                value={searchDateTo}
+                onChange={(e) => setSearchDateTo(e.target.value)}
+                className="rounded-lg border border-black/10 bg-white/60 px-2 py-1 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
+              />
+            </div>
+            {(searchTagFilter || searchFolderFilter || searchDateFrom || searchDateTo) && (
+              <button
+                onClick={() => {
+                  setSearchTagFilter("");
+                  setSearchFolderFilter("");
+                  setSearchDateFrom("");
+                  setSearchDateTo("");
+                }}
+                className="text-xs text-[#B8692A] hover:text-[#96541F] font-medium transition-colors"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Document list */}
         <main className="flex-1 overflow-y-auto px-6 py-6">

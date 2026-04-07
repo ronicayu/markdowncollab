@@ -4,6 +4,8 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     document: { findMany: vi.fn() },
     documentShare: { findMany: vi.fn() },
+    tag: { findMany: vi.fn() },
+    documentTag: { findMany: vi.fn() },
   },
 }));
 
@@ -21,9 +23,12 @@ import { getServerSession } from "next-auth";
 const mockGetSession = vi.mocked(getServerSession);
 const mockDocFindMany = vi.mocked(prisma.document.findMany);
 const mockShareFindMany = vi.mocked(prisma.documentShare.findMany);
+const mockTagFindMany = vi.mocked(prisma.tag.findMany);
+const mockDocTagFindMany = vi.mocked(prisma.documentTag.findMany);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.resetModules();
 });
 
 describe("GET /api/documents/search", () => {
@@ -115,6 +120,103 @@ describe("GET /api/documents/search", () => {
 
     expect(res.status).toBe(200);
     expect(data).toHaveLength(1);
+  });
+});
+
+describe("GET /api/documents/search with filters", () => {
+  it("filters by tag name", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-1", name: "Test", email: "test@example.com" },
+      expires: "never",
+    } as any);
+
+    mockTagFindMany.mockResolvedValue([{ id: "tag-1", name: "important", color: "#ff0000" }] as any);
+    mockDocTagFindMany.mockResolvedValue([{ documentId: "doc-1", tagId: "tag-1" }] as any);
+
+    mockDocFindMany.mockResolvedValue([
+      { id: "doc-1", title: "Meeting Notes", ownerId: "user-1", updatedAt: new Date("2025-01-01") },
+      { id: "doc-2", title: "Meeting Agenda", ownerId: "user-1", updatedAt: new Date("2025-01-02") },
+    ] as any);
+
+    mockShareFindMany.mockResolvedValue([]);
+
+    const { GET } = await import("../../search/route");
+    const req = new Request("http://localhost/api/documents/search?q=meeting&tag=important");
+    const res = await GET(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    // Only doc-1 has the tag
+    expect(data).toHaveLength(1);
+    expect(data[0].id).toBe("doc-1");
+  });
+
+  it("filters by folderId", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-1", name: "Test", email: "test@example.com" },
+      expires: "never",
+    } as any);
+
+    mockDocFindMany.mockResolvedValue([
+      { id: "doc-1", title: "Project Notes", ownerId: "user-1", folderId: "folder-1", updatedAt: new Date("2025-01-01") },
+    ] as any);
+
+    mockShareFindMany.mockResolvedValue([]);
+
+    const { GET } = await import("../../search/route");
+    const req = new Request("http://localhost/api/documents/search?q=project&folderId=folder-1");
+    const res = await GET(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toHaveLength(1);
+    expect(data[0].id).toBe("doc-1");
+  });
+
+  it("filters by date range", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-1", name: "Test", email: "test@example.com" },
+      expires: "never",
+    } as any);
+
+    mockDocFindMany.mockResolvedValue([
+      { id: "doc-1", title: "January Notes", ownerId: "user-1", updatedAt: new Date("2025-01-15") },
+    ] as any);
+
+    mockShareFindMany.mockResolvedValue([]);
+
+    const { GET } = await import("../../search/route");
+    const req = new Request("http://localhost/api/documents/search?q=notes&dateFrom=2025-01-01&dateTo=2025-01-31");
+    const res = await GET(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toHaveLength(1);
+    expect(data[0].id).toBe("doc-1");
+  });
+
+  it("returns empty when tag filter matches no documents", async () => {
+    mockGetSession.mockResolvedValue({
+      user: { id: "user-1", name: "Test", email: "test@example.com" },
+      expires: "never",
+    } as any);
+
+    mockTagFindMany.mockResolvedValue([{ id: "tag-99", name: "nonexistent", color: "#000" }] as any);
+    mockDocTagFindMany.mockResolvedValue([] as any);
+
+    mockDocFindMany.mockResolvedValue([
+      { id: "doc-1", title: "Meeting Notes", ownerId: "user-1", updatedAt: new Date("2025-01-01") },
+    ] as any);
+
+    mockShareFindMany.mockResolvedValue([]);
+
+    const { GET } = await import("../../search/route");
+    const req = new Request("http://localhost/api/documents/search?q=meeting&tag=nonexistent");
+    const res = await GET(req);
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toHaveLength(0);
   });
 });
 

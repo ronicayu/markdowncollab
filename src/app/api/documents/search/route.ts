@@ -49,17 +49,67 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing query parameter 'q'" }, { status: 400 });
   }
 
+  // Advanced filter params
+  const tagName = url.searchParams.get("tag")?.trim() || null;
+  const folderId = url.searchParams.get("folderId")?.trim() || null;
+  const dateFrom = url.searchParams.get("dateFrom")?.trim() || null;
+  const dateTo = url.searchParams.get("dateTo")?.trim() || null;
+
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const userEmail = session?.user?.email ?? undefined;
 
+  // Build additional where clauses for filters
+  const extraFilters: Record<string, unknown>[] = [];
+  if (folderId) {
+    extraFilters.push({ folderId });
+  }
+  if (dateFrom) {
+    const fromDate = new Date(dateFrom);
+    if (!isNaN(fromDate.getTime())) {
+      extraFilters.push({ updatedAt: { gte: fromDate } });
+    }
+  }
+  if (dateTo) {
+    const toDate = new Date(dateTo);
+    if (!isNaN(toDate.getTime())) {
+      // Set to end of day
+      toDate.setHours(23, 59, 59, 999);
+      extraFilters.push({ updatedAt: { lte: toDate } });
+    }
+  }
+
+  // If tag filter is set, find document IDs with that tag
+  let tagFilterDocIds: Set<string> | null = null;
+  if (tagName) {
+    const tag = await prisma.documentTag.findMany({
+      where: {
+        tagId: {
+          in: (
+            await prisma.tag.findMany({
+              where: { name: { equals: tagName } },
+              select: { id: true },
+            })
+          ).map((t) => t.id),
+        },
+      },
+      select: { documentId: true },
+    });
+    tagFilterDocIds = new Set(tag.map((t) => t.documentId));
+  }
+
   // Get accessible document IDs for this user
   let accessibleDocs: { id: string; title: string; updatedAt: Date }[];
+
+  const baseWhere: Record<string, unknown> = { deletedAt: null };
+  if (extraFilters.length > 0) {
+    (baseWhere as any).AND = extraFilters;
+  }
 
   if (!userId) {
     // Unauthenticated: only legacy docs
     accessibleDocs = await prisma.document.findMany({
-      where: { ownerId: null, deletedAt: null },
+      where: { ...baseWhere, ownerId: null },
       select: { id: true, title: true, updatedAt: true },
     });
   } else {
@@ -76,7 +126,7 @@ export async function GET(req: Request) {
 
     accessibleDocs = await prisma.document.findMany({
       where: {
-        deletedAt: null,
+        ...baseWhere,
         OR: [
           { ownerId: userId },
           { ownerId: null },
@@ -85,6 +135,11 @@ export async function GET(req: Request) {
       },
       select: { id: true, title: true, updatedAt: true },
     });
+  }
+
+  // Apply tag filter if set
+  if (tagFilterDocIds) {
+    accessibleDocs = accessibleDocs.filter((d) => tagFilterDocIds!.has(d.id));
   }
 
   const lowerQuery = query.toLowerCase();
