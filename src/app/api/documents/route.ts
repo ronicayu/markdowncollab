@@ -67,6 +67,7 @@ export async function POST(req: Request) {
     data: {
       title: title || "Untitled",
       ownerId: userId ?? null,
+      templateId: templateId ?? null,
     },
   });
 

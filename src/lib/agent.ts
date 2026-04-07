@@ -36,7 +36,59 @@ export function parseSuggestions(response: string): RawSuggestion[] {
   );
 }
 
-const REVIEW_PROMPT = `You are a writing assistant reviewing a markdown document. Analyze the document and suggest improvements for clarity, grammar, style, and conciseness.
+const TEMPLATE_GUIDANCE: Record<string, { context: string; guidance: string }> = {
+  "meeting-notes": {
+    context: "meeting notes",
+    guidance: "Focus on action items being specific and assigned. Flag vague decisions. Ensure attendees and date are filled in.",
+  },
+  adr: {
+    context: "architecture decision record",
+    guidance: "Verify the decision is clearly stated, context is sufficient, and consequences are honest about trade-offs.",
+  },
+  rfc: {
+    context: "RFC (Request for Comments)",
+    guidance: "Check that the motivation is compelling, the design is detailed enough to implement, and alternatives are fairly evaluated.",
+  },
+  standup: {
+    context: "standup update",
+    guidance: "Ensure blockers are clearly stated. Flag items that lack specificity.",
+  },
+  "project-brief": {
+    context: "project brief",
+    guidance: "Verify scope is bounded, timeline is realistic, and risks are identified.",
+  },
+  "bug-report": {
+    context: "bug report",
+    guidance: "Check that steps to reproduce are specific and the expected vs actual behavior is clear.",
+  },
+};
+
+interface PromptContext {
+  templateId?: string | null;
+  title?: string | null;
+}
+
+/**
+ * Build a context-aware review prompt based on document template and title.
+ */
+export function buildReviewPrompt(markdown: string, context: PromptContext): string {
+  const template = context.templateId ? TEMPLATE_GUIDANCE[context.templateId] : null;
+
+  const docType = template ? template.context : "document";
+  const titleLine = context.title ? ` titled "${context.title}"` : "";
+  const guidanceLine = template
+    ? template.guidance
+    : "Review for general writing quality — clarity, grammar, style, conciseness.";
+
+  return `You are a writing assistant reviewing a ${docType}${titleLine}.
+
+${guidanceLine}
+
+Review for:
+1. Clarity and readability
+2. Grammar and style
+3. Completeness — are any expected sections missing or empty?
+4. Actionability — are action items, decisions, or next steps clear?
 
 Return your suggestions as a JSON array where each item has:
 - "original": the exact text from the document that should be changed (must match character-for-character)
@@ -45,15 +97,22 @@ Return your suggestions as a JSON array where each item has:
 
 Return ONLY the JSON array, no other text. If there are no suggestions, return an empty array [].
 
-Important: the "original" field must contain the EXACT text from the document — it will be used for text matching.`;
+Important: the "original" field must contain the EXACT text from the document — it will be used for text matching.
+
+Here is the document to review:
+
+${markdown}`;
+}
 
 /**
  * Call the Anthropic API to generate editing suggestions for a markdown document.
  */
 export async function generateSuggestions(
-  markdown: string
+  markdown: string,
+  context?: PromptContext
 ): Promise<RawSuggestion[]> {
   const client = new Anthropic();
+  const prompt = buildReviewPrompt(markdown, context || {});
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-5-20250514",
@@ -61,7 +120,7 @@ export async function generateSuggestions(
     messages: [
       {
         role: "user",
-        content: `${REVIEW_PROMPT}\n\nHere is the document to review:\n\n${markdown}`,
+        content: prompt,
       },
     ],
   });

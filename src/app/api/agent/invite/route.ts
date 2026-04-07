@@ -3,6 +3,7 @@ import * as Y from "yjs";
 import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { generateSuggestions } from "@/lib/agent";
 import { addSuggestion } from "@/lib/suggestion-store";
+import { prisma } from "@/lib/prisma";
 
 const WS_URL = process.env.WS_URL || "ws://localhost:3000/ws";
 
@@ -128,8 +129,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate suggestions via Anthropic API
-    const rawSuggestions = await generateSuggestions(plainText);
+    // Fetch document metadata for context-aware agent
+    const doc = await prisma.document.findUnique({
+      where: { id: documentId },
+      select: { title: true, templateId: true },
+    });
+
+    // Generate suggestions via Anthropic API with document context
+    const rawSuggestions = await generateSuggestions(plainText, {
+      templateId: doc?.templateId,
+      title: doc?.title,
+    });
 
     // Add each suggestion to the Yjs shared map with RelativePosition anchors
     let suggestionsCount = 0;
