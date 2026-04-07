@@ -156,6 +156,9 @@ export default function DocumentPage({
   const [userRole, setUserRole] = useState<"owner" | "editor" | "viewer" | null>(null);
   const [docStatus, setDocStatus] = useState<string>("draft");
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbSegment[]>([]);
+  const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockedBy: string | null } | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [expirationDialogOpen, setExpirationDialogOpen] = useState(false);
   // Fetch document title, role, status, and breadcrumbs on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
@@ -199,6 +202,48 @@ export default function DocumentPage({
     },
     [id]
   );
+
+  // Fetch lock status on mount
+  useEffect(() => {
+    fetch(`/api/documents/${id}/lock`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setLockInfo({ locked: data.locked, lockedBy: data.lockedBy });
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const handleToggleLock = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/documents/${id}/lock`, { method: "PUT" });
+      const data = await res.json();
+      if (res.ok) {
+        setLockInfo({ locked: data.locked, lockedBy: data.lockedBy });
+        toast(data.locked ? `Document locked` : "Document unlocked");
+      } else {
+        toast(data.error || "Failed to toggle lock", "error");
+      }
+    } catch {
+      toast("Failed to toggle lock", "error");
+    }
+  }, [id]);
+
+  const handleSummarize = useCallback(async () => {
+    setSummaryLoading(true);
+    try {
+      const res = await fetch(`/api/documents/${id}/summarize`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        toast(data.summary, "success", 10000);
+      } else {
+        toast(data.error || "Failed to generate summary", "error");
+      }
+    } catch {
+      toast("Failed to generate summary", "error");
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [id]);
 
   // Track document view on mount
   useEffect(() => {
@@ -766,8 +811,13 @@ export default function DocumentPage({
         chatOpen={chatOpen}
         breadcrumbs={breadcrumbs}
         onSetReminder={() => setReminderDialogOpen(true)}
+        lockInfo={lockInfo}
+        onToggleLock={handleToggleLock}
+        onSummarize={handleSummarize}
+        summaryLoading={summaryLoading}
+        onSetExpiration={() => setExpirationDialogOpen(true)}
       />
-      {userRole !== "viewer" && !focusMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
       <div className="flex flex-1 overflow-hidden">
         {!focusMode && (
@@ -788,7 +838,7 @@ export default function DocumentPage({
                 provider={provider}
                 onEditorReady={handleEditorReady}
                 activeCommentId={activeCommentId}
-                editable={userRole !== "viewer"}
+                editable={userRole !== "viewer" && !(lockInfo?.locked && lockInfo.lockedBy !== userName)}
                 initialContent={templateContent}
                 onToggleShortcutsHelp={toggleShortcutsHelp}
               />

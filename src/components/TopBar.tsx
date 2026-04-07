@@ -37,6 +37,11 @@ interface TopBarProps {
   onStatusChange?: (status: string) => void;
   breadcrumbs?: BreadcrumbSegment[];
   onSetReminder?: () => void;
+  lockInfo?: { locked: boolean; lockedBy: string | null } | null;
+  onToggleLock?: () => void;
+  onSummarize?: () => void;
+  summaryLoading?: boolean;
+  onSetExpiration?: () => void;
 }
 
 export default function TopBar({
@@ -60,6 +65,11 @@ export default function TopBar({
   onStatusChange,
   breadcrumbs,
   onSetReminder,
+  lockInfo,
+  onToggleLock,
+  onSummarize,
+  summaryLoading,
+  onSetExpiration,
 }: TopBarProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
@@ -198,6 +208,14 @@ export default function TopBar({
             {documentStatus === "approved" ? "Approved" : documentStatus === "in_review" ? "In Review" : "Draft"}
           </span>
         )}
+        {lockInfo?.locked && lockInfo.lockedBy && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            Locked by {lockInfo.lockedBy}
+          </span>
+        )}
       </div>
 
       {/* Right: collaborators + actions */}
@@ -224,6 +242,52 @@ export default function TopBar({
               </div>
             ))}
           </div>
+        )}
+
+        {/* Lock toggle */}
+        {onToggleLock && (
+          <button
+            onClick={onToggleLock}
+            className={`flex items-center gap-1.5 h-8 px-2 sm:px-3 text-sm font-medium transition-colors rounded-md ${
+              lockInfo?.locked
+                ? "text-amber-400 bg-amber-400/10 hover:bg-amber-400/20"
+                : "text-white/60 hover:text-white hover:bg-white/8"
+            }`}
+            title={lockInfo?.locked ? "Unlock document" : "Lock document"}
+            aria-label={lockInfo?.locked ? "Unlock document" : "Lock document"}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              {lockInfo?.locked ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              )}
+            </svg>
+            <span className="hidden sm:inline">{lockInfo?.locked ? "Unlock" : "Lock"}</span>
+          </button>
+        )}
+
+        {/* Summarize button */}
+        {onSummarize && (
+          <button
+            onClick={onSummarize}
+            disabled={summaryLoading}
+            className="flex items-center gap-1.5 h-8 px-2 sm:px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Generate AI summary"
+            aria-label="Generate AI summary"
+          >
+            {summaryLoading ? (
+              <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+              </svg>
+            )}
+            <span className="hidden sm:inline">{summaryLoading ? "Summarizing..." : "Summarize"}</span>
+          </button>
         )}
 
         {/* Present button */}
@@ -305,6 +369,23 @@ export default function TopBar({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>Set reminder</span>
+                  </button>
+                </>
+              )}
+              {onSetExpiration && (
+                <>
+                  <div className="border-t border-white/10 my-1" />
+                  <button
+                    onClick={() => {
+                      setExportOpen(false);
+                      onSetExpiration();
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors w-full text-left"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                    </svg>
+                    <span>Set expiration</span>
                   </button>
                 </>
               )}

@@ -18,6 +18,9 @@ model Document {
   status     String             @default("draft")
   approvedBy String?
   approvedAt DateTime?
+  lockedBy   String?
+  lockedAt   DateTime?
+  expiresAt  DateTime?
   deletedAt  DateTime?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
