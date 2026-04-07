@@ -10,8 +10,6 @@ import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { Markdown } from "tiptap-markdown";
 import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
-import Underline from "@tiptap/extension-underline";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { MermaidBlock } from "@/extensions/mermaid-block";
@@ -21,7 +19,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import SlashCommandMenu from "./SlashCommandMenu";
 import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
-import { YjsUndo } from "@/extensions/yjs-undo";
 import * as TablePkg from "@tiptap/extension-table";
 const { Table, TableRow, TableCell, TableHeader } = TablePkg;
 import SearchBar from "./SearchBar";
@@ -124,16 +121,16 @@ export default function Editor({
       StarterKit.configure({
         undoRedo: false,
         codeBlock: false, // replaced by MermaidBlock below
+        link: {
+          openOnClick: false,
+          autolink: true,
+          linkOnPaste: true,
+          HTMLAttributes: { class: "editor-link" },
+        },
       }),
       MermaidBlock,
       Placeholder.configure({
         placeholder: "Start typing, or press / for commands...",
-      }),
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        linkOnPaste: true,
-        HTMLAttributes: { class: "editor-link" },
       }),
       SuggestionMark,
       CommentMark,
@@ -141,7 +138,6 @@ export default function Editor({
       Collaboration.configure({
         document: ydoc,
       }),
-      YjsUndo,
       Markdown.configure({
         html: true,
         transformPastedText: false,
@@ -158,7 +154,6 @@ export default function Editor({
         allowBase64: false,
         HTMLAttributes: { class: "editor-image" },
       }),
-      Underline,
       Highlight.configure({
         multicolor: false,
       }),
