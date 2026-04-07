@@ -54,6 +54,14 @@ const COMMANDS: Command[] = [
     action: (editor) => editor.chain().focus().toggleOrderedList().run(),
   },
   {
+    id: "todo",
+    label: "Task List",
+    description: "Interactive checklist",
+    icon: "☑",
+    keywords: ["todo", "task", "checklist", "checkbox"],
+    action: (editor) => editor.chain().focus().toggleTaskList().run(),
+  },
+  {
     id: "quote",
     label: "Blockquote",
     description: "Quote or callout",

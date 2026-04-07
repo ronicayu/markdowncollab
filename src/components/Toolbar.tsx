@@ -196,6 +196,20 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       isActive: () => editor.isActive("orderedList"),
     },
     {
+      label: "Task list",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <rect x="3" y="5" width="4" height="4" rx="0.5" />
+          <path strokeLinecap="round" d="M4.5 7l1 1 2-2" strokeWidth={1.5} />
+          <path strokeLinecap="round" d="M11 7h10" />
+          <rect x="3" y="14" width="4" height="4" rx="0.5" />
+          <path strokeLinecap="round" d="M11 16h10" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().toggleTaskList().run(),
+      isActive: () => editor.isActive("taskList"),
+    },
+    {
       label: "Outdent",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">

@@ -21,6 +21,8 @@ import SlashCommandMenu from "./SlashCommandMenu";
 import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
 import * as TablePkg from "@tiptap/extension-table";
 const { Table, TableRow, TableCell, TableHeader } = TablePkg;
+import { TaskList } from "@tiptap/extension-task-list";
+import { TaskItem } from "@tiptap/extension-task-item";
 import { DragHandle } from "@tiptap/extension-drag-handle";
 import "./drag-handle.css";
 import SearchBar from "./SearchBar";
@@ -161,6 +163,10 @@ export default function Editor({
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
+      }),
+      TaskList,
+      TaskItem.configure({
+        nested: true,
       }),
       DragHandle.configure({
         render() {
