@@ -9,6 +9,13 @@ interface TemplateItem {
   icon: string;
 }
 
+interface CustomTemplateItem {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
 interface TemplatePickerProps {
   open: boolean;
   onClose: () => void;
@@ -17,14 +24,20 @@ interface TemplatePickerProps {
 
 export default function TemplatePicker({ open, onClose, onSelect }: TemplatePickerProps) {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
+  const [customTemplates, setCustomTemplates] = useState<CustomTemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    fetch("/api/templates")
-      .then((r) => r.json())
-      .then(setTemplates)
+    Promise.all([
+      fetch("/api/templates").then((r) => r.json()),
+      fetch("/api/templates/custom").then((r) => (r.ok ? r.json() : [])).catch(() => []),
+    ])
+      .then(([builtIn, custom]) => {
+        setTemplates(builtIn);
+        setCustomTemplates(custom);
+      })
       .finally(() => setLoading(false));
   }, [open]);
 
@@ -56,23 +69,53 @@ export default function TemplatePicker({ open, onClose, onSelect }: TemplatePick
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {templates.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => onSelect(t.id)}
-                className="flex items-start gap-3 text-left bg-[#FFFEF9] rounded-lg px-4 py-3 border border-transparent hover:border-[#B8692A] hover:shadow-sm transition-all group"
-              >
-                <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
-                <div className="min-w-0">
-                  <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
-                    {t.name}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>
+          <>
+            {customTemplates.length > 0 && (
+              <div className="mb-5">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Your Templates</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {customTemplates.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => onSelect(`custom:${t.id}`)}
+                      className="flex items-start gap-3 text-left bg-amber-50/60 rounded-lg px-4 py-3 border border-transparent hover:border-[#B8692A] hover:shadow-sm transition-all group"
+                    >
+                      <span className="text-xl shrink-0 mt-0.5">{"\uD83D\uDCC4"}</span>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
+                          {t.name}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t.description || "Custom template"}</p>
+                      </div>
+                    </button>
+                  ))}
                 </div>
-              </button>
-            ))}
-          </div>
+              </div>
+            )}
+
+            <div>
+              {customTemplates.length > 0 && (
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Built-in Templates</p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {templates.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => onSelect(t.id)}
+                    className="flex items-start gap-3 text-left bg-[#FFFEF9] rounded-lg px-4 py-3 border border-transparent hover:border-[#B8692A] hover:shadow-sm transition-all group"
+                  >
+                    <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
+                        {t.name}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

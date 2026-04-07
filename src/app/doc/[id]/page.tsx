@@ -24,6 +24,7 @@ import OutlineSidebar from "@/components/OutlineSidebar";
 import FloatingCommentButton from "@/components/FloatingCommentButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import TypingIndicator from "@/components/TypingIndicator";
+import SaveTemplateDialog from "@/components/SaveTemplateDialog";
 import {
   getSuggestions,
   getComments,
@@ -574,6 +575,25 @@ export default function DocumentPage({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+
+  const handleSaveAsTemplate = useCallback(async (name: string, description: string) => {
+    if (!editor) return;
+    // Get the current document content as HTML
+    const content = editor.getHTML();
+    const res = await fetch("/api/templates/custom", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, description, content }),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      toast(err.error || "Failed to save template", "error");
+      throw new Error(err.error);
+    }
+    toast("Template saved");
+  }, [editor]);
+
   const [agentLoading, setAgentLoading] = useState(false);
 
   const handleInviteAgent = useCallback(async () => {
@@ -623,6 +643,7 @@ export default function DocumentPage({
         versionHistoryOpen={versionHistoryOpen}
         focusMode={focusMode}
         onToggleFocusMode={toggleFocusMode}
+        onSaveAsTemplate={() => setSaveTemplateOpen(true)}
       />
       {userRole !== "viewer" && !focusMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
@@ -750,6 +771,11 @@ export default function DocumentPage({
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
+      />
+      <SaveTemplateDialog
+        open={saveTemplateOpen}
+        onClose={() => setSaveTemplateOpen(false)}
+        onSave={handleSaveAsTemplate}
       />
     </div>
   );
