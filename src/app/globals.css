@@ -179,3 +179,34 @@ body {
   border-radius: 2px;
   box-shadow: 0 0 0 1px #ea580c; /* orange-600 ring */
 }
+
+/* Remote cursor styles (custom extension) */
+.remote-cursor-caret {
+  position: relative;
+  border-left: 2px solid;
+  margin-left: -1px;
+  margin-right: -1px;
+  pointer-events: none;
+  word-break: normal;
+  display: inline;
+}
+
+.remote-cursor-label {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  padding: 1px 6px;
+  border-radius: 3px 3px 3px 0;
+  color: white;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+.remote-cursor-selection {
+  pointer-events: none;
+}

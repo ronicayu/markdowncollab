@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { RemoteCursors } from "@/extensions/remote-cursors";
 import { getUserColor } from "@/lib/cursor-utils";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
@@ -144,11 +144,10 @@ export default function Editor({
         allowBase64: false,
         HTMLAttributes: { class: "editor-image" },
       }),
-      // CollaborationCursor disabled: Tiptap v3's CollaborationCursor requires
-      // TiptapCollabProvider (from @tiptap/y-tiptap) instead of y-websocket's
-      // WebsocketProvider. The extension crashes accessing provider.doc which
-      // doesn't exist on WebsocketProvider. TODO: migrate to TiptapCollabProvider.
-      // CollaborationCursor.configure({ provider, user: { name: userName, color: cursorColor } }),
+      RemoteCursors.configure({
+        provider,
+        currentUser: userName,
+      }),
     ],
     editorProps: {
       attributes: {
