@@ -553,11 +553,26 @@ export default function DocumentPage({
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const toggleShortcutsHelp = useCallback(() => setShortcutsOpen((prev) => !prev), []);
 
+  const [focusMode, setFocusMode] = useState(false);
+  const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
+
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
 
   function toggleVersionHistory() {
     setVersionHistoryOpen((prev) => !prev);
   }
+
+  // Keyboard shortcut: Cmd+Shift+F to toggle focus mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "F") {
+        e.preventDefault();
+        setFocusMode((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const [agentLoading, setAgentLoading] = useState(false);
 
@@ -606,37 +621,45 @@ export default function DocumentPage({
         userRole={userRole}
         onToggleVersionHistory={toggleVersionHistory}
         versionHistoryOpen={versionHistoryOpen}
+        focusMode={focusMode}
+        onToggleFocusMode={toggleFocusMode}
       />
-      {userRole !== "viewer" && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
-      <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />
+      {userRole !== "viewer" && !focusMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
       <div className="flex flex-1 overflow-hidden">
-        <div className="hidden lg:block">
-          <ErrorBoundary>
-            <OutlineSidebar editor={editor} />
-          </ErrorBoundary>
-        </div>
+        {!focusMode && (
+          <div className="hidden lg:block">
+            <ErrorBoundary>
+              <OutlineSidebar editor={editor} />
+            </ErrorBoundary>
+          </div>
+        )}
         {ydoc && provider && (
-          <ErrorBoundary>
-            <Editor
-              documentId={id}
-              userName={userName}
-              ydoc={ydoc}
-              provider={provider}
-              onEditorReady={handleEditorReady}
-              activeCommentId={activeCommentId}
-              editable={userRole !== "viewer"}
-              initialContent={templateContent}
-              onToggleShortcutsHelp={toggleShortcutsHelp}
-            />
-          </ErrorBoundary>
+          <div className={`flex-1 transition-all duration-300 ${focusMode ? "max-w-[700px] mx-auto" : ""}`}>
+            <ErrorBoundary>
+              <Editor
+                documentId={id}
+                userName={userName}
+                ydoc={ydoc}
+                provider={provider}
+                onEditorReady={handleEditorReady}
+                activeCommentId={activeCommentId}
+                editable={userRole !== "viewer"}
+                initialContent={templateContent}
+                onToggleShortcutsHelp={toggleShortcutsHelp}
+              />
+            </ErrorBoundary>
+          </div>
         )}
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
-        <FloatingCommentButton
-          editor={editor}
-          onAddComment={() => setOpenFormTrigger((n) => n + 1)}
-          commentFormOpen={commentFormOpen}
-        />
-        <div className="hidden md:block">
+        {!focusMode && (
+          <FloatingCommentButton
+            editor={editor}
+            onAddComment={() => setOpenFormTrigger((n) => n + 1)}
+            commentFormOpen={commentFormOpen}
+          />
+        )}
+        {!focusMode && <div className="hidden md:block">
           <ErrorBoundary>
           <CommentSidebar
             suggestions={suggestions}
@@ -657,8 +680,8 @@ export default function DocumentPage({
             currentUserId={(session?.user as any)?.id}
           />
           </ErrorBoundary>
-        </div>
-        {versionHistoryOpen && (
+        </div>}
+        {versionHistoryOpen && !focusMode && (
           <VersionHistoryPanel
             documentId={id}
             isOpen={versionHistoryOpen}

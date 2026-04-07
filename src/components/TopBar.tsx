@@ -50,6 +50,8 @@ interface TopBarProps {
   userRole?: "owner" | "editor" | "viewer" | null;
   onToggleVersionHistory?: () => void;
   versionHistoryOpen?: boolean;
+  focusMode?: boolean;
+  onToggleFocusMode?: () => void;
 }
 
 export default function TopBar({
@@ -63,6 +65,8 @@ export default function TopBar({
   userRole,
   onToggleVersionHistory,
   versionHistoryOpen,
+  focusMode,
+  onToggleFocusMode,
 }: TopBarProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
@@ -112,6 +116,25 @@ export default function TopBar({
         setShowShareModal(true);
       }
     }
+  }
+
+  if (focusMode) {
+    return (
+      <div className="flex items-center justify-between bg-[#111110] px-3 py-2 md:px-4 shrink-0 transition-all">
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <span className="text-sm font-semibold text-white/80 truncate">{title}</span>
+        </div>
+        <button
+          onClick={onToggleFocusMode}
+          className="flex items-center gap-1.5 h-8 px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Exit Focus
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -219,6 +242,20 @@ export default function TopBar({
             </div>
           )}
         </div>
+
+        {/* Focus mode toggle */}
+        <button
+          onClick={onToggleFocusMode}
+          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+          title="Focus mode (Cmd+Shift+F)"
+          aria-label="Toggle focus mode"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span className="hidden sm:inline">Focus</span>
+        </button>
 
         {/* Version History toggle */}
         <button
