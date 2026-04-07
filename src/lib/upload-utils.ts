@@ -3,7 +3,6 @@ export const ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/gif",
   "image/webp",
-  "image/svg+xml",
 ];
 
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -15,7 +14,7 @@ export function validateImageFile(
   if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
     return {
       valid: false,
-      error: `File type "${mimeType}" is not supported. Allowed: PNG, JPG, GIF, WebP, SVG.`,
+      error: `File type "${mimeType}" is not supported. Allowed: PNG, JPG, GIF, WebP.`,
     };
   }
   if (size > MAX_FILE_SIZE) {
@@ -36,7 +35,6 @@ export function extensionFromMime(mimeType: string): string {
     "image/jpeg": "jpg",
     "image/gif": "gif",
     "image/webp": "webp",
-    "image/svg+xml": "svg",
   };
   return map[mimeType] || "bin";
 }
