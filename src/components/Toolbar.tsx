@@ -341,20 +341,20 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   ];
 
   return (
-    <div className="sticky top-0 z-10 border-b border-gray-200 bg-white relative">
+    <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative">
     <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1.5 scrollbar-none">
       {buttons.map((btn, i) => (
         <div key={btn.label} className="flex items-center">
           {btn.separator && i > 0 && (
-            <div className="w-px h-5 bg-gray-200 mx-1.5" />
+            <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
           )}
           <button
             onClick={btn.action}
             title={btn.shortcut ? `${btn.label} (${formatShortcut(btn.shortcut, isMac)})` : btn.label}
             className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
               btn.isActive()
-                ? "bg-[#B8692A]/10 text-[#B8692A]"
-                : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                ? "bg-[var(--accent)]/10 text-[var(--accent)]"
+                : "text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]"
             }`}
           >
             {btn.icon}
@@ -362,11 +362,11 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
         </div>
       ))}
       {/* Separator before help button */}
-      <div className="w-px h-5 bg-gray-200 mx-1.5" />
+      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
       <button
         onClick={onToggleShortcutsHelp}
         title={`Keyboard shortcuts (${isMac ? "\u2318" : "Ctrl"}+/)`}
-        className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+        className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-secondary)] transition-colors"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
           <circle cx="12" cy="12" r="10" />
@@ -376,7 +376,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       </button>
     </div>
     {/* Scroll fade hint for mobile */}
-    <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
+    <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--toolbar-bg)] to-transparent pointer-events-none" />
     </div>
   );
 }

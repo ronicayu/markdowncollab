@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import ToastProvider from "@/components/ToastProvider";
 import SessionProvider from "@/components/SessionProvider";
+import ThemeWrapper from "@/components/ThemeWrapper";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -16,7 +17,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={jakarta.className} suppressHydrationWarning>
         <SessionProvider>
-          {children}
+          <ThemeWrapper>
+            <a href="#main-content" className="skip-to-content">
+              Skip to content
+            </a>
+            {children}
+          </ThemeWrapper>
           <ToastProvider />
         </SessionProvider>
       </body>

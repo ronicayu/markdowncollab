@@ -3,6 +3,35 @@
 import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import ShareDialog from "@/components/ShareDialog";
+import { useTheme } from "@/lib/theme";
+
+function ThemeToggle() {
+  const { resolvedTheme, setTheme, theme } = useTheme();
+  const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
+  const label =
+    theme === "light" ? "Switch to dark mode" : theme === "dark" ? "Switch to system theme" : "Switch to light mode";
+  return (
+    <button
+      onClick={() => setTheme(next)}
+      aria-label={label}
+      title={label}
+      className="flex items-center justify-center h-8 w-8 rounded-md text-white/60 hover:text-white hover:bg-white/8 transition-colors"
+    >
+      {resolvedTheme === "dark" ? (
+        /* Moon icon */
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0112.003 21c-5.385 0-9.75-4.365-9.75-9.75 0-4.126 2.562-7.652 6.178-9.084A9.004 9.004 0 0021.752 15.002z" />
+        </svg>
+      ) : (
+        /* Sun icon */
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1.5M12 19.5V21M4.219 4.219l1.061 1.061M17.72 17.72l1.06 1.06M3 12h1.5M19.5 12H21M4.219 19.781l1.061-1.061M17.72 6.28l1.06-1.06" />
+          <circle cx="12" cy="12" r="4" />
+        </svg>
+      )}
+    </button>
+  );
+}
 
 export interface Collaborator {
   name: string;
@@ -128,6 +157,8 @@ export default function TopBar({
 
       {/* Right: collaborators + actions */}
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
+        {/* Theme toggle */}
+        <ThemeToggle />
         {/* Collaborator avatars */}
         {collaborators.length > 0 && (
           <div className="flex -space-x-2">
