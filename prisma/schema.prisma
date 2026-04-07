@@ -103,6 +103,18 @@ model CustomTemplate {
   @@index([ownerId])
 }
 
+model ActivityLog {
+  id         String   @id @default(uuid())
+  documentId String
+  userId     String?
+  userName   String
+  action     String   // "shared", "restored_version", "invited_agent", etc.
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([documentId, createdAt])
+}
+
 model Notification {
   id            String   @id @default(uuid())
   userId        String

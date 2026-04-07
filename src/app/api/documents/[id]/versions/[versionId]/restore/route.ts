@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/access-control";
 import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { createSnapshot, restoreSnapshot } from "@/lib/version-snapshot";
+import { logActivity } from "@/lib/activity-log";
 
 export async function POST(
   _req: Request,
@@ -61,6 +62,15 @@ export async function POST(
     // Restore the snapshot — this modifies the live Yjs doc,
     // which broadcasts updates to all connected clients via the WS server
     restoreSnapshot(conn.ydoc, version.snapshot);
+
+    // Log the restore activity
+    await logActivity(
+      id,
+      userId ?? null,
+      session?.user?.name || "Unknown",
+      "restored_version",
+      `Restored to version from ${restoreDate}`
+    );
 
     return NextResponse.json({
       ok: true,

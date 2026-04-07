@@ -4,6 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import type { DocumentVersion, VersionPreview, VersionListResponse } from "@/types";
 import DiffViewer from "./DiffViewer";
 
+interface ActivityEntry {
+  id: string;
+  documentId: string;
+  userId: string | null;
+  userName: string;
+  action: string;
+  detail: string | null;
+  createdAt: string;
+}
+
 interface VersionHistoryPanelProps {
   documentId: string;
   isOpen: boolean;
@@ -32,6 +42,11 @@ export default function VersionHistoryPanel({
   const [savingManual, setSavingManual] = useState(false);
   const [diffData, setDiffData] = useState<{ oldText: string; newText: string; oldLabel: string } | null>(null);
   const [diffLoading, setDiffLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"versions" | "activity">("versions");
+  const [activities, setActivities] = useState<ActivityEntry[]>([]);
+  const [activityTotal, setActivityTotal] = useState(0);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   const fetchVersions = useCallback(async () => {
     setLoading(true);
@@ -51,11 +66,35 @@ export default function VersionHistoryPanel({
     }
   }, [documentId, page]);
 
+  const fetchActivities = useCallback(async () => {
+    setActivityLoading(true);
+    try {
+      const res = await fetch(
+        `/api/documents/${documentId}/activity?page=${activityPage}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setActivities(data.activities);
+        setActivityTotal(data.total);
+      }
+    } catch (err) {
+      console.error("Failed to fetch activities:", err);
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [documentId, activityPage]);
+
   useEffect(() => {
     if (isOpen) {
       fetchVersions();
     }
   }, [isOpen, fetchVersions]);
+
+  useEffect(() => {
+    if (isOpen && activeTab === "activity") {
+      fetchActivities();
+    }
+  }, [isOpen, activeTab, fetchActivities]);
 
   async function handlePreview(version: DocumentVersion) {
     setPreviewLoading(true);
@@ -133,6 +172,23 @@ export default function VersionHistoryPanel({
     } finally {
       setDiffLoading(false);
     }
+  }
+
+  function formatTimeAgo(dateStr: string) {
+    const now = Date.now();
+    const then = new Date(dateStr).getTime();
+    const seconds = Math.floor((now - then) / 1000);
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   }
 
   function formatDate(dateStr: string) {
@@ -221,6 +277,32 @@ export default function VersionHistoryPanel({
           </button>
         </div>
 
+        {/* Tab switcher */}
+        <div className="flex border-b border-[#E8D8C0]">
+          <button
+            onClick={() => setActiveTab("versions")}
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+              activeTab === "versions"
+                ? "text-[#B8692A] border-b-2 border-[#B8692A]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Versions
+          </button>
+          <button
+            onClick={() => setActiveTab("activity")}
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+              activeTab === "activity"
+                ? "text-[#B8692A] border-b-2 border-[#B8692A]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Activity
+          </button>
+        </div>
+
+        {activeTab === "versions" && (
+        <>
         {/* Save version button */}
         <div className="px-3 py-2 border-b border-[#E8D8C0]">
           <button
@@ -377,6 +459,94 @@ export default function VersionHistoryPanel({
             </>
           )}
         </div>
+        </>
+        )}
+
+        {activeTab === "activity" && (
+          <div className="flex-1 overflow-y-auto px-3 py-2">
+            {activityLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <svg
+                  className="h-5 w-5 animate-spin text-gray-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+              </div>
+            ) : activities.length === 0 ? (
+              <p className="text-xs text-gray-400 py-4 text-center">
+                No activity recorded yet.
+              </p>
+            ) : (
+              <>
+                {activities.map((activity) => {
+                  const ago = formatTimeAgo(activity.createdAt);
+                  return (
+                    <div
+                      key={activity.id}
+                      className="py-2 border-b border-[#E8D8C0] last:border-b-0"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-gray-700">
+                          {activity.userName}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {activity.action.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      {activity.detail && (
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                          {activity.detail}
+                        </p>
+                      )}
+                      <span className="text-[10px] text-gray-400">{ago}</span>
+                    </div>
+                  );
+                })}
+
+                {/* Activity pagination */}
+                {Math.ceil(activityTotal / 20) > 1 && (
+                  <div className="flex items-center justify-between pt-2 border-t border-[#E8D8C0]">
+                    <button
+                      onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
+                      disabled={activityPage <= 1}
+                      className="text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-[10px] text-gray-400">
+                      {activityPage} / {Math.ceil(activityTotal / 20)}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setActivityPage((p) =>
+                          Math.min(Math.ceil(activityTotal / 20), p + 1)
+                        )
+                      }
+                      disabled={activityPage >= Math.ceil(activityTotal / 20)}
+                      className="text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Preview modal */}

@@ -3,12 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/access-control";
+import { logActivity } from "@/lib/activity-log";
 
 async function getSessionInfo() {
   const session = await getServerSession(authOptions);
   return {
     userId: (session?.user as any)?.id as string | undefined,
     userEmail: session?.user?.email ?? undefined,
+    userName: session?.user?.name ?? "Unknown",
   };
 }
 
@@ -37,7 +39,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { userId, userEmail } = await getSessionInfo();
+  const { userId, userEmail, userName } = await getSessionInfo();
 
   const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null, undefined, "owner");
   if (!access.hasAccess) {
@@ -62,6 +64,15 @@ export async function POST(
         role,
       },
     });
+
+    // Log share activity
+    await logActivity(
+      id,
+      userId ?? null,
+      userName,
+      "shared",
+      `Shared with ${email} as ${role}`
+    );
 
     return NextResponse.json(share, { status: 201 });
   } catch (error: any) {
