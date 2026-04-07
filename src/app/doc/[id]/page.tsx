@@ -23,6 +23,7 @@ import VersionHistoryPanel from "@/components/VersionHistoryPanel";
 import OutlineSidebar from "@/components/OutlineSidebar";
 import FloatingCommentButton from "@/components/FloatingCommentButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import TypingIndicator from "@/components/TypingIndicator";
 import {
   getSuggestions,
   getComments,
@@ -531,6 +532,24 @@ export default function DocumentPage({
     toast("Comment added");
   }
 
+  // Typing indicator: set awareness typing=true on edits, clear after 2s
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!editor) return;
+    const onUpdate = () => {
+      provider.awareness.setLocalStateField("typing", true);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        provider.awareness.setLocalStateField("typing", false);
+      }, 2000);
+    };
+    editor.on("update", onUpdate);
+    return () => {
+      editor.off("update", onUpdate);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
+  }, [editor, provider]);
+
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const toggleShortcutsHelp = useCallback(() => setShortcutsOpen((prev) => !prev), []);
 
@@ -589,6 +608,7 @@ export default function DocumentPage({
         versionHistoryOpen={versionHistoryOpen}
       />
       {userRole !== "viewer" && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden lg:block">
           <ErrorBoundary>
