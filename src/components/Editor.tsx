@@ -21,6 +21,9 @@ import { TocBlock } from "@/extensions/toc-block";
 import { EmbedBlock, parseEmbedUrl } from "@/extensions/embed-block";
 import { MathBlock } from "@/extensions/math-block";
 import { DetailsBlock } from "@/extensions/details-block";
+import { ToggleList, ToggleItem } from "@/extensions/toggle-list";
+import { StatusBadge } from "@/extensions/status-badge";
+import { PollBlock } from "@/extensions/poll-block";
 import "katex/dist/katex.min.css";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
@@ -156,6 +159,10 @@ export default function Editor({
       EmbedBlock,
       MathBlock,
       DetailsBlock,
+      ToggleList,
+      ToggleItem,
+      StatusBadge,
+      PollBlock,
       Placeholder.configure({
         placeholder: "Start typing, or press / for commands...",
       }),
@@ -261,6 +268,64 @@ export default function Editor({
               });
               const tr = view.state.tr.replaceSelectionWith(node);
               view.dispatch(tr);
+            }
+            return true;
+          }
+        }
+
+        // Smart Paste: TSV (tab-separated values) → table
+        const smartText = event.clipboardData?.getData('text/plain') || '';
+        const smartLines = smartText.split('\n').filter(l => l.trim() !== '');
+        if (smartLines.length >= 2 && smartLines.every(l => l.includes('\t'))) {
+          event.preventDefault();
+          const rows = smartLines.map(l => l.split('\t'));
+          const colCount = Math.max(...rows.map(r => r.length));
+          const tableRows = rows.map((cells, rowIdx) => {
+            const cellType = rowIdx === 0 ? 'tableHeader' : 'tableCell';
+            const tableCells = [];
+            for (let c = 0; c < colCount; c++) {
+              tableCells.push({
+                type: cellType,
+                content: [{ type: 'paragraph', content: cells[c] ? [{ type: 'text', text: cells[c] }] : [] }],
+              });
+            }
+            return { type: 'tableRow', content: tableCells };
+          });
+          const { schema } = view.state;
+          if (schema.nodes.table) {
+            const edRef = (view as unknown as { editor?: TiptapEditor }).editor;
+            if (edRef) {
+              edRef.chain().focus().insertContent({ type: 'table', content: tableRows }).run();
+            } else {
+              // Fallback: direct ProseMirror insertion
+              try {
+                const tableNode = schema.nodeFromJSON({ type: 'table', content: tableRows });
+                view.dispatch(view.state.tr.replaceSelectionWith(tableNode));
+              } catch { /* ignore */ }
+            }
+          }
+          return true;
+        }
+
+        // Smart Paste: code detection → code block
+        if (smartLines.length >= 2) {
+          const codePatterns = /^(function |const |let |var |import |export |def |class |#include|package |from |public |private |protected |if \(|for \(|while \(|\/\/ |\/\*|#!)/;
+          const firstNonEmpty = smartLines.find(l => l.trim().length > 0) || '';
+          const hasIndentation = smartLines.filter(l => l.trim().length > 0).some(l => /^\s{2,}/.test(l));
+          if (codePatterns.test(firstNonEmpty.trim()) && hasIndentation) {
+            event.preventDefault();
+            let language = '';
+            if (/^(import |from |def )/.test(firstNonEmpty.trim())) language = 'python';
+            else if (/^(function |const |let |var |export |import )/.test(firstNonEmpty.trim())) language = 'javascript';
+            else if (/^#include/.test(firstNonEmpty.trim())) language = 'c';
+            else if (/^package /.test(firstNonEmpty.trim())) language = 'go';
+            else if (/^(public |private |protected )/.test(firstNonEmpty.trim())) language = 'java';
+
+            const { schema } = view.state;
+            const codeBlockType = schema.nodes.codeBlock;
+            if (codeBlockType) {
+              const node = codeBlockType.create({ language }, schema.text(smartText));
+              view.dispatch(view.state.tr.replaceSelectionWith(node));
             }
             return true;
           }

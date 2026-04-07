@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { Editor } from "@tiptap/core";
 import { parseEmbedUrl } from "@/extensions/embed-block";
+import { STATUS_BADGE_OPTIONS } from "@/extensions/status-badge";
 
 interface LinkedDoc {
   id: string;
@@ -468,6 +469,60 @@ const COMMANDS: Command[] = [
       editor.chain().focus().insertContent({ type: "detailsBlock", attrs: { summary: "Details", body: "" } }).run(),
   },
   {
+    id: "toggle",
+    label: "Toggle List",
+    description: "Collapsible list items",
+    icon: "\u25B7",
+    keywords: ["toggle", "collapse", "collapsible", "faq", "accordion"],
+    action: (editor) =>
+      (editor.commands as unknown as { insertToggleList: () => boolean }).insertToggleList(),
+  },
+  {
+    id: "status-todo",
+    label: "Status: To Do",
+    description: "Gray status badge",
+    icon: "\u25CF",
+    keywords: ["status", "badge", "todo", "to do"],
+    action: (editor) =>
+      (editor.commands as unknown as { insertStatusBadge: (attrs: { label: string; color: string }) => boolean }).insertStatusBadge({ label: STATUS_BADGE_OPTIONS[0].label, color: STATUS_BADGE_OPTIONS[0].color }),
+  },
+  {
+    id: "status-progress",
+    label: "Status: In Progress",
+    description: "Blue status badge",
+    icon: "\u25CF",
+    keywords: ["status", "badge", "progress", "in progress"],
+    action: (editor) =>
+      (editor.commands as unknown as { insertStatusBadge: (attrs: { label: string; color: string }) => boolean }).insertStatusBadge({ label: STATUS_BADGE_OPTIONS[1].label, color: STATUS_BADGE_OPTIONS[1].color }),
+  },
+  {
+    id: "status-done",
+    label: "Status: Done",
+    description: "Green status badge",
+    icon: "\u25CF",
+    keywords: ["status", "badge", "done", "complete"],
+    action: (editor) =>
+      (editor.commands as unknown as { insertStatusBadge: (attrs: { label: string; color: string }) => boolean }).insertStatusBadge({ label: STATUS_BADGE_OPTIONS[2].label, color: STATUS_BADGE_OPTIONS[2].color }),
+  },
+  {
+    id: "status-blocked",
+    label: "Status: Blocked",
+    description: "Red status badge",
+    icon: "\u25CF",
+    keywords: ["status", "badge", "blocked"],
+    action: (editor) =>
+      (editor.commands as unknown as { insertStatusBadge: (attrs: { label: string; color: string }) => boolean }).insertStatusBadge({ label: STATUS_BADGE_OPTIONS[3].label, color: STATUS_BADGE_OPTIONS[3].color }),
+  },
+  {
+    id: "status-review",
+    label: "Status: Needs Review",
+    description: "Amber status badge",
+    icon: "\u25CF",
+    keywords: ["status", "badge", "review", "needs review"],
+    action: (editor) =>
+      (editor.commands as unknown as { insertStatusBadge: (attrs: { label: string; color: string }) => boolean }).insertStatusBadge({ label: STATUS_BADGE_OPTIONS[4].label, color: STATUS_BADGE_OPTIONS[4].color }),
+  },
+  {
     id: "footnote",
     label: "Footnote",
     description: "Insert a footnote reference",
@@ -499,6 +554,33 @@ const COMMANDS: Command[] = [
         // Append footnote entry
         editor.chain().focus().insertContent("<p>" + nextNum + ". [footnote text]</p>").run();
       }
+    },
+  },
+  {
+    id: "poll",
+    label: "Poll",
+    description: "Create a live poll for voting",
+    icon: "\uD83D\uDDF3",
+    keywords: ["poll", "vote", "voting", "survey"],
+    action: (editor) => {
+      const question = window.prompt("Poll question:");
+      if (!question) return;
+      const optionsStr = window.prompt("Options (comma-separated, 2-4):");
+      if (!optionsStr) return;
+      const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean).slice(0, 4);
+      if (options.length < 2) {
+        window.alert("Please provide at least 2 options.");
+        return;
+      }
+      const pollId = `poll-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "pollBlock",
+          attrs: { pollId, question, options: JSON.stringify(options) },
+        })
+        .run();
     },
   },
 ];
