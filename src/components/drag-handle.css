@@ -1,0 +1,26 @@
+/* Drag handle styles for block reordering */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  font-size: 14px;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.25);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.drag-handle:hover {
+  color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.1);
+}

@@ -21,6 +21,8 @@ import SlashCommandMenu from "./SlashCommandMenu";
 import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
 import * as TablePkg from "@tiptap/extension-table";
 const { Table, TableRow, TableCell, TableHeader } = TablePkg;
+import { DragHandle } from "@tiptap/extension-drag-handle";
+import "./drag-handle.css";
 import SearchBar from "./SearchBar";
 import LinkDialog from "./LinkDialog";
 
@@ -159,6 +161,15 @@ export default function Editor({
       }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
+      }),
+      DragHandle.configure({
+        render() {
+          const el = document.createElement("div");
+          el.className = "drag-handle";
+          el.innerHTML = "⠿";
+          return el;
+        },
+        nested: true,
       }),
       RemoteCursors.configure({
         provider,
