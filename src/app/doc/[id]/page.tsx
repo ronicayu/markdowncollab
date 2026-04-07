@@ -14,6 +14,7 @@ function generateId(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 import Editor from "@/components/Editor";
+import { trackDocumentOpen } from "@/components/RecentDocs";
 import Toolbar from "@/components/Toolbar";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import TopBar from "@/components/TopBar";
@@ -167,6 +168,9 @@ export default function DocumentPage({
         if (doc?.title) setDocTitle(doc.title);
         if (doc?.role) setUserRole(doc.role);
         if (doc?.status) setDocStatus(doc.status);
+        // Track recent document open for the RecentDocs widget
+        trackDocumentOpen(id, doc?.title || id);
+        if (typeof window !== "undefined") window.dispatchEvent(new Event("recentDocsUpdated"));
         // Fetch folder breadcrumb path if document is in a folder
         if (doc?.folderId) {
           fetch(`/api/folders/${doc.folderId}`)

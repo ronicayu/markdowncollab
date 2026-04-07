@@ -7,6 +7,7 @@ import ThemeWrapper from "@/components/ThemeWrapper";
 import GlobalCommandPalette from "@/components/GlobalCommandPalette";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/OfflineIndicator";
+import RecentDocs from "@/components/RecentDocs";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
             <GlobalCommandPalette />
             <OfflineIndicator />
+            <RecentDocs />
             <ServiceWorkerRegistration />
           </ThemeWrapper>
           <ToastProvider />
