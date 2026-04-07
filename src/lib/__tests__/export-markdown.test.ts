@@ -15,7 +15,7 @@ describe("xmlFragmentToMarkdown", () => {
   it("converts H1 heading", () => {
     const frag = buildFragment((f) => {
       const h = new Y.XmlElement("heading");
-      h.setAttribute("level", 1);
+      h.setAttribute("level", "1");
       h.insert(0, [new Y.XmlText("Hello World")]);
       f.insert(0, [h]);
     });
@@ -25,10 +25,10 @@ describe("xmlFragmentToMarkdown", () => {
   it("converts H2 and H3 headings", () => {
     const frag = buildFragment((f) => {
       const h2 = new Y.XmlElement("heading");
-      h2.setAttribute("level", 2);
+      h2.setAttribute("level", "2");
       h2.insert(0, [new Y.XmlText("Section")]);
       const h3 = new Y.XmlElement("heading");
-      h3.setAttribute("level", 3);
+      h3.setAttribute("level", "3");
       h3.insert(0, [new Y.XmlText("Subsection")]);
       f.insert(0, [h2, h3]);
     });
