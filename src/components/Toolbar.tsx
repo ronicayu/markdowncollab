@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { Editor } from "@tiptap/core";
 import EmojiPicker from "./EmojiPicker";
 import {
@@ -9,6 +9,15 @@ import {
   HIGHLIGHT_COLORS,
   personalHighlightPluginKey,
 } from "@/extensions/personal-highlight";
+import {
+  loadMacros,
+  saveMacro,
+  deleteMacro,
+  recordedKeyFromEvent,
+  replayMacro,
+  type RecordedKey,
+  type Macro,
+} from "@/lib/macros";
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -58,8 +67,18 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
   const snippetBtnRef = useRef<HTMLDivElement>(null);
   const highlightBtnRef = useRef<HTMLDivElement>(null);
+  const [macroRecording, setMacroRecording] = useState(false);
+  const macroKeysRef = useRef<RecordedKey[]>([]);
+  const [macros, setMacros] = useState<Macro[]>([]);
+  const [showMacroMenu, setShowMacroMenu] = useState(false);
+  const [macroPlaying, setMacroPlaying] = useState(false);
+  const [showMacroName, setShowMacroName] = useState(false);
+  const [macroName, setMacroName] = useState("");
+  const macroBtnRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
+    setMacros(loadMacros());
   }, []);
 
   // Load auto-numbering preference from localStorage
@@ -91,6 +110,70 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       localStorage.setItem(`autoNumber:${docId}`, String(next));
     }
   }
+
+  // Macro recording: capture keydown events on editor DOM
+  useEffect(() => {
+    if (!macroRecording || !editor) return;
+    const editorEl = editor.view.dom;
+    const handler = (e: Event) => {
+      const ke = e as KeyboardEvent;
+      macroKeysRef.current.push(recordedKeyFromEvent(ke));
+    };
+    editorEl.addEventListener("keydown", handler);
+    return () => editorEl.removeEventListener("keydown", handler);
+  }, [macroRecording, editor]);
+
+  function startMacroRecording() {
+    macroKeysRef.current = [];
+    setMacroRecording(true);
+  }
+
+  function stopMacroRecording() {
+    setMacroRecording(false);
+    if (macroKeysRef.current.length === 0) return;
+    setShowMacroName(true);
+  }
+
+  function saveMacroWithName() {
+    const name = macroName.trim() || `Macro ${macros.length + 1}`;
+    const macro: Macro = {
+      name,
+      keys: [...macroKeysRef.current],
+      createdAt: new Date().toISOString(),
+    };
+    saveMacro(macro);
+    setMacros(loadMacros());
+    setMacroName("");
+    setShowMacroName(false);
+  }
+
+  async function playMacroByName(name: string) {
+    if (!editor || macroPlaying) return;
+    const macro = macros.find((m) => m.name === name);
+    if (!macro) return;
+    setMacroPlaying(true);
+    setShowMacroMenu(false);
+    editor.commands.focus();
+    await replayMacro(editor.view.dom, macro.keys);
+    setMacroPlaying(false);
+  }
+
+  function handleDeleteMacro(name: string) {
+    deleteMacro(name);
+    setMacros(loadMacros());
+  }
+
+  // Close macro menu on outside click
+  useEffect(() => {
+    if (!showMacroMenu) return;
+    function handleClick(e: MouseEvent) {
+      if (macroBtnRef.current && !macroBtnRef.current.contains(e.target as Node)) {
+        setShowMacroMenu(false);
+      }
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [showMacroMenu]);
 
   // Close highlight picker on outside click
   useEffect(() => {
@@ -674,6 +757,90 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
               className="w-full text-xs text-center py-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
             >
               Remove
+            </button>
+          </div>
+        )}
+      </div>
+      {/* Macro record/play */}
+      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
+      <div className="relative flex items-center gap-0.5" ref={macroBtnRef}>
+        {!macroRecording ? (
+          <button
+            onClick={startMacroRecording}
+            title="Record macro"
+            aria-label="Record macro"
+            className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+              <circle cx="12" cy="12" r="6" fill="currentColor" className="text-red-500" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={stopMacroRecording}
+            title="Stop recording"
+            aria-label="Stop recording macro"
+            className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-red-500 bg-red-50 animate-pulse transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+              <rect x="6" y="6" width="12" height="12" rx="1" />
+            </svg>
+          </button>
+        )}
+        {macros.length > 0 && (
+          <button
+            onClick={() => setShowMacroMenu((v) => !v)}
+            disabled={macroPlaying}
+            title="Play macro"
+            aria-label="Play macro"
+            className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+            </svg>
+          </button>
+        )}
+        {showMacroMenu && (
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-48">
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide px-1 mb-1.5">Macros</p>
+            {macros.map((m) => (
+              <div key={m.name} className="flex items-center gap-1">
+                <button
+                  onClick={() => playMacroByName(m.name)}
+                  className="flex-1 text-left text-sm text-gray-700 hover:bg-gray-100 rounded px-2 py-1 truncate"
+                >
+                  {m.name}
+                </button>
+                <button
+                  onClick={() => handleDeleteMacro(m.name)}
+                  className="text-gray-400 hover:text-red-500 p-0.5"
+                  title="Delete macro"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {showMacroName && (
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-56">
+            <p className="text-xs font-medium text-gray-700 mb-2">Name this macro</p>
+            <input
+              type="text"
+              placeholder="Macro name..."
+              value={macroName}
+              onChange={(e) => setMacroName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") saveMacroWithName(); }}
+              className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 mb-2 outline-none focus:border-blue-400"
+              autoFocus
+            />
+            <button
+              onClick={saveMacroWithName}
+              className="w-full text-xs font-medium text-white bg-[#B8692A] rounded py-1.5 hover:bg-[#96541F] transition-colors"
+            >
+              Save
             </button>
           </div>
         )}
