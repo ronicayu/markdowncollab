@@ -4,6 +4,7 @@ import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { generateSuggestions } from "@/lib/agent";
 import { addSuggestion } from "@/lib/suggestion-store";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 const WS_URL = process.env.WS_URL || "ws://localhost:3000/ws";
 
@@ -99,6 +100,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Missing documentId" },
         { status: 400 }
+      );
+    }
+
+    // Rate limit: 5 invocations per user per hour
+    const rateLimitKey = `agent-invite:${request.headers.get("x-forwarded-for") || "anonymous"}`;
+    const rateResult = checkRateLimit(rateLimitKey, 5, 720_000); // 3600000ms/5 = 720000ms per token
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { error: "Rate limit exceeded. Try again later." },
+        { status: 429, headers: { "Retry-After": String(rateResult.retryAfter) } }
       );
     }
 

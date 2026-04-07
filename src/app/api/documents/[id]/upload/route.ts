@@ -6,6 +6,7 @@ import { validateImageFile, extensionFromMime } from "@/lib/upload-utils";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || "./uploads";
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,6 +36,16 @@ export async function POST(
   );
   if (!access.hasAccess) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Rate limit: 20 uploads per user per minute
+  const rateLimitKey = `upload:${userId || req.headers.get("x-forwarded-for") || "anonymous"}`;
+  const rateResult = checkRateLimit(rateLimitKey, 20, 3_000); // 60000ms/20 = 3000ms per token
+  if (!rateResult.allowed) {
+    return NextResponse.json(
+      { error: "Upload rate limit exceeded. Try again later." },
+      { status: 429, headers: { "Retry-After": String(rateResult.retryAfter) } }
+    );
   }
 
   // Parse multipart form data
