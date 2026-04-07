@@ -15,30 +15,7 @@ import type { CodeBlockOptions } from "@tiptap/extension-code-block";
 import type { NodeViewRenderer, NodeViewRendererProps } from "@tiptap/core";
 import type { NodeView } from "@tiptap/pm/view";
 import MermaidNodeView from "@/components/MermaidNodeView";
-
-/**
- * Creates a minimal DOM-based NodeView that replicates what CodeBlock's
- * renderHTML would produce, used as the fallback for non-mermaid blocks.
- */
-function createCodeBlockDomNodeView(
-  props: NodeViewRendererProps,
-  languageClassPrefix: string
-): NodeView {
-  const { node } = props;
-
-  const pre = document.createElement("pre");
-  const code = document.createElement("code");
-  const lang: string | null = node.attrs.language ?? null;
-  if (lang && languageClassPrefix) {
-    code.className = languageClassPrefix + lang;
-  }
-  pre.appendChild(code);
-
-  return {
-    dom: pre,
-    contentDOM: code,
-  };
-}
+import CodeBlockLanguageSelector from "@/components/CodeBlockLanguageSelector";
 
 export const MermaidBlock = CodeBlock.extend<CodeBlockOptions>({
   // Keep the same node name so that existing documents and Markdown parsing
@@ -46,9 +23,8 @@ export const MermaidBlock = CodeBlock.extend<CodeBlockOptions>({
   name: "codeBlock",
 
   addNodeView(): NodeViewRenderer {
-    // Capture extension options in closure.
-    const getOptions = () => this.options;
     const mermaidRenderer = ReactNodeViewRenderer(MermaidNodeView);
+    const codeBlockRenderer = ReactNodeViewRenderer(CodeBlockLanguageSelector);
 
     return (props: NodeViewRendererProps): NodeView => {
       const { node } = props;
@@ -57,14 +33,9 @@ export const MermaidBlock = CodeBlock.extend<CodeBlockOptions>({
         return mermaidRenderer(props);
       }
 
-      // For all other languages fall back to a plain DOM node view that
-      // matches what renderHTML() would produce.
-      const opts = getOptions();
-      const prefix =
-        typeof opts.languageClassPrefix === "string"
-          ? opts.languageClassPrefix
-          : "language-";
-      return createCodeBlockDomNodeView(props, prefix);
+      // For all other languages use the CodeBlockLanguageSelector React
+      // node view which renders a language dropdown above the code.
+      return codeBlockRenderer(props);
     };
   },
 
