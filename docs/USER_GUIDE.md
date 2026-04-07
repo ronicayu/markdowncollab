@@ -11,7 +11,9 @@ Welcome to MarkdownCollab, a real-time collaborative markdown editor for teams. 
 3. [The Editor](#the-editor)
 4. [Formatting Text](#formatting-text)
 5. [Slash Commands](#slash-commands)
-6. [Tables](#tables)
+6. [Footnotes](#footnotes)
+7. [Word Count Goals](#word-count-goals)
+8. [Tables](#tables)
 7. [Images](#images)
 8. [Code Blocks](#code-blocks)
 9. [Mermaid Diagrams](#mermaid-diagrams)
@@ -174,6 +176,41 @@ Type `/` anywhere in the editor to open the command menu. Start typing to filter
 | `/warning` | Insert a warning callout |
 | `/tip` | Insert a tip callout |
 | `/danger` | Insert a danger callout |
+| `/footnote` | Insert a footnote reference |
+
+---
+
+## Footnotes
+
+Use the `/footnote` slash command to insert academic-style footnotes.
+
+**How it works:**
+1. Place your cursor where you want the footnote reference
+2. Type `/footnote` and select it from the menu
+3. A superscript number (e.g., ^1) is inserted at the cursor
+4. A numbered footnote entry is added at the bottom of the document
+5. Replace `[footnote text]` with your actual footnote content
+
+Footnotes auto-increment: the first is ^1, the second ^2, and so on. A horizontal rule separates the document body from the footnotes section.
+
+---
+
+## Word Count Goals
+
+Click the word count in the editor footer to set a writing goal.
+
+**Setting a goal:**
+1. Click the word/character count at the bottom-right of the editor
+2. Enter your target word count (e.g., 500)
+3. Click **Set** or press Enter
+
+**Progress display:**
+- Shows "150 / 500 words" with a progress bar
+- **Gray** when under 50% of goal
+- **Amber** when approaching (50-99%)
+- **Green** when goal is reached (100%)
+
+Click the count again to update or remove the goal. Goals are saved per document and persist across sessions.
 
 ---
 
