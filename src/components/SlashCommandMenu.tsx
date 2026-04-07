@@ -244,12 +244,18 @@ export default function SlashCommandMenu({
     <div
       ref={menuRef}
       style={style}
+      role="listbox"
+      aria-label="Slash commands"
+      aria-activedescendant={filtered[selectedIndex] ? `slash-cmd-${filtered[selectedIndex].id}` : undefined}
       className="w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-y-auto max-h-72"
       onMouseDown={(e) => e.preventDefault()} // prevent editor blur
     >
       {filtered.map((cmd, i) => (
         <button
           key={cmd.id}
+          id={`slash-cmd-${cmd.id}`}
+          role="option"
+          aria-selected={i === selectedIndex}
           data-selected={i === selectedIndex ? "true" : "false"}
           onMouseEnter={() => setSelectedIndex(i)}
           onClick={() => runCommand(cmd)}

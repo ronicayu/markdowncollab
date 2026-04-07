@@ -341,7 +341,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   ];
 
   return (
-    <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative">
+    <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative" role="toolbar" aria-label="Text formatting">
     <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1.5 scrollbar-none">
       {buttons.map((btn, i) => (
         <div key={btn.label} className="flex items-center">
@@ -351,6 +351,8 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
           <button
             onClick={btn.action}
             title={btn.shortcut ? `${btn.label} (${formatShortcut(btn.shortcut, isMac)})` : btn.label}
+            aria-label={btn.label}
+            aria-pressed={btn.isActive() ? "true" : "false"}
             className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
               btn.isActive()
                 ? "bg-[var(--accent)]/10 text-[var(--accent)]"
@@ -366,6 +368,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       <button
         onClick={onToggleShortcutsHelp}
         title={`Keyboard shortcuts (${isMac ? "\u2318" : "Ctrl"}+/)`}
+        aria-label="Keyboard shortcuts"
         className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-secondary)] transition-colors"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">

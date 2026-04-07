@@ -37,10 +37,13 @@ export default function TemplatePicker({ open, onClose, onSelect }: TemplatePick
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="template-picker-title"
         className="bg-white rounded-xl shadow-xl p-6 mx-4 max-w-lg w-full max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Choose a template</h2>
+        <h2 id="template-picker-title" className="text-lg font-semibold text-gray-900 mb-1">Choose a template</h2>
         <p className="text-sm text-gray-500 mb-4">Start with a structure or go blank.</p>
 
         {loading ? (

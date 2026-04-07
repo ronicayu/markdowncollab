@@ -70,13 +70,15 @@ export default function SearchBar({
     : "";
 
   return (
-    <div className="border-b border-gray-200 bg-white px-3 py-2 flex flex-col gap-2">
+    <div role="search" aria-label="Find and replace" className="border-b border-gray-200 bg-white px-3 py-2 flex flex-col gap-2">
       {/* Search row */}
       <div className="flex items-center gap-2">
         {/* Expand/collapse replace toggle */}
         <button
           onClick={onToggleReplace}
           title={showReplace ? "Hide replace" : "Show replace"}
+          aria-label={showReplace ? "Hide replace" : "Show replace"}
+          aria-expanded={showReplace}
           className="h-7 w-7 shrink-0 rounded flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
         >
           <svg
@@ -99,6 +101,7 @@ export default function SearchBar({
             onChange={(e) => onQueryChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             placeholder="Find..."
+            aria-label="Search text"
             className="w-full h-8 pl-3 pr-16 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#B8692A] focus:border-[#B8692A]"
           />
           {matchDisplay && (
@@ -112,6 +115,8 @@ export default function SearchBar({
         <button
           onClick={onToggleCaseSensitive}
           title="Case sensitive"
+          aria-label="Toggle case sensitive"
+          aria-pressed={caseSensitive ? "true" : "false"}
           className={`h-7 w-7 shrink-0 rounded flex items-center justify-center text-xs font-bold transition-colors ${
             caseSensitive
               ? "bg-[#B8692A]/10 text-[#B8692A]"
@@ -125,6 +130,7 @@ export default function SearchBar({
         <button
           onClick={onFindPrevious}
           title="Previous match"
+          aria-label="Previous match"
           disabled={matchCount === 0}
           className="h-7 w-7 shrink-0 rounded flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30 disabled:cursor-default transition-colors"
         >
@@ -135,6 +141,7 @@ export default function SearchBar({
         <button
           onClick={onFindNext}
           title="Next match"
+          aria-label="Next match"
           disabled={matchCount === 0}
           className="h-7 w-7 shrink-0 rounded flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-30 disabled:cursor-default transition-colors"
         >
@@ -147,6 +154,7 @@ export default function SearchBar({
         <button
           onClick={onClose}
           title="Close"
+          aria-label="Close search"
           className="h-7 w-7 shrink-0 rounded flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">

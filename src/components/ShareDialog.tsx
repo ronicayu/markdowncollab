@@ -113,8 +113,8 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl p-6 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-base font-semibold text-gray-900 mb-4">Share document</h3>
+      <div role="dialog" aria-modal="true" aria-labelledby="share-dialog-title" className="bg-white rounded-xl shadow-xl p-6 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <h3 id="share-dialog-title" className="text-base font-semibold text-gray-900 mb-4">Share document</h3>
 
         {/* Email share form */}
         <div className="flex gap-2 mb-3">

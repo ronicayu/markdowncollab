@@ -120,12 +120,14 @@ export default function TopBar({
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <a
           href="/"
+          aria-label="Go to document list"
           className="inline-flex items-center h-9 px-1 text-sm font-bold text-white/80 hover:text-white shrink-0 transition-colors"
         >
           MC
         </a>
         <span className="text-white/25 text-sm">/</span>
         <input
+          aria-label="Document title"
           value={editableTitle}
           onChange={(e) => setEditableTitle(e.target.value)}
           onBlur={commitTitle}
@@ -187,6 +189,8 @@ export default function TopBar({
             onClick={() => setExportOpen((v) => !v)}
             className="flex items-center gap-1.5 h-8 px-2 sm:px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
             title="Export"
+            aria-label="Export document"
+            aria-expanded={exportOpen}
           >
             <svg className="h-4 w-4 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -225,6 +229,8 @@ export default function TopBar({
               : "text-white/60 hover:text-white hover:bg-white/8"
           }`}
           title="Version history"
+          aria-label="Version history"
+          aria-pressed={versionHistoryOpen ? "true" : "false"}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -238,6 +244,7 @@ export default function TopBar({
           disabled={agentLoading}
           className="flex items-center gap-1.5 h-8 px-2 sm:px-3 border border-white/20 text-white/70 hover:text-white hover:border-white/40 text-sm font-medium rounded-md transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           title="Invite Agent"
+          aria-label={agentLoading ? "Agent working" : "Invite AI agent"}
         >
           {agentLoading ? (
             <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -265,6 +272,7 @@ export default function TopBar({
             )}
             <button
               onClick={() => signOut()}
+              aria-label="Sign out"
               className="text-xs text-white/50 hover:text-white transition-colors"
             >
               <span className="hidden sm:inline">Sign out</span>
@@ -288,6 +296,7 @@ export default function TopBar({
         {/* Share — primary */}
         <button
           onClick={handleShare}
+          aria-label="Share document"
           className="flex items-center gap-1.5 h-8 px-2 sm:px-3 bg-[#B8692A] hover:bg-[#96541F] text-white text-sm font-medium rounded-md transition-colors"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

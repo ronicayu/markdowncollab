@@ -575,7 +575,7 @@ export default function DocumentPage({
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#F2E8D5]">
+    <div id="main-content" className="flex h-screen flex-col bg-[#F2E8D5]">
       <TopBar
         title={docTitle}
         documentId={id}

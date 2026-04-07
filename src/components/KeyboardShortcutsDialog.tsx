@@ -103,11 +103,14 @@ export default function KeyboardShortcutsDialog({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shortcuts-dialog-title"
         className="bg-white rounded-xl shadow-xl mx-4 max-w-lg w-full max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between rounded-t-xl">
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 id="shortcuts-dialog-title" className="text-base font-semibold text-gray-900">
             Keyboard Shortcuts
           </h2>
           <button

@@ -89,11 +89,14 @@ export default function LinkDialog({ editor, onClose }: LinkDialogProps) {
     >
       <form
         data-testid="link-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="link-dialog-title"
         className="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-5 space-y-4"
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
       >
-        <h3 className="text-sm font-semibold text-gray-900">Insert Link</h3>
+        <h3 id="link-dialog-title" className="text-sm font-semibold text-gray-900">Insert Link</h3>
 
         <div className="space-y-3">
           <div>
