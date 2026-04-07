@@ -3,6 +3,9 @@
  * The WS server handles upgrade requests to /ws/* paths.
  * Everything else goes to Next.js.
  */
+import { validateEnv } from "./env-check.mjs";
+validateEnv();
+
 import { createServer } from "http";
 import next from "next";
 import { WebSocketServer } from "ws";
