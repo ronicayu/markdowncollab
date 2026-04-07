@@ -156,6 +156,27 @@ const COMMANDS: Command[] = [
       editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
   },
   {
+    id: "emoji",
+    label: "Emoji",
+    description: "Insert an emoji character",
+    icon: "\u{1F600}",
+    keywords: ["emoji", "smiley", "face", "reaction"],
+    action: () => {
+      // Trigger the emoji picker via toolbar button click
+      const emojiBtn = document.querySelector('button[aria-label="Emoji"]') as HTMLButtonElement;
+      if (emojiBtn) emojiBtn.click();
+    },
+  },
+  {
+    id: "toc",
+    label: "Table of Contents",
+    description: "Auto-generated from headings",
+    icon: "\u{1F4D1}",
+    keywords: ["toc", "table of contents", "outline", "headings", "navigation"],
+    action: (editor) =>
+      editor.chain().focus().insertContent({ type: "tocBlock" }).run(),
+  },
+  {
     id: "callout",
     label: "Callout",
     description: "Info callout block",

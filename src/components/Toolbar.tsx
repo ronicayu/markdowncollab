@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/core";
+import EmojiPicker from "./EmojiPicker";
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -26,6 +27,8 @@ function formatShortcut(shortcut: string, mac: boolean): string {
 
 export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps) {
   const [isMac, setIsMac] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const emojiBtnRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
   }, []);
@@ -290,6 +293,19 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       separator: true,
     },
     {
+      label: "Emoji",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <circle cx="12" cy="12" r="10" />
+          <path strokeLinecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
+          <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="9" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+      action: () => setShowEmoji((v) => !v),
+      isActive: () => showEmoji,
+    },
+    {
       label: "Horizontal rule",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
@@ -394,6 +410,18 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
     </div>
     {/* Scroll fade hint for mobile */}
     <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--toolbar-bg)] to-transparent pointer-events-none" />
+    {/* Emoji picker popover */}
+    {showEmoji && (
+      <div className="absolute top-full left-0 mt-1 z-50">
+        <EmojiPicker
+          onSelect={(emoji) => {
+            editor.chain().focus().insertContent(emoji).run();
+            setShowEmoji(false);
+          }}
+          onClose={() => setShowEmoji(false)}
+        />
+      </div>
+    )}
     </div>
   );
 }
