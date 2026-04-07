@@ -13,6 +13,7 @@ model Document {
   ownerId    String?
   visibility String             @default("private")
   templateId String?
+  folderId   String?
   deletedAt  DateTime?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
@@ -79,6 +80,16 @@ model DocumentTag {
   @@unique([documentId, tagId])
   @@index([documentId])
   @@index([tagId])
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  parentId  String?
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  @@index([ownerId, parentId])
 }
 
 model Notification {

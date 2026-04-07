@@ -8,12 +8,15 @@ export async function GET(req: NextRequest) {
   const userId = (session?.user as any)?.id as string | undefined;
   const userEmail = session?.user?.email ?? undefined;
   const showTrash = req.nextUrl.searchParams.get("trash") === "true";
+  const folderIdParam = req.nextUrl.searchParams.get("folderId");
 
   if (!userId) {
     // Unauthenticated: only return legacy docs (no owner) for backward compatibility
+    const unauthWhere: any = { ownerId: null, deletedAt: null };
+    if (folderIdParam) unauthWhere.folderId = folderIdParam;
     const docs = await prisma.document.findMany({
-      where: { ownerId: null, deletedAt: null },
-      select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, createdAt: true, updatedAt: true },
+      where: unauthWhere,
+      select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, folderId: true, createdAt: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
     });
     return NextResponse.json(docs.map((d) => ({ ...d, role: "editor" })));
@@ -34,10 +37,13 @@ export async function GET(req: NextRequest) {
 
   const trashFilter = showTrash ? { deletedAt: { not: null } } : { deletedAt: null };
 
+  const folderFilter = folderIdParam !== null ? { folderId: folderIdParam === "root" ? null : folderIdParam } : {};
+
   const docs = await prisma.document.findMany({
     where: {
       AND: [
         trashFilter,
+        folderFilter,
         {
           OR: [
             { ownerId: userId },            // docs I own
@@ -47,7 +53,7 @@ export async function GET(req: NextRequest) {
         },
       ],
     },
-    select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, createdAt: true, updatedAt: true },
+    select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, folderId: true, createdAt: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },
   });
 

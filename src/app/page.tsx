@@ -14,6 +14,13 @@ interface Tag {
   color: string;
 }
 
+interface Folder {
+  id: string;
+  name: string;
+  parentId: string | null;
+  children: Folder[];
+}
+
 interface Doc {
   id: string;
   title: string;
@@ -22,6 +29,7 @@ interface Doc {
   role?: string;
   ownerId?: string | null;
   starred?: boolean;
+  folderId?: string | null;
 }
 
 function formatDate(dateStr: string) {
@@ -66,6 +74,13 @@ export default function Home() {
   const [tagFilterId, setTagFilterId] = useState<string | null>(null);
   const [tagPopoverDocId, setTagPopoverDocId] = useState<string | null>(null);
   const [newTagName, setNewTagName] = useState("");
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [renameFolderName, setRenameFolderName] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -93,6 +108,97 @@ export default function Home() {
       .then(setAllTags)
       .catch(() => {});
   }, []);
+
+  // Fetch folders
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/folders")
+      .then((r) => r.json())
+      .then((data: Folder[]) => { if (Array.isArray(data)) setFolders(data); })
+      .catch(() => {});
+  }, [session]);
+
+  async function createFolder() {
+    const name = newFolderName.trim();
+    if (!name) return;
+    const res = await fetch("/api/folders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, parentId: currentFolderId }),
+    });
+    if (res.ok) {
+      setNewFolderName("");
+      setShowNewFolder(false);
+      // Refresh folders
+      const data = await fetch("/api/folders").then((r) => r.json());
+      if (Array.isArray(data)) setFolders(data);
+    }
+  }
+
+  async function renameFolder(folderId: string) {
+    const name = renameFolderName.trim();
+    if (!name) { setRenamingFolderId(null); return; }
+    const res = await fetch(`/api/folders/${folderId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      setRenamingFolderId(null);
+      const data = await fetch("/api/folders").then((r) => r.json());
+      if (Array.isArray(data)) setFolders(data);
+    }
+  }
+
+  async function deleteFolder(folderId: string) {
+    const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
+    if (res.ok) {
+      if (currentFolderId === folderId) setCurrentFolderId(null);
+      const data = await fetch("/api/folders").then((r) => r.json());
+      if (Array.isArray(data)) setFolders(data);
+      // Refresh docs since some may have moved to root
+      fetch("/api/documents").then((r) => r.json()).then(setDocs);
+    }
+  }
+
+  async function moveDocToFolder(docId: string, folderId: string | null) {
+    await fetch(`/api/documents/${docId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folderId }),
+    });
+    setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, folderId } : d));
+  }
+
+  function toggleFolderExpanded(folderId: string) {
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId); else next.add(folderId);
+      return next;
+    });
+  }
+
+  // Build breadcrumb path for current folder
+  function getBreadcrumbs(): { id: string | null; name: string }[] {
+    const crumbs: { id: string | null; name: string }[] = [{ id: null, name: "All Documents" }];
+    if (!currentFolderId) return crumbs;
+
+    function findPath(nodes: Folder[], targetId: string, path: Folder[]): Folder[] | null {
+      for (const node of nodes) {
+        const newPath = [...path, node];
+        if (node.id === targetId) return newPath;
+        const found = findPath(node.children, targetId, newPath);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    const path = findPath(folders, currentFolderId, []);
+    if (path) {
+      for (const f of path) crumbs.push({ id: f.id, name: f.name });
+    }
+    return crumbs;
+  }
 
   // Fetch trash docs when the Trash tab is active
   useEffect(() => {
@@ -197,6 +303,13 @@ export default function Home() {
 
   const filteredDocs = (() => {
     let result = docs;
+    // Folder filter (only applies to "all" tab)
+    if (activeTab === "all" && currentFolderId !== null) {
+      result = result.filter((d) => d.folderId === currentFolderId);
+    } else if (activeTab === "all" && currentFolderId === null) {
+      // Show only root docs when in "All Documents" view (no folder selected means root)
+      // But we show all docs by default when no folder is explicitly selected
+    }
     if (activeTab === "starred") {
       result = docs.filter((d) => d.starred);
     } else if (activeTab === "recent") {
@@ -352,9 +465,9 @@ export default function Home() {
           ).map(({ label, tab }) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); if (tab === "all") setCurrentFolderId(null); }}
               className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors ${
-                activeTab === tab
+                activeTab === tab && !(tab === "all" && currentFolderId)
                   ? "bg-white/10 text-white font-medium"
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
@@ -379,6 +492,121 @@ export default function Home() {
             </button>
           ))}
         </nav>
+        {/* Folders section */}
+        {session && (
+          <div className="px-3 py-3 border-t border-white/10">
+            <div className="flex items-center justify-between mb-2 px-3">
+              <p className="text-xs text-white/30 uppercase tracking-wider">Folders</p>
+              <button
+                onClick={() => { setShowNewFolder(true); setNewFolderName(""); }}
+                className="text-white/30 hover:text-white transition-colors"
+                title="New folder"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </button>
+            </div>
+            {showNewFolder && (
+              <form
+                className="flex items-center gap-1 px-3 mb-2"
+                onSubmit={(e) => { e.preventDefault(); createFolder(); }}
+              >
+                <input
+                  autoFocus
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  placeholder="Folder name..."
+                  className="flex-1 min-w-0 rounded border border-white/20 bg-white/5 px-2 py-1 text-xs text-white outline-none focus:border-white/40"
+                  onKeyDown={(e) => { if (e.key === "Escape") setShowNewFolder(false); }}
+                />
+                <button
+                  type="submit"
+                  disabled={!newFolderName.trim()}
+                  className="px-2 py-1 rounded bg-white/10 text-white text-xs font-medium disabled:opacity-40 hover:bg-white/20"
+                >
+                  Add
+                </button>
+              </form>
+            )}
+            <div className="space-y-0.5">
+              {(function renderFolderTree(nodes: Folder[], depth: number): React.ReactNode[] {
+                return nodes.map((folder) => (
+                  <div key={folder.id}>
+                    <div
+                      className={`group/folder flex items-center gap-1 w-full text-left rounded-md text-sm transition-colors ${
+                        currentFolderId === folder.id
+                          ? "bg-white/10 text-white font-medium"
+                          : "text-white/50 hover:text-white hover:bg-white/5"
+                      }`}
+                      style={{ paddingLeft: `${0.75 + depth * 0.75}rem` }}
+                    >
+                      {folder.children.length > 0 ? (
+                        <button
+                          onClick={() => toggleFolderExpanded(folder.id)}
+                          className="p-0.5 shrink-0"
+                        >
+                          <svg
+                            className={`h-3 w-3 transition-transform ${expandedFolders.has(folder.id) ? "rotate-90" : ""}`}
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      ) : (
+                        <span className="w-4 shrink-0" />
+                      )}
+                      <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                      </svg>
+                      {renamingFolderId === folder.id ? (
+                        <input
+                          autoFocus
+                          value={renameFolderName}
+                          onChange={(e) => setRenameFolderName(e.target.value)}
+                          onBlur={() => renameFolder(folder.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") renameFolder(folder.id);
+                            if (e.key === "Escape") setRenamingFolderId(null);
+                          }}
+                          className="flex-1 min-w-0 rounded bg-white/10 px-1 py-0.5 text-xs text-white outline-none"
+                        />
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setCurrentFolderId(folder.id);
+                            setActiveTab("all");
+                            if (folder.children.length > 0) setExpandedFolders((prev) => new Set(prev).add(folder.id));
+                          }}
+                          onDoubleClick={() => {
+                            setRenamingFolderId(folder.id);
+                            setRenameFolderName(folder.name);
+                          }}
+                          className="flex-1 min-w-0 text-left py-2 truncate"
+                        >
+                          {folder.name}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteFolder(folder.id)}
+                        className="p-1 shrink-0 opacity-0 group-hover/folder:opacity-100 text-white/30 hover:text-red-400 transition-all"
+                        title="Delete folder"
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    {expandedFolders.has(folder.id) && folder.children.length > 0 && (
+                      <div>{renderFolderTree(folder.children, depth + 1)}</div>
+                    )}
+                  </div>
+                ));
+              })(folders, 0)}
+            </div>
+          </div>
+        )}
         {allTags.length > 0 && (
           <div className="px-3 py-3 border-t border-white/10">
             <p className="text-xs text-white/30 uppercase tracking-wider mb-2 px-3">Tags</p>
@@ -493,7 +721,29 @@ export default function Home() {
 
         {/* Top bar */}
         <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
-          <h1 className="text-lg font-semibold text-gray-900 shrink-0">{headingLabel[activeTab]}</h1>
+          <div className="shrink-0">
+            {activeTab === "all" && currentFolderId ? (
+              <nav className="flex items-center gap-1 text-sm">
+                {getBreadcrumbs().map((crumb, i, arr) => (
+                  <span key={crumb.id ?? "root"} className="flex items-center gap-1">
+                    {i > 0 && <span className="text-gray-400">/</span>}
+                    {i === arr.length - 1 ? (
+                      <span className="font-semibold text-gray-900">{crumb.name}</span>
+                    ) : (
+                      <button
+                        onClick={() => setCurrentFolderId(crumb.id)}
+                        className="text-gray-500 hover:text-gray-900 transition-colors"
+                      >
+                        {crumb.name}
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            ) : (
+              <h1 className="text-lg font-semibold text-gray-900">{headingLabel[activeTab]}</h1>
+            )}
+          </div>
           <div className="flex items-center gap-2 flex-1 max-w-sm">
             <input
               type="text"

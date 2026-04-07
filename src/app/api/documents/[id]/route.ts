@@ -41,8 +41,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { title } = await req.json();
-  const doc = await prisma.document.update({ where: { id }, data: { title } });
+  const body = await req.json();
+  const data: Record<string, any> = {};
+  if (body.title !== undefined) data.title = body.title;
+  if (body.folderId !== undefined) data.folderId = body.folderId;
+  const doc = await prisma.document.update({ where: { id }, data });
   return NextResponse.json({ ...doc, role: access.role });
 }
 
