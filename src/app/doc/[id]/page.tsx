@@ -27,6 +27,7 @@ import TypingIndicator from "@/components/TypingIndicator";
 import SaveTemplateDialog from "@/components/SaveTemplateDialog";
 import PresentationMode from "@/components/PresentationMode";
 import PinnedNotes from "@/components/PinnedNotes";
+import AIChatSidebar from "@/components/AIChatSidebar";
 import {
   getSuggestions,
   getComments,
@@ -599,6 +600,8 @@ export default function DocumentPage({
   const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
 
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const toggleChat = useCallback(() => setChatOpen((prev) => !prev), []);
 
   function toggleVersionHistory() {
     setVersionHistoryOpen((prev) => !prev);
@@ -695,6 +698,8 @@ export default function DocumentPage({
             setPresentationMode(true);
           }
         }}
+        onToggleChat={toggleChat}
+        chatOpen={chatOpen}
       />
       {userRole !== "viewer" && !focusMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
@@ -761,6 +766,13 @@ export default function DocumentPage({
             isOpen={versionHistoryOpen}
             onClose={() => setVersionHistoryOpen(false)}
             userName={userName}
+          />
+        )}
+        {chatOpen && !focusMode && (
+          <AIChatSidebar
+            documentId={id}
+            isOpen={chatOpen}
+            onClose={() => setChatOpen(false)}
           />
         )}
       </div>
