@@ -1147,7 +1147,7 @@ export default function Home() {
           ) : (
             <div className="space-y-2 max-w-3xl">
               {selected.size > 0 && (
-                <div className="flex items-center gap-3 bg-[#111110] text-white rounded-xl px-4 py-3 mb-2">
+                <div className="relative flex items-center gap-3 bg-[#111110] text-white rounded-xl px-4 py-3 mb-2">
                   <span className="text-sm">{selected.size} selected</span>
                   <button
                     onClick={bulkDelete}
@@ -1156,6 +1156,91 @@ export default function Home() {
                   >
                     {bulkDeleting ? "Deleting..." : "Delete"}
                   </button>
+                  <button
+                    onClick={() => setShowBulkTagPopover((v) => !v)}
+                    disabled={bulkTagging}
+                    className="text-sm font-medium text-green-400 hover:text-green-300 disabled:opacity-50"
+                  >
+                    {bulkTagging ? "Tagging..." : "Tag"}
+                  </button>
+                  {showBulkTagPopover && (
+                    <div
+                      className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-gray-700">Tag {selected.size} documents</p>
+                        <button onClick={() => setShowBulkTagPopover(false)} className="text-gray-400 hover:text-gray-600 text-xs">
+                          x
+                        </button>
+                      </div>
+                      <div className="space-y-1 max-h-40 overflow-y-auto mb-2">
+                        {allTags.length === 0 ? (
+                          <p className="text-xs text-gray-400 text-center py-2">No tags yet</p>
+                        ) : (
+                          allTags.map((tag) => {
+                            const allHave = [...selected].every((docId) =>
+                              (docTags[docId] || []).some((t) => t.id === tag.id)
+                            );
+                            const someHave = [...selected].some((docId) =>
+                              (docTags[docId] || []).some((t) => t.id === tag.id)
+                            );
+                            return (
+                              <button
+                                key={tag.id}
+                                onClick={() => allHave ? bulkRemoveTag(tag.id) : bulkAddTag(tag.id)}
+                                className={`w-full text-left flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors ${
+                                  allHave ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                                }`}
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                                <span className="truncate text-gray-700">{tag.name}</span>
+                                {allHave && <span className="ml-auto text-xs text-gray-400">&#10003;</span>}
+                                {!allHave && someHave && <span className="ml-auto text-xs text-gray-400">&#8212;</span>}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          const trimmed = newTagName.trim();
+                          if (!trimmed) return;
+                          const res = await fetch("/api/tags", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ name: trimmed }),
+                          });
+                          const tag = await res.json();
+                          if (tag && tag.id) {
+                            setAllTags((prev) => {
+                              if (prev.some((t) => t.id === tag.id)) return prev;
+                              return [...prev, tag].sort((a, b) => a.name.localeCompare(b.name));
+                            });
+                            await bulkAddTag(tag.id);
+                          }
+                          setNewTagName("");
+                        }}
+                        className="flex items-center gap-1"
+                      >
+                        <input
+                          type="text"
+                          value={newTagName}
+                          onChange={(e) => setNewTagName(e.target.value)}
+                          placeholder="New tag..."
+                          className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A]"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newTagName.trim()}
+                          className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+                        >
+                          Add
+                        </button>
+                      </form>
+                    </div>
+                  )}
                   <a
                     href={`/api/documents/export?ids=${[...selected].join(",")}`}
                     className="text-sm font-medium text-amber-400 hover:text-amber-300"
@@ -1171,7 +1256,7 @@ export default function Home() {
                     </a>
                   )}
                   <button
-                    onClick={() => setSelected(new Set())}
+                    onClick={() => { setSelected(new Set()); setShowBulkTagPopover(false); }}
                     className="text-sm text-white/50 hover:text-white ml-auto"
                   >
                     Cancel
