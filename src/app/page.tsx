@@ -1043,6 +1043,14 @@ export default function Home() {
                   >
                     Export ZIP
                   </a>
+                  {selected.size === 2 && (
+                    <a
+                      href={`/compare?a=${[...selected][0]}&b=${[...selected][1]}`}
+                      className="text-sm font-medium text-blue-400 hover:text-blue-300"
+                    >
+                      Compare
+                    </a>
+                  )}
                   <button
                     onClick={() => setSelected(new Set())}
                     className="text-sm text-white/50 hover:text-white ml-auto"
