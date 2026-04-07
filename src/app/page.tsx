@@ -600,6 +600,15 @@ export default function Home() {
             </svg>
             Board
           </Link>
+          <Link
+            href="/search-replace"
+            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+            </svg>
+            Search &amp; Replace
+          </Link>
         </div>
         {/* Folders section */}
         {session && (
