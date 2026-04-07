@@ -234,7 +234,7 @@ export default function DocumentPage({
       const res = await fetch(`/api/documents/${id}/summarize`, { method: "POST" });
       const data = await res.json();
       if (res.ok) {
-        toast(data.summary, "success", 10000);
+        toast(data.summary);
       } else {
         toast(data.error || "Failed to generate summary", "error");
       }
