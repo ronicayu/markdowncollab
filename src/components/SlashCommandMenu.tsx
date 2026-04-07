@@ -10,6 +10,100 @@ interface LinkedDoc {
   title: string;
 }
 
+interface SnippetItem {
+  id: string;
+  title: string;
+  content: string;
+}
+
+function SnippetDropdown({
+  position,
+  onSelect,
+  onClose,
+}: {
+  position: { top: number; left: number };
+  onSelect: (snippet: SnippetItem) => void;
+  onClose: () => void;
+}) {
+  const [snippets, setSnippets] = useState<SnippetItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/snippets")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: SnippetItem[]) => {
+        setSnippets(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((i) => Math.min(i + 1, snippets.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((i) => Math.max(i - 1, 0));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (snippets[selectedIndex]) onSelect(snippets[selectedIndex]);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [snippets, selectedIndex, onSelect, onClose]);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: position.top + 4,
+        left: position.left,
+        zIndex: 1001,
+      }}
+      className="w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden"
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      <div className="px-3 py-2 border-b border-gray-100">
+        <p className="text-xs font-medium text-gray-500">Your Snippets</p>
+      </div>
+      <div className="max-h-48 overflow-y-auto">
+        {loading ? (
+          <p className="text-xs text-gray-400 px-3 py-3 text-center">Loading...</p>
+        ) : snippets.length === 0 ? (
+          <p className="text-xs text-gray-400 px-3 py-3 text-center">No snippets saved yet</p>
+        ) : (
+          snippets.map((s, i) => (
+            <button
+              key={s.id}
+              data-selected={i === selectedIndex ? "true" : "false"}
+              onMouseEnter={() => setSelectedIndex(i)}
+              onClick={() => onSelect(s)}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                i === selectedIndex ? "bg-amber-50" : "hover:bg-gray-50"
+              }`}
+            >
+              <span className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 shrink-0">
+                S
+              </span>
+              <div className="min-w-0">
+                <span className="truncate text-gray-900 block">{s.title}</span>
+                <span className="truncate text-xs text-gray-400 block">{s.content.slice(0, 50)}</span>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DocSearchDropdown({
   position,
   onSelect,
@@ -557,6 +651,17 @@ const COMMANDS: Command[] = [
     },
   },
   {
+    id: "snippet",
+    label: "Snippet",
+    description: "Insert a saved snippet",
+    icon: "\u{1F4CB}",
+    keywords: ["snippet", "template", "reuse", "saved"],
+    hasSubmenu: true,
+    action: () => {
+      // Action is handled by the submenu; this is a no-op placeholder
+    },
+  },
+  {
     id: "poll",
     label: "Poll",
     description: "Create a live poll for voting",
@@ -602,6 +707,7 @@ export default function SlashCommandMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const [usageCounts] = useState(() => getUsageCounts());
   const [showDocSearch, setShowDocSearch] = useState(false);
+  const [showSnippetMenu, setShowSnippetMenu] = useState(false);
   // Saved position for inserting after slash cleanup
   const slashCleanupRef = useRef<{ from: number; to: number } | null>(null);
 
@@ -670,6 +776,15 @@ export default function SlashCommandMenu({
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [allItems, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleSnippetSelect = useCallback(
+    (snippet: SnippetItem) => {
+      editor.chain().focus().insertContent(snippet.content).run();
+      setShowSnippetMenu(false);
+      onClose();
+    },
+    [editor, onClose]
+  );
+
   const handleDocSelect = useCallback(
     (doc: LinkedDoc) => {
       // Insert [[Title]] as a link pointing to /doc/{id}
@@ -720,8 +835,24 @@ export default function SlashCommandMenu({
       return;
     }
 
+    // For snippet, open the snippet submenu instead of closing
+    if (cmd.id === "snippet") {
+      setShowSnippetMenu(true);
+      return;
+    }
+
     cmd.action(editor);
     onClose();
+  }
+
+  if (showSnippetMenu) {
+    return (
+      <SnippetDropdown
+        position={position}
+        onSelect={handleSnippetSelect}
+        onClose={() => { setShowSnippetMenu(false); onClose(); }}
+      />
+    );
   }
 
   if (showDocSearch) {

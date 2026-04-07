@@ -144,3 +144,25 @@ model Webhook {
 
   @@index([ownerId])
 }
+
+model Reminder {
+  id         String   @id @default(uuid())
+  documentId String
+  userId     String
+  remindAt   DateTime
+  message    String
+  dismissed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, dismissed, remindAt])
+}
+
+model Snippet {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  ownerId   String
+  createdAt DateTime @default(now())
+
+  @@index([ownerId])
+}

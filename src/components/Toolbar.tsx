@@ -45,8 +45,11 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   const [showEmoji, setShowEmoji] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [autoNumbering, setAutoNumbering] = useState(false);
+  const [showSnippetSave, setShowSnippetSave] = useState(false);
+  const [snippetTitle, setSnippetTitle] = useState("");
   const colorBtnRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
+  const snippetBtnRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
   }, []);
@@ -78,6 +81,39 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
     }
     if (docId) {
       localStorage.setItem(`autoNumber:${docId}`, String(next));
+    }
+  }
+
+  // Close snippet save on outside click
+  useEffect(() => {
+    if (!showSnippetSave) return;
+    function handleClick(e: MouseEvent) {
+      if (snippetBtnRef.current && !snippetBtnRef.current.contains(e.target as Node)) {
+        setShowSnippetSave(false);
+        setSnippetTitle("");
+      }
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [showSnippetSave]);
+
+  async function handleSaveSnippet() {
+    if (!editor || !snippetTitle.trim()) return;
+    const { from, to } = editor.state.selection;
+    if (from === to) return;
+    const selectedText = editor.state.doc.textBetween(from, to, "\n");
+    try {
+      const res = await fetch("/api/snippets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: snippetTitle.trim(), content: selectedText }),
+      });
+      if (res.ok) {
+        setShowSnippetSave(false);
+        setSnippetTitle("");
+      }
+    } catch {
+      // silently fail
     }
   }
 
@@ -524,6 +560,46 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       >
         <span className="text-xs font-bold tracking-tight">#</span>
       </button>
+      {/* Save as snippet */}
+      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
+      <div className="relative" ref={snippetBtnRef}>
+        <button
+          onClick={() => {
+            if (!editor) return;
+            const { from, to } = editor.state.selection;
+            if (from === to) return;
+            setShowSnippetSave((v) => !v);
+          }}
+          title="Save selection as snippet"
+          aria-label="Save selection as snippet"
+          className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </button>
+        {showSnippetSave && (
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-56">
+            <p className="text-xs font-medium text-gray-700 mb-2">Save as Snippet</p>
+            <input
+              type="text"
+              placeholder="Snippet name..."
+              value={snippetTitle}
+              onChange={(e) => setSnippetTitle(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSaveSnippet(); }}
+              className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 mb-2 outline-none focus:border-blue-400"
+              autoFocus
+            />
+            <button
+              onClick={handleSaveSnippet}
+              disabled={!snippetTitle.trim()}
+              className="w-full text-xs font-medium text-white bg-[#B8692A] rounded py-1.5 hover:bg-[#96541F] disabled:opacity-40 transition-colors"
+            >
+              Save
+            </button>
+          </div>
+        )}
+      </div>
       {/* Separator before help button */}
       <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
       <button
