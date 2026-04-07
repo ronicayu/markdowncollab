@@ -592,17 +592,19 @@ export default function DocumentPage({
         <div className="hidden lg:block">
           <OutlineSidebar editor={editor} />
         </div>
-        <Editor
-          documentId={id}
-          userName={userName}
-          ydoc={ydoc}
-          provider={provider}
-          onEditorReady={handleEditorReady}
-          activeCommentId={activeCommentId}
-          editable={userRole !== "viewer"}
-          initialContent={templateContent}
-          onToggleShortcutsHelp={toggleShortcutsHelp}
-        />
+        {ydoc && provider && (
+          <Editor
+            documentId={id}
+            userName={userName}
+            ydoc={ydoc}
+            provider={provider}
+            onEditorReady={handleEditorReady}
+            activeCommentId={activeCommentId}
+            editable={userRole !== "viewer"}
+            initialContent={templateContent}
+            onToggleShortcutsHelp={toggleShortcutsHelp}
+          />
+        )}
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
         <FloatingCommentButton
           editor={editor}

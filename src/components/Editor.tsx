@@ -17,10 +17,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import SlashCommandMenu from "./SlashCommandMenu";
 import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
-import Table from "@tiptap/extension-table";
-import TableRow from "@tiptap/extension-table-row";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
+import * as TablePkg from "@tiptap/extension-table";
+const { Table, TableRow, TableCell, TableHeader } = TablePkg;
 import SearchBar from "./SearchBar";
 
 
@@ -146,13 +144,11 @@ export default function Editor({
         allowBase64: false,
         HTMLAttributes: { class: "editor-image" },
       }),
-      CollaborationCursor.configure({
-        provider,
-        user: {
-          name: userName,
-          color: cursorColor,
-        },
-      }),
+      // CollaborationCursor disabled: Tiptap v3's CollaborationCursor requires
+      // TiptapCollabProvider (from @tiptap/y-tiptap) instead of y-websocket's
+      // WebsocketProvider. The extension crashes accessing provider.doc which
+      // doesn't exist on WebsocketProvider. TODO: migrate to TiptapCollabProvider.
+      // CollaborationCursor.configure({ provider, user: { name: userName, color: cursorColor } }),
     ],
     editorProps: {
       attributes: {
