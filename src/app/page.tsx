@@ -97,6 +97,8 @@ export default function Home() {
   const [searchDateTo, setSearchDateTo] = useState("");
   const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [dueReminders, setDueReminders] = useState<{ id: string; documentId: string; remindAt: string; message: string; docTitle: string }[]>([]);
+  const [showBulkTagPopover, setShowBulkTagPopover] = useState(false);
+  const [bulkTagging, setBulkTagging] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -473,6 +475,54 @@ export default function Home() {
     setBulkDeleting(false);
   }
 
+  async function bulkAddTag(tagId: string) {
+    setBulkTagging(true);
+    const ids = [...selected];
+    await Promise.all(
+      ids.map((docId) =>
+        fetch(`/api/documents/${docId}/tags`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tagId }),
+        })
+          .then((r) => r.json())
+          .then((tag) => {
+            if (tag && tag.id) {
+              setDocTags((prev) => {
+                const existing = prev[docId] || [];
+                if (existing.some((t) => t.id === tag.id)) return prev;
+                return { ...prev, [docId]: [...existing, tag] };
+              });
+            }
+          })
+          .catch(() => {})
+      )
+    );
+    setBulkTagging(false);
+  }
+
+  async function bulkRemoveTag(tagId: string) {
+    setBulkTagging(true);
+    const ids = [...selected];
+    await Promise.all(
+      ids.map((docId) =>
+        fetch(`/api/documents/${docId}/tags`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tagId }),
+        })
+          .then(() => {
+            setDocTags((prev) => ({
+              ...prev,
+              [docId]: (prev[docId] || []).filter((t) => t.id !== tagId),
+            }));
+          })
+          .catch(() => {})
+      )
+    );
+    setBulkTagging(false);
+  }
+
   async function deleteDoc(doc: Doc) {
     setDeletingId(doc.id);
     setConfirmDelete(null);
@@ -540,6 +590,15 @@ export default function Home() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
             </svg>
             Statistics
+          </Link>
+          <Link
+            href="/board"
+            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+            Board
           </Link>
         </div>
         {/* Folders section */}
