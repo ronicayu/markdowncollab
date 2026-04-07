@@ -707,7 +707,7 @@ export default function DocumentPage({
         {!focusMode && (
           <div className="hidden lg:block">
             <ErrorBoundary>
-              <OutlineSidebar editor={editor} />
+              <OutlineSidebar editor={editor} documentId={id} />
             </ErrorBoundary>
           </div>
         )}

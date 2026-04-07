@@ -9,13 +9,32 @@ interface Heading {
   pos: number;
 }
 
-interface OutlineSidebarProps {
-  editor: Editor | null;
+interface Backlink {
+  id: string;
+  title: string;
+  snippet: string;
 }
 
-export default function OutlineSidebar({ editor }: OutlineSidebarProps) {
+interface OutlineSidebarProps {
+  editor: Editor | null;
+  documentId?: string;
+}
+
+export default function OutlineSidebar({ editor, documentId }: OutlineSidebarProps) {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [collapsed, setCollapsed] = useState(false);
+  const [backlinks, setBacklinks] = useState<Backlink[]>([]);
+
+  // Fetch backlinks on mount
+  useEffect(() => {
+    if (!documentId) return;
+    fetch(`/api/documents/${documentId}/backlinks`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setBacklinks(data);
+      })
+      .catch(() => {});
+  }, [documentId]);
 
   useEffect(() => {
     if (!editor) return;
@@ -103,6 +122,23 @@ export default function OutlineSidebar({ editor }: OutlineSidebarProps) {
               {h.text}
             </button>
           ))}
+        </div>
+      )}
+      {backlinks.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-[#E8D8C0]">
+          <p className="text-xs font-semibold text-gray-400 tracking-widest mb-2">LINKED FROM</p>
+          <div className="space-y-1">
+            {backlinks.map((bl) => (
+              <a
+                key={bl.id}
+                href={`/doc/${bl.id}`}
+                className="block text-sm text-gray-600 hover:text-gray-900 py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors truncate"
+                title={bl.snippet || bl.title}
+              >
+                {bl.title}
+              </a>
+            ))}
+          </div>
         </div>
       )}
     </div>
