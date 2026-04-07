@@ -631,6 +631,7 @@ export default function DocumentPage({
   }, []);
 
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [presentationMode, setPresentationMode] = useState(false);
   const [presentationContent, setPresentationContent] = useState("");
 
@@ -712,6 +713,7 @@ export default function DocumentPage({
         onToggleChat={toggleChat}
         chatOpen={chatOpen}
         breadcrumbs={breadcrumbs}
+        onSetReminder={() => setReminderDialogOpen(true)}
       />
       {userRole !== "viewer" && !focusMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
@@ -854,6 +856,12 @@ export default function DocumentPage({
         onClose={() => setSaveTemplateOpen(false)}
         onSave={handleSaveAsTemplate}
       />
+      {reminderDialogOpen && (
+        <ReminderDialog
+          documentId={id}
+          onClose={() => setReminderDialogOpen(false)}
+        />
+      )}
       {presentationMode && (
         <PresentationMode
           content={presentationContent}

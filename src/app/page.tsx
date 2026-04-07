@@ -96,6 +96,7 @@ export default function Home() {
   const [searchDateFrom, setSearchDateFrom] = useState("");
   const [searchDateTo, setSearchDateTo] = useState("");
   const [showSearchFilters, setShowSearchFilters] = useState(false);
+  const [dueReminders, setDueReminders] = useState<{ id: string; documentId: string; remindAt: string; message: string; docTitle: string }[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -123,6 +124,23 @@ export default function Home() {
       .then(setAllTags)
       .catch(() => {});
   }, []);
+
+  // Check for due reminders on mount
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/reminders")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((reminders: { id: string; documentId: string; remindAt: string; message: string }[]) => {
+        const now = new Date();
+        const due = reminders.filter((r) => new Date(r.remindAt) <= now);
+        due.forEach((rem) => {
+          const docTitle = docs.find((d) => d.id === rem.documentId)?.title || "a document";
+          setDueReminders((prev) => [...prev, { ...rem, docTitle }]);
+        });
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
 
   // Fetch folders
   useEffect(() => {
@@ -761,6 +779,36 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* Due reminders banner */}
+        {dueReminders.length > 0 && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2 flex flex-col gap-1">
+            {dueReminders.map((rem) => (
+              <div key={rem.id} className="flex items-center justify-between gap-2 text-sm">
+                <div className="flex items-center gap-2 text-amber-800">
+                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    Reminder: {rem.message || "Check this document"} &mdash;{" "}
+                    <Link href={`/doc/${rem.documentId}`} className="font-medium underline hover:text-amber-900">
+                      {rem.docTitle}
+                    </Link>
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    fetch(`/api/reminders?id=${rem.id}`, { method: "DELETE" });
+                    setDueReminders((prev) => prev.filter((r) => r.id !== rem.id));
+                  }}
+                  className="text-amber-600 hover:text-amber-800 text-xs font-medium shrink-0"
+                >
+                  Dismiss
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Top bar */}
         <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
