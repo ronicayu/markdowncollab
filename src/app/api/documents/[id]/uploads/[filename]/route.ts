@@ -7,6 +7,7 @@ import { join } from "path";
 import { existsSync } from "fs";
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || "./uploads";
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const MIME_TYPES: Record<string, string> = {
   png: "image/png",
@@ -22,6 +23,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string; filename: string }> }
 ) {
   const { id, filename } = await params;
+
+  // Validate document ID to prevent path traversal
+  if (!UUID_REGEX.test(id)) {
+    return NextResponse.json({ error: "Invalid document ID" }, { status: 400 });
+  }
 
   // Auth check -- viewer role is sufficient to see images
   const session = await getServerSession(authOptions);

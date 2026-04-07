@@ -8,12 +8,18 @@ import { join } from "path";
 import { randomUUID } from "crypto";
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || "./uploads";
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Validate document ID to prevent path traversal
+  if (!UUID_REGEX.test(id)) {
+    return NextResponse.json({ error: "Invalid document ID" }, { status: 400 });
+  }
 
   // Auth check
   const session = await getServerSession(authOptions);
