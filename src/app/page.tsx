@@ -81,6 +81,15 @@ export default function Home() {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
   const [renameFolderName, setRenameFolderName] = useState("");
+  const [analyticsDocId, setAnalyticsDocId] = useState<string | null>(null);
+  const [analyticsData, setAnalyticsData] = useState<{
+    viewCount: number;
+    editCount: number;
+    collaboratorCount: number;
+    createdAt: string;
+    lastEditedAt: string;
+  } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -1080,8 +1089,50 @@ export default function Home() {
                       </form>
                     </div>
                   )}
-                  {/* Tag + Duplicate + Delete buttons — appear on hover */}
+                  {/* Analytics popover */}
+                  {analyticsDocId === doc.id && analyticsData && (
+                    <div
+                      className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-gray-700">Analytics</p>
+                        <button onClick={() => setAnalyticsDocId(null)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600">
+                        <div className="flex justify-between"><span>Views</span><span className="font-medium text-gray-900">{analyticsData.viewCount}</span></div>
+                        <div className="flex justify-between"><span>Activity events</span><span className="font-medium text-gray-900">{analyticsData.editCount}</span></div>
+                        <div className="flex justify-between"><span>Collaborators</span><span className="font-medium text-gray-900">{analyticsData.collaboratorCount}</span></div>
+                        <div className="flex justify-between"><span>Created</span><span className="font-medium text-gray-900">{formatDate(analyticsData.createdAt)}</span></div>
+                        <div className="flex justify-between"><span>Last edited</span><span className="font-medium text-gray-900">{formatDate(analyticsData.lastEditedAt)}</span></div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Analytics + Tag + Duplicate + Delete buttons — appear on hover */}
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (analyticsDocId === doc.id) {
+                          setAnalyticsDocId(null);
+                          return;
+                        }
+                        setAnalyticsDocId(doc.id);
+                        setAnalyticsLoading(true);
+                        fetch(`/api/documents/${doc.id}/analytics`)
+                          .then((r) => r.ok ? r.json() : null)
+                          .then((data) => { if (data) setAnalyticsData(data); })
+                          .catch(() => {})
+                          .finally(() => setAnalyticsLoading(false));
+                      }}
+                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+                      title="View analytics"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                      </svg>
+                    </button>
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTagPopoverDocId(tagPopoverDocId === doc.id ? null : doc.id); setNewTagName(""); }}
                       className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"

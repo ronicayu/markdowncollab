@@ -160,6 +160,11 @@ export default function DocumentPage({
       .catch(() => {});
   }, [id]);
 
+  // Track document view on mount
+  useEffect(() => {
+    fetch(`/api/documents/${id}/analytics`, { method: "POST" }).catch(() => {});
+  }, [id]);
+
   const handleTitleChange = useCallback(
     async (newTitle: string) => {
       setDocTitle(newTitle);
