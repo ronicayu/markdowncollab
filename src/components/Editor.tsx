@@ -10,6 +10,7 @@ import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { Markdown } from "tiptap-markdown";
 import Image from "@tiptap/extension-image";
+import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextAlign } from "@tiptap/extension-text-align";
@@ -24,6 +25,7 @@ import { YjsUndo } from "@/extensions/yjs-undo";
 import * as TablePkg from "@tiptap/extension-table";
 const { Table, TableRow, TableCell, TableHeader } = TablePkg;
 import SearchBar from "./SearchBar";
+import LinkDialog from "./LinkDialog";
 
 
 interface EditorProps {
@@ -57,6 +59,7 @@ export default function Editor({
     pos: { top: number; left: number };
   } | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [showReplace, setShowReplace] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [wordCount, setWordCount] = useState({ words: 0, chars: 0 });
@@ -125,6 +128,12 @@ export default function Editor({
       MermaidBlock,
       Placeholder.configure({
         placeholder: "Start typing, or press / for commands...",
+      }),
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: { class: "editor-link" },
       }),
       SuggestionMark,
       CommentMark,
@@ -333,6 +342,9 @@ export default function Editor({
         e.preventDefault();
         setSearchOpen(true);
         setShowReplace(true);
+      } else if (mod && e.key === "k") {
+        e.preventDefault();
+        setLinkDialogOpen(true);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -393,6 +405,12 @@ export default function Editor({
           onToggleCaseSensitive={() => editor.commands.toggleCaseSensitive()}
           onToggleReplace={() => setShowReplace((v) => !v)}
           onClose={handleClose}
+        />
+      )}
+      {linkDialogOpen && editor && (
+        <LinkDialog
+          editor={editor}
+          onClose={() => setLinkDialogOpen(false)}
         />
       )}
       <EditorContent editor={editor} />

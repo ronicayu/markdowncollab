@@ -79,6 +79,19 @@ const COMMANDS: Command[] = [
       editor.chain().focus().setNode("mermaidBlock", { content: "graph LR\n  A --> B" }).run(),
   },
   {
+    id: "link",
+    label: "Link",
+    description: "Insert a hyperlink",
+    icon: "\uD83D\uDD17",
+    keywords: ["link", "url", "href", "hyperlink"],
+    action: () => {
+      // Trigger the Cmd+K shortcut handler in Editor to open the link dialog
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
+      );
+    },
+  },
+  {
     id: "divider",
     label: "Divider",
     description: "Horizontal rule",
