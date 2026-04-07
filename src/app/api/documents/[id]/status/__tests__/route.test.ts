@@ -36,7 +36,7 @@ describe("GET /api/documents/[id]/status", () => {
       approvedAt: null,
     } as any);
 
-    const { GET } = await import("../../route");
+    const { GET } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status");
     const res = await GET(req, { params: Promise.resolve({ id: "doc-1" }) });
     const data = await res.json();
@@ -48,7 +48,7 @@ describe("GET /api/documents/[id]/status", () => {
   it("returns 404 for missing document", async () => {
     mockDocFindUnique.mockResolvedValue(null);
 
-    const { GET } = await import("../../route");
+    const { GET } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status");
     const res = await GET(req, { params: Promise.resolve({ id: "doc-1" }) });
 
@@ -60,7 +60,7 @@ describe("PUT /api/documents/[id]/status", () => {
   it("requires authentication", async () => {
     mockGetSession.mockResolvedValue(null);
 
-    const { PUT } = await import("../../route");
+    const { PUT } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -83,7 +83,7 @@ describe("PUT /api/documents/[id]/status", () => {
       status: "draft",
     } as any);
 
-    const { PUT } = await import("../../route");
+    const { PUT } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -115,7 +115,7 @@ describe("PUT /api/documents/[id]/status", () => {
 
     mockActivityCreate.mockResolvedValue({} as any);
 
-    const { PUT } = await import("../../route");
+    const { PUT } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -140,7 +140,7 @@ describe("PUT /api/documents/[id]/status", () => {
       status: "draft",
     } as any);
 
-    const { PUT } = await import("../../route");
+    const { PUT } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -172,7 +172,7 @@ describe("PUT /api/documents/[id]/status", () => {
 
     mockActivityCreate.mockResolvedValue({} as any);
 
-    const { PUT } = await import("../../route");
+    const { PUT } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -209,7 +209,7 @@ describe("PUT /api/documents/[id]/status", () => {
       status: "draft",
     } as any);
 
-    const { PUT } = await import("../../route");
+    const { PUT } = await import("../route");
     const req = new Request("http://localhost/api/documents/doc-1/status", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
