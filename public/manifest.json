@@ -1,0 +1,21 @@
+{
+  "name": "MarkdownCollab",
+  "short_name": "MC",
+  "description": "Real-time collaborative markdown editing",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111110",
+  "theme_color": "#B8692A",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

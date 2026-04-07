@@ -5,6 +5,8 @@ import ToastProvider from "@/components/ToastProvider";
 import SessionProvider from "@/components/SessionProvider";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import GlobalCommandPalette from "@/components/GlobalCommandPalette";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
+import OfflineIndicator from "@/components/OfflineIndicator";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -16,6 +18,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#B8692A" />
+      </head>
       <body className={jakarta.className} suppressHydrationWarning>
         <SessionProvider>
           <ThemeWrapper>
@@ -24,6 +30,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </a>
             {children}
             <GlobalCommandPalette />
+            <OfflineIndicator />
+            <ServiceWorkerRegistration />
           </ThemeWrapper>
           <ToastProvider />
         </SessionProvider>
