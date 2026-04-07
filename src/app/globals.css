@@ -381,3 +381,68 @@ body {
 .skip-to-content:focus {
   top: 0;
 }
+
+/* Callout / Admonition blocks */
+.ProseMirror .callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border-left: 4px solid;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  font-style: normal;
+}
+.ProseMirror .callout .callout-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+.ProseMirror .callout .callout-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Info callout — blue */
+.ProseMirror .callout-info {
+  border-left-color: #3b82f6;
+  background-color: #eff6ff;
+  color: #1e3a5f;
+}
+.dark .ProseMirror .callout-info {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+}
+
+/* Warning callout — amber */
+.ProseMirror .callout-warning {
+  border-left-color: #f59e0b;
+  background-color: #fffbeb;
+  color: #78350f;
+}
+.dark .ProseMirror .callout-warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
+}
+
+/* Tip callout — green */
+.ProseMirror .callout-tip {
+  border-left-color: #22c55e;
+  background-color: #f0fdf4;
+  color: #14532d;
+}
+.dark .ProseMirror .callout-tip {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+}
+
+/* Danger callout — red */
+.ProseMirror .callout-danger {
+  border-left-color: #ef4444;
+  background-color: #fef2f2;
+  color: #7f1d1d;
+}
+.dark .ProseMirror .callout-danger {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}

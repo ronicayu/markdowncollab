@@ -155,6 +155,42 @@ const COMMANDS: Command[] = [
     action: (editor) =>
       editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
   },
+  {
+    id: "callout",
+    label: "Callout",
+    description: "Info callout block",
+    icon: "\u2139\uFE0F",
+    keywords: ["callout", "admonition", "info", "note"],
+    action: (editor) =>
+      (editor.commands as unknown as { setCallout: (attrs: { type: string }) => boolean }).setCallout({ type: "info" }),
+  },
+  {
+    id: "warning",
+    label: "Warning",
+    description: "Warning callout block",
+    icon: "\u26A0\uFE0F",
+    keywords: ["warning", "caution", "alert"],
+    action: (editor) =>
+      (editor.commands as unknown as { setCallout: (attrs: { type: string }) => boolean }).setCallout({ type: "warning" }),
+  },
+  {
+    id: "tip",
+    label: "Tip",
+    description: "Tip callout block",
+    icon: "\uD83D\uDCA1",
+    keywords: ["tip", "hint", "suggestion"],
+    action: (editor) =>
+      (editor.commands as unknown as { setCallout: (attrs: { type: string }) => boolean }).setCallout({ type: "tip" }),
+  },
+  {
+    id: "danger",
+    label: "Danger",
+    description: "Danger callout block",
+    icon: "\uD83D\uDEA8",
+    keywords: ["danger", "error", "critical", "important"],
+    action: (editor) =>
+      (editor.commands as unknown as { setCallout: (attrs: { type: string }) => boolean }).setCallout({ type: "danger" }),
+  },
 ];
 
 interface SlashCommandMenuProps {

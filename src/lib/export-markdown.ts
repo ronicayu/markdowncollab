@@ -48,6 +48,11 @@ export function xmlFragmentToMarkdown(fragment: Y.XmlFragment): string {
         const src = child.getAttribute("src") || "";
         const alt = child.getAttribute("alt") || "";
         md += `![${alt}](${src})\n\n`;
+      } else if (tag === "callout") {
+        const calloutType = child.getAttribute("type") || "info";
+        const label = calloutType.charAt(0).toUpperCase() + calloutType.slice(1);
+        const content = getElementText(child).trim();
+        md += `> **${label}:** ${content}\n\n`;
       } else if (tag === "table") {
         md += tableToMarkdown(child);
         md += "\n";
