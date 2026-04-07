@@ -40,6 +40,7 @@ import "./drag-handle.css";
 import SearchBar from "./SearchBar";
 import LinkDialog from "./LinkDialog";
 import TableSortMenu from "./TableSortMenu";
+import { PersonalHighlight } from "@/extensions/personal-highlight";
 
 
 interface EditorProps {
@@ -246,6 +247,9 @@ export default function Editor({
       RemoteCursors.configure({
         provider,
         currentUser: userName,
+      }),
+      PersonalHighlight.configure({
+        documentId,
       }),
     ],
     editorProps: {

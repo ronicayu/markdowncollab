@@ -3,6 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import type { Editor } from "@tiptap/core";
 import EmojiPicker from "./EmojiPicker";
+import {
+  addPersonalHighlight,
+  removePersonalHighlight,
+  HIGHLIGHT_COLORS,
+  personalHighlightPluginKey,
+} from "@/extensions/personal-highlight";
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -47,9 +53,11 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   const [autoNumbering, setAutoNumbering] = useState(false);
   const [showSnippetSave, setShowSnippetSave] = useState(false);
   const [snippetTitle, setSnippetTitle] = useState("");
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const colorBtnRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
   const snippetBtnRef = useRef<HTMLDivElement>(null);
+  const highlightBtnRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
   }, []);
@@ -83,6 +91,18 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       localStorage.setItem(`autoNumber:${docId}`, String(next));
     }
   }
+
+  // Close highlight picker on outside click
+  useEffect(() => {
+    if (!showHighlightPicker) return;
+    function handleClick(e: MouseEvent) {
+      if (highlightBtnRef.current && !highlightBtnRef.current.contains(e.target as Node)) {
+        setShowHighlightPicker(false);
+      }
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [showHighlightPicker]);
 
   // Close snippet save on outside click
   useEffect(() => {
@@ -596,6 +616,64 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
               className="w-full text-xs font-medium text-white bg-[#B8692A] rounded py-1.5 hover:bg-[#96541F] disabled:opacity-40 transition-colors"
             >
               Save
+            </button>
+          </div>
+        )}
+      </div>
+      {/* Personal highlight */}
+      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
+      <div className="relative" ref={highlightBtnRef}>
+        <button
+          onClick={() => {
+            if (!editor) return;
+            const { from, to } = editor.state.selection;
+            if (from === to) return;
+            setShowHighlightPicker((v) => !v);
+          }}
+          title="Personal highlight (local only)"
+          aria-label="Personal highlight"
+          className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
+            showHighlightPicker
+              ? "bg-[var(--accent)]/10 text-[var(--accent)]"
+              : "text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]"
+          }`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+        </button>
+        {showHighlightPicker && (
+          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-40">
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide px-1 mb-1.5">Personal Highlight</p>
+            <div className="flex gap-1.5 mb-2 px-1">
+              {HIGHLIGHT_COLORS.map((c) => (
+                <button
+                  key={c.color}
+                  title={c.name}
+                  onClick={() => {
+                    if (!editor) return;
+                    const { from, to } = editor.state.selection;
+                    if (from === to) return;
+                    addPersonalHighlight(editor.view, from, to, c.color);
+                    setShowHighlightPicker(false);
+                  }}
+                  className="h-6 w-6 rounded-full border border-gray-200 hover:scale-110 transition-transform"
+                  style={{ backgroundColor: c.bg }}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                if (!editor) return;
+                const { from, to } = editor.state.selection;
+                if (from !== to) {
+                  removePersonalHighlight(editor.view, from, to);
+                }
+                setShowHighlightPicker(false);
+              }}
+              className="w-full text-xs text-center py-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+            >
+              Remove
             </button>
           </div>
         )}
