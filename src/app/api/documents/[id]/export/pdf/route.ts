@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkDocumentAccess } from "@/lib/access-control";
 import puppeteer from "puppeteer";
 import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { xmlFragmentToHtml, wrapInHtmlTemplate } from "@/lib/export-html";
@@ -8,6 +11,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Auth check — viewer role is sufficient for export
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string | undefined;
+  const userEmail = session?.user?.email ?? undefined;
+
+  const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null);
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const wsUrl = process.env.WS_URL || "ws://localhost:3000/ws";
   let cleanup: (() => void) | null = null;
   let browser: Awaited<ReturnType<typeof puppeteer.launch>> | null = null;
@@ -26,17 +40,31 @@ export async function GET(
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
     const page = await browser.newPage();
-    await page.setContent(fullHtml, { waitUntil: "networkidle0" });
+
+    // Block all external network requests for security
+    await page.setRequestInterception(true);
+    page.on("request", (request) => {
+      if (request.url().startsWith("data:") || request.url() === "about:blank") {
+        request.continue();
+      } else {
+        request.abort();
+      }
+    });
+
+    await page.setContent(fullHtml, { waitUntil: "domcontentloaded" });
     const pdf = await page.pdf({
       format: "A4",
       margin: { top: "20mm", bottom: "20mm", left: "15mm", right: "15mm" },
       printBackground: true,
     });
 
+    // Sanitize filename to prevent header injection
+    const safeId = id.replace(/[^a-zA-Z0-9_-]/g, "_");
+
     return new NextResponse(pdf, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${id}.pdf"`,
+        "Content-Disposition": `attachment; filename="${safeId}.pdf"`,
       },
     });
   } catch (error) {
