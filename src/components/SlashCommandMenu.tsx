@@ -1,8 +1,121 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { Editor } from "@tiptap/core";
 import { parseEmbedUrl } from "@/extensions/embed-block";
+
+interface LinkedDoc {
+  id: string;
+  title: string;
+}
+
+function DocSearchDropdown({
+  position,
+  onSelect,
+  onClose,
+}: {
+  position: { top: number; left: number };
+  onSelect: (doc: LinkedDoc) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [docs, setDocs] = useState<LinkedDoc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/documents")
+      .then((r) => r.json())
+      .then((data: LinkedDoc[]) => {
+        setDocs(data.map((d) => ({ id: d.id, title: d.title || "Untitled" })));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return docs;
+    const q = query.toLowerCase();
+    return docs.filter((d) => d.title.toLowerCase().includes(q));
+  }, [docs, query]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((i) => Math.max(i - 1, 0));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (filtered[selectedIndex]) onSelect(filtered[selectedIndex]);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [filtered, selectedIndex, onSelect, onClose]);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: position.top + 4,
+        left: position.left,
+        zIndex: 1001,
+      }}
+      className="w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden"
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      <div className="px-3 py-2 border-b border-gray-100">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Search documents..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full text-sm bg-transparent outline-none placeholder:text-gray-400"
+        />
+      </div>
+      <div className="max-h-48 overflow-y-auto">
+        {loading ? (
+          <p className="text-xs text-gray-400 px-3 py-3 text-center">Loading...</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-xs text-gray-400 px-3 py-3 text-center">No documents found</p>
+        ) : (
+          filtered.map((doc, i) => (
+            <button
+              key={doc.id}
+              data-selected={i === selectedIndex ? "true" : "false"}
+              onMouseEnter={() => setSelectedIndex(i)}
+              onClick={() => onSelect(doc)}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                i === selectedIndex ? "bg-amber-50" : "hover:bg-gray-50"
+              }`}
+            >
+              <span className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 shrink-0">
+                #
+              </span>
+              <span className="truncate text-gray-900">{doc.title}</span>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
 
 const STORAGE_KEY = "slashCommandUsage";
 
@@ -32,6 +145,8 @@ interface Command {
   icon: string;
   keywords: string[];
   action: (editor: Editor) => void;
+  /** If true, the command opens an async sub-menu (e.g. doc search) */
+  hasSubmenu?: boolean;
 }
 
 const COMMANDS: Command[] = [
@@ -128,6 +243,17 @@ const COMMANDS: Command[] = [
       document.dispatchEvent(
         new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
       );
+    },
+  },
+  {
+    id: "link-doc",
+    label: "Link to Document",
+    description: "Insert a [[wiki-link]] to another document",
+    icon: "[[",
+    keywords: ["link", "doc", "wiki", "document", "cross", "reference"],
+    hasSubmenu: true,
+    action: () => {
+      // Action is handled by the submenu; this is a no-op placeholder
     },
   },
   {
@@ -393,6 +519,9 @@ export default function SlashCommandMenu({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const [usageCounts] = useState(() => getUsageCounts());
+  const [showDocSearch, setShowDocSearch] = useState(false);
+  // Saved position for inserting after slash cleanup
+  const slashCleanupRef = useRef<{ from: number; to: number } | null>(null);
 
   const filtered = COMMANDS.filter((cmd) => {
     if (!query) return true;
@@ -459,6 +588,33 @@ export default function SlashCommandMenu({
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [allItems, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleDocSelect = useCallback(
+    (doc: LinkedDoc) => {
+      // Insert [[Title]] as a link pointing to /doc/{id}
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "text",
+          marks: [
+            {
+              type: "link",
+              attrs: {
+                href: `/doc/${doc.id}`,
+                target: null,
+                class: "wiki-link",
+              },
+            },
+          ],
+          text: `[[${doc.title}]]`,
+        })
+        .run();
+      setShowDocSearch(false);
+      onClose();
+    },
+    [editor, onClose]
+  );
+
   function runCommand(cmd: Command | undefined) {
     if (!cmd) return;
     // Delete the slash + typed query from the document
@@ -475,8 +631,25 @@ export default function SlashCommandMenu({
       })
       .run();
     incrementUsage(cmd.id);
+
+    // For link-doc, open the doc search submenu instead of closing
+    if (cmd.id === "link-doc") {
+      setShowDocSearch(true);
+      return;
+    }
+
     cmd.action(editor);
     onClose();
+  }
+
+  if (showDocSearch) {
+    return (
+      <DocSearchDropdown
+        position={position}
+        onSelect={handleDocSelect}
+        onClose={() => { setShowDocSearch(false); onClose(); }}
+      />
+    );
   }
 
   if (allItems.length === 0) {

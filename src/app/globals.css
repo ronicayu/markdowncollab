@@ -116,6 +116,21 @@ body {
   color: var(--link-hover);
 }
 
+/* Wiki-style cross-document links [[Doc Title]] */
+.ProseMirror a.wiki-link {
+  color: var(--link-color);
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.15s;
+  font-weight: 500;
+}
+.ProseMirror a.wiki-link:hover {
+  color: var(--link-hover);
+  text-decoration-style: solid;
+}
+
 /* Highlight mark */
 .ProseMirror mark[data-color] {
   background-color: #fef08a;
