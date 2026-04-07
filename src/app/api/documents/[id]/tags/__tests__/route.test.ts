@@ -42,7 +42,7 @@ describe("GET /api/documents/[id]/tags", () => {
       { id: "t2", name: "Feature", color: "#3b82f6" },
     ] as any);
 
-    const { GET } = await import("../../route");
+    const { GET } = await import("../route");
     const req = new NextRequest("http://localhost/api/documents/doc-1/tags");
     const res = await GET(req, { params: makeParams("doc-1") });
     const data = await res.json();
@@ -55,7 +55,7 @@ describe("GET /api/documents/[id]/tags", () => {
   it("returns empty array when document has no tags", async () => {
     mockDocTagFindMany.mockResolvedValue([]);
 
-    const { GET } = await import("../../route");
+    const { GET } = await import("../route");
     const req = new NextRequest("http://localhost/api/documents/doc-1/tags");
     const res = await GET(req, { params: makeParams("doc-1") });
     const data = await res.json();
@@ -79,7 +79,7 @@ describe("POST /api/documents/[id]/tags", () => {
       color: "#ef4444",
     } as any);
 
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new NextRequest("http://localhost/api/documents/doc-1/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -104,7 +104,7 @@ describe("POST /api/documents/[id]/tags", () => {
       color: "#ef4444",
     } as any);
 
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new NextRequest("http://localhost/api/documents/doc-1/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -119,7 +119,7 @@ describe("POST /api/documents/[id]/tags", () => {
   });
 
   it("returns 400 when tagId is missing", async () => {
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new NextRequest("http://localhost/api/documents/doc-1/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -135,7 +135,7 @@ describe("DELETE /api/documents/[id]/tags", () => {
   it("removes a tag from a document", async () => {
     mockDocTagDeleteMany.mockResolvedValue({ count: 1 } as any);
 
-    const { DELETE } = await import("../../route");
+    const { DELETE } = await import("../route");
     const req = new NextRequest("http://localhost/api/documents/doc-1/tags", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -152,7 +152,7 @@ describe("DELETE /api/documents/[id]/tags", () => {
   });
 
   it("returns 400 when tagId is missing", async () => {
-    const { DELETE } = await import("../../route");
+    const { DELETE } = await import("../route");
     const req = new NextRequest("http://localhost/api/documents/doc-1/tags", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },

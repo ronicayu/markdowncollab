@@ -27,7 +27,7 @@ describe("GET /api/tags", () => {
       { id: "t2", name: "Feature", color: "#3b82f6" },
     ] as any);
 
-    const { GET } = await import("../../route");
+    const { GET } = await import("../route");
     const res = await GET();
     const data = await res.json();
 
@@ -40,7 +40,7 @@ describe("GET /api/tags", () => {
   it("returns empty array when no tags exist", async () => {
     mockTagFindMany.mockResolvedValue([]);
 
-    const { GET } = await import("../../route");
+    const { GET } = await import("../route");
     const res = await GET();
     const data = await res.json();
 
@@ -58,7 +58,7 @@ describe("POST /api/tags", () => {
       color: "#ef4444",
     } as any);
 
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new Request("http://localhost/api/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -79,7 +79,7 @@ describe("POST /api/tags", () => {
       color: "#ef4444",
     } as any);
 
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new Request("http://localhost/api/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -93,7 +93,7 @@ describe("POST /api/tags", () => {
   });
 
   it("returns 400 when name is missing", async () => {
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new Request("http://localhost/api/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -105,7 +105,7 @@ describe("POST /api/tags", () => {
   });
 
   it("returns 400 when name is empty string", async () => {
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new Request("http://localhost/api/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -124,7 +124,7 @@ describe("POST /api/tags", () => {
       color: "#6b7280",
     } as any);
 
-    const { POST } = await import("../../route");
+    const { POST } = await import("../route");
     const req = new Request("http://localhost/api/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
