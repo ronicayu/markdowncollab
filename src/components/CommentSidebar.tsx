@@ -19,6 +19,7 @@ interface CommentSidebarProps {
   onAddComment: (text: string) => void;
   onResolveComment: (id: string) => void;
   onReplyToComment: (commentId: string, text: string) => void;
+  onToggleReaction?: (commentId: string, emoji: string) => void;
   hasSelection: boolean;
   activeCommentId?: string | null;
   /** Increment this value to imperatively open the comment form (e.g. from the floating button). */
@@ -40,6 +41,7 @@ export default function CommentSidebar({
   onAddComment,
   onResolveComment,
   onReplyToComment,
+  onToggleReaction,
   hasSelection,
   activeCommentId,
   openFormTrigger,
@@ -288,6 +290,8 @@ export default function CommentSidebar({
               onClick={onClickItem}
               onResolve={onResolveComment}
               onReply={onReplyToComment}
+              onToggleReaction={onToggleReaction}
+              currentUserName={currentUserName}
               isActive={c.id === activeCommentId}
               isContentDeleted={!c.resolved && !activeCommentIds.has(c.id)}
             />

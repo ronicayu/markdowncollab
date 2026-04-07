@@ -4,11 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import type { Comment } from "@/types";
 import { renderMentionText } from "@/lib/mention-utils";
 
+const REACTION_EMOJIS = ["\uD83D\uDC4D", "\u2764\uFE0F", "\uD83D\uDC40", "\uD83D\uDD25", "\uD83C\uDF89", "\uD83E\uDD14"];
+
 interface CommentCardProps {
   comment: Comment;
   onClick: (id: string) => void;
   onResolve: (id: string) => void;
   onReply: (commentId: string, text: string) => void;
+  onToggleReaction?: (commentId: string, emoji: string) => void;
+  currentUserName?: string;
   isActive?: boolean;
   isContentDeleted: boolean;
 }
@@ -35,11 +39,78 @@ function formatTimestamp(iso: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function ReactionBar({
+  reactions,
+  commentId,
+  currentUserName,
+  onToggleReaction,
+}: {
+  reactions?: Record<string, string[]>;
+  commentId: string;
+  currentUserName?: string;
+  onToggleReaction: (commentId: string, emoji: string) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      {REACTION_EMOJIS.map((emoji) => {
+        const reactors = reactions?.[emoji] || [];
+        const count = reactors.length;
+        if (count === 0) return null;
+        const isReacted = currentUserName ? reactors.includes(currentUserName) : false;
+        return (
+          <button
+            key={emoji}
+            onClick={() => onToggleReaction(commentId, emoji)}
+            title={reactors.join(", ")}
+            className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-colors ${
+              isReacted
+                ? "bg-amber-100 border border-amber-300"
+                : "bg-gray-100 border border-gray-200 hover:bg-gray-200"
+            }`}
+          >
+            <span>{emoji}</span>
+            <span className="text-gray-600 font-medium">{count}</span>
+          </button>
+        );
+      })}
+      <div className="relative">
+        <button
+          onClick={() => setPickerOpen((v) => !v)}
+          className="inline-flex items-center justify-center h-5 w-5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-xs transition-colors"
+          title="Add reaction"
+        >
+          +
+        </button>
+        {pickerOpen && (
+          <div className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg shadow-lg p-1 z-10">
+            {REACTION_EMOJIS.map((em) => (
+              <button
+                key={em}
+                onClick={() => {
+                  onToggleReaction(commentId, em);
+                  setPickerOpen(false);
+                }}
+                className="text-sm hover:scale-125 transition-transform p-0.5 rounded hover:bg-gray-100"
+              >
+                {em}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CommentCard({
   comment,
   onClick,
   onResolve,
   onReply,
+  onToggleReaction,
+  currentUserName,
   isActive,
   isContentDeleted,
 }: CommentCardProps) {
@@ -112,6 +183,16 @@ export default function CommentCard({
           )
         )}
       </p>
+
+      {/* Reactions */}
+      {!comment.resolved && onToggleReaction && (
+        <ReactionBar
+          reactions={comment.reactions}
+          commentId={comment.id}
+          currentUserName={currentUserName}
+          onToggleReaction={onToggleReaction}
+        />
+      )}
 
       {/* Replies */}
       {comment.replies && comment.replies.length > 0 && (

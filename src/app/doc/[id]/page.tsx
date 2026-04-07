@@ -32,6 +32,7 @@ import {
   addComment,
   resolveComment,
   addReplyToComment,
+  toggleCommentReaction,
 } from "@/lib/suggestion-store";
 import { toast } from "@/lib/toast";
 import { getUserColor } from "@/lib/cursor-utils";
@@ -479,6 +480,14 @@ export default function DocumentPage({
     [ydoc, userName]
   );
 
+  const handleToggleReaction = useCallback(
+    (commentId: string, emoji: string) => {
+      if (!userName) return;
+      toggleCommentReaction(ydoc, commentId, emoji, userName);
+    },
+    [ydoc, userName]
+  );
+
   const [mobileCommentOpen, setMobileCommentOpen] = useState(false);
   const [savedSelection, setSavedSelection] = useState<{ from: number; to: number } | null>(null);
   const mobileTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -692,6 +701,7 @@ export default function DocumentPage({
             onAddComment={handleAddComment}
             onResolveComment={handleResolveComment}
             onReplyToComment={handleReplyToComment}
+            onToggleReaction={handleToggleReaction}
             hasSelection={hasSelection}
             activeCommentId={activeCommentId}
             openFormTrigger={openFormTrigger}

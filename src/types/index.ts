@@ -33,6 +33,7 @@ export interface Comment {
   resolved: boolean;
   createdAt: string;
   replies?: CommentReply[];
+  reactions?: Record<string, string[]>;
 }
 
 export interface Collaborator {

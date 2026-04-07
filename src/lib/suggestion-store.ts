@@ -120,6 +120,36 @@ export function getComments(ydoc: Y.Doc): Comment[] {
   return results;
 }
 
+export function toggleCommentReaction(
+  ydoc: Y.Doc,
+  commentId: string,
+  emoji: string,
+  userName: string
+): void {
+  const map = getCommentMap(ydoc);
+  const raw = map.get(commentId);
+  if (!raw) return;
+  try {
+    const parsed: SerializedComment = JSON.parse(raw);
+    if (!parsed.reactions) parsed.reactions = {};
+    const users = parsed.reactions[emoji] || [];
+    const idx = users.indexOf(userName);
+    if (idx >= 0) {
+      users.splice(idx, 1);
+      if (users.length === 0) {
+        delete parsed.reactions[emoji];
+      } else {
+        parsed.reactions[emoji] = users;
+      }
+    } else {
+      parsed.reactions[emoji] = [...users, userName];
+    }
+    map.set(commentId, JSON.stringify(parsed));
+  } catch {
+    // skip malformed entries
+  }
+}
+
 export function addReplyToComment(
   ydoc: Y.Doc,
   commentId: string,
