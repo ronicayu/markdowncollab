@@ -4,6 +4,7 @@ import "./globals.css";
 import ToastProvider from "@/components/ToastProvider";
 import SessionProvider from "@/components/SessionProvider";
 import ThemeWrapper from "@/components/ThemeWrapper";
+import GlobalCommandPalette from "@/components/GlobalCommandPalette";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Skip to content
             </a>
             {children}
+            <GlobalCommandPalette />
           </ThemeWrapper>
           <ToastProvider />
         </SessionProvider>
