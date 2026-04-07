@@ -41,6 +41,7 @@ import SearchBar from "./SearchBar";
 import LinkDialog from "./LinkDialog";
 import TableSortMenu from "./TableSortMenu";
 import { PersonalHighlight } from "@/extensions/personal-highlight";
+import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib/health-score";
 
 
 interface EditorProps {
@@ -53,6 +54,7 @@ interface EditorProps {
   editable?: boolean;
   initialContent?: string | null;
   onToggleShortcutsHelp?: () => void;
+  templateId?: string;
 }
 
 export default function Editor({
@@ -65,6 +67,7 @@ export default function Editor({
   editable = true,
   initialContent,
   onToggleShortcutsHelp,
+  templateId,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getUserColor(userName), [userName]);
@@ -87,6 +90,8 @@ export default function Editor({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrollable, setIsScrollable] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [healthScore, setHealthScore] = useState<HealthScoreType | null>(null);
+  const [showHealthDetails, setShowHealthDetails] = useState(false);
 
   async function uploadImage(file: File): Promise<string | null> {
     const formData = new FormData();
@@ -414,6 +419,14 @@ export default function Editor({
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       setWordCount({ words, chars: text.length });
 
+      // Health score (use markdown storage for accurate markdown syntax detection)
+      try {
+        const mdText = (ed.storage as any).markdown?.getMarkdown?.() ?? text;
+        setHealthScore(calculateHealthScore(mdText, templateId));
+      } catch {
+        setHealthScore(calculateHealthScore(text, templateId));
+      }
+
       const { state, view } = ed;
       const { $from } = state.selection;
 
@@ -585,7 +598,7 @@ export default function Editor({
         />
       )}
       <EditorContent editor={editor} />
-      <div className="sticky bottom-0 flex justify-between px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
+      <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
         <span>
           {saveStatus === "saving" ? (
             "Saving..."
@@ -599,6 +612,70 @@ export default function Editor({
             })()
           ) : ""}
         </span>
+        {/* Health Score Badge */}
+        {healthScore && (
+          <div className="relative">
+            <button
+              onClick={() => setShowHealthDetails((v) => !v)}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors cursor-pointer ${
+                healthScore.color === "green"
+                  ? "bg-green-100 text-green-700 hover:bg-green-200"
+                  : healthScore.color === "amber"
+                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                  : "bg-red-100 text-red-700 hover:bg-red-200"
+              }`}
+              title="Document Health Score — click for details"
+            >
+              <span>{healthScore.score}</span>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+            {showHealthDetails && (
+              <div className="absolute bottom-7 left-1/2 -translate-x-1/2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 text-xs text-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-gray-900">Health Score: {healthScore.score}/100</span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowHealthDetails(false); }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <span>Readability (Flesch)</span>
+                    <span className="font-medium">{healthScore.metrics.fleschReadingEase}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Avg sentence length</span>
+                    <span className="font-medium">{healthScore.metrics.avgSentenceLength} words</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Has headings</span>
+                    <span className="font-medium">{healthScore.metrics.hasHeadings ? "Yes" : "No"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Has links</span>
+                    <span className="font-medium">{healthScore.metrics.hasLinks ? "Yes" : "No"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Word count</span>
+                    <span className="font-medium">{healthScore.metrics.wordCount} {healthScore.metrics.wordCountAppropriate ? "" : "(too short)"}</span>
+                  </div>
+                  {healthScore.metrics.templateCompleteness !== null && (
+                    <div className="flex justify-between">
+                      <span>Template completeness</span>
+                      <span className="font-medium">{healthScore.metrics.templateCompleteness}%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         <span
           className="cursor-pointer hover:text-gray-600 transition-colors relative"
           onClick={() => {
