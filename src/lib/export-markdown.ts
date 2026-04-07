@@ -63,6 +63,18 @@ export function xmlFragmentToMarkdown(fragment: Y.XmlFragment): string {
         const summary = child.getAttribute("summary") || "Details";
         const body = child.getAttribute("body") || "";
         md += `<details><summary>${summary}</summary>\n\n${body}\n\n</details>\n\n`;
+      } else if (tag === "toggleList") {
+        // Export toggle items as bullet points with "> " for body
+        for (let j = 0; j < child.length; j++) {
+          const item = child.get(j);
+          if (item instanceof Y.XmlElement && item.nodeName === "toggleItem") {
+            const itemText = getElementText(item);
+            md += `- ${itemText}\n`;
+          }
+        }
+        md += "\n";
+      } else if (tag === "toggleItem") {
+        md += `- ${getElementText(child)}\n`;
       } else if (tag === "tocBlock") {
         // Export TOC as a markdown comment — the actual TOC is auto-generated
         md += "<!-- Table of Contents -->\n\n";
@@ -95,7 +107,12 @@ function getElementText(element: Y.XmlElement): string {
     if (child instanceof Y.XmlText) {
       text += xmlTextToMarkdown(child);
     } else if (child instanceof Y.XmlElement) {
-      text += getElementText(child);
+      if (child.nodeName === "statusBadge") {
+        const label = child.getAttribute("label") || "";
+        text += `[Badge: ${label}]`;
+      } else {
+        text += getElementText(child);
+      }
     }
   }
   return text;
