@@ -12,6 +12,8 @@ import { Markdown } from "tiptap-markdown";
 import Image from "@tiptap/extension-image";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextAlign } from "@tiptap/extension-text-align";
+import { Color } from "@tiptap/extension-color";
+import { TextStyle } from "@tiptap/extension-text-style";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import { TocBlock } from "@/extensions/toc-block";
 import type * as Y from "yjs";
@@ -175,6 +177,8 @@ export default function Editor({
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
+      TextStyle,
+      Color,
       TaskList,
       TaskItem.configure({
         nested: true,

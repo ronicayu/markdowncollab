@@ -25,13 +25,42 @@ function formatShortcut(shortcut: string, mac: boolean): string {
     .replace(/Shift/g, mac ? "\u21E7" : "Shift");
 }
 
+const COLOR_SWATCHES = [
+  { name: "Red", hex: "#dc2626" },
+  { name: "Orange", hex: "#ea580c" },
+  { name: "Amber", hex: "#d97706" },
+  { name: "Green", hex: "#16a34a" },
+  { name: "Teal", hex: "#0d9488" },
+  { name: "Blue", hex: "#2563eb" },
+  { name: "Indigo", hex: "#4f46e5" },
+  { name: "Purple", hex: "#9333ea" },
+  { name: "Pink", hex: "#db2777" },
+  { name: "Gray", hex: "#6b7280" },
+  { name: "Brown", hex: "#92400e" },
+  { name: "Black", hex: "#000000" },
+];
+
 export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps) {
   const [isMac, setIsMac] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const colorBtnRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
   }, []);
+
+  // Close color picker on outside click
+  useEffect(() => {
+    if (!showColorPicker) return;
+    function handleClick(e: MouseEvent) {
+      if (colorBtnRef.current && !colorBtnRef.current.contains(e.target as Node)) {
+        setShowColorPicker(false);
+      }
+    }
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, [showColorPicker]);
 
   if (!editor) return null;
 
@@ -86,6 +115,20 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       ),
       action: () => editor.chain().focus().toggleHighlight().run(),
       isActive: () => editor.isActive("highlight"),
+    },
+    {
+      label: "Text color",
+      icon: (
+        <span className="relative text-sm font-bold leading-none">
+          A
+          <span
+            className="absolute bottom-0 left-0.5 right-0.5 h-[3px] rounded-sm"
+            style={{ backgroundColor: editor.getAttributes("textStyle").color || "#000000" }}
+          />
+        </span>
+      ),
+      action: () => setShowColorPicker((v) => !v),
+      isActive: () => showColorPicker,
     },
     {
       label: "Link",
@@ -374,7 +417,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
     <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative" role="toolbar" aria-label="Text formatting">
     <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1.5 scrollbar-none">
       {buttons.map((btn, i) => (
-        <div key={btn.label} className="flex items-center">
+        <div key={btn.label} className="flex items-center" ref={btn.label === "Text color" ? colorBtnRef : undefined}>
           {btn.separator && i > 0 && (
             <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
           )}
@@ -391,6 +434,34 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
           >
             {btn.icon}
           </button>
+          {/* Color picker dropdown */}
+          {btn.label === "Text color" && showColorPicker && (
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-48">
+              <div className="grid grid-cols-6 gap-1.5 mb-2">
+                {COLOR_SWATCHES.map((swatch) => (
+                  <button
+                    key={swatch.hex}
+                    title={swatch.name}
+                    onClick={() => {
+                      editor.chain().focus().setColor(swatch.hex).run();
+                      setShowColorPicker(false);
+                    }}
+                    className="h-6 w-6 rounded-full border border-gray-200 hover:scale-110 transition-transform"
+                    style={{ backgroundColor: swatch.hex }}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={() => {
+                  editor.chain().focus().unsetColor().run();
+                  setShowColorPicker(false);
+                }}
+                className="w-full text-xs text-center py-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+              >
+                Default
+              </button>
+            </div>
+          )}
         </div>
       ))}
       {/* Separator before help button */}
