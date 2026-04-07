@@ -166,3 +166,14 @@ model Snippet {
 
   @@index([ownerId])
 }
+
+model CustomCommand {
+  id          String   @id @default(uuid())
+  name        String
+  description String   @default("")
+  content     String
+  ownerId     String
+  createdAt   DateTime @default(now())
+
+  @@index([ownerId])
+}

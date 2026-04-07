@@ -690,6 +690,189 @@ const COMMANDS: Command[] = [
   },
 ];
 
+interface CustomCommandItem {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+}
+
+function CustomCommandManager({
+  position,
+  onClose,
+}: {
+  position: { top: number; left: number };
+  onClose: () => void;
+}) {
+  const [commands, setCommands] = useState<CustomCommandItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const fetchCommands = useCallback(() => {
+    fetch("/api/commands")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: CustomCommandItem[]) => {
+        setCommands(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetchCommands();
+  }, [fetchCommands]);
+
+  async function handleSave() {
+    if (!name.trim() || !content.trim()) return;
+    setSaving(true);
+    try {
+      if (editingId) {
+        // Delete old, create new (simple approach)
+        await fetch("/api/commands", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: editingId }),
+        });
+      }
+      await fetch("/api/commands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), description: description.trim(), content: content.trim() }),
+      });
+      setName("");
+      setDescription("");
+      setContent("");
+      setEditingId(null);
+      fetchCommands();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    await fetch("/api/commands", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    fetchCommands();
+  }
+
+  function startEdit(cmd: CustomCommandItem) {
+    setEditingId(cmd.id);
+    setName(cmd.name);
+    setDescription(cmd.description);
+    setContent(cmd.content);
+  }
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [onClose]);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        top: Math.min(position.top + 4, window.innerHeight - 420),
+        left: position.left,
+        zIndex: 1001,
+      }}
+      className="w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+        <p className="text-xs font-medium text-gray-500">Manage Custom Commands</p>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
+      </div>
+      <div className="max-h-48 overflow-y-auto">
+        {loading ? (
+          <p className="text-xs text-gray-400 px-3 py-3 text-center">Loading...</p>
+        ) : commands.length === 0 ? (
+          <p className="text-xs text-gray-400 px-3 py-3 text-center">No custom commands yet</p>
+        ) : (
+          commands.map((cmd) => (
+            <div
+              key={cmd.id}
+              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 group"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-900 truncate">/{cmd.name}</p>
+                <p className="text-xs text-gray-400 truncate">{cmd.description || cmd.content.slice(0, 40)}</p>
+              </div>
+              <button
+                onClick={() => startEdit(cmd)}
+                className="text-gray-300 hover:text-blue-500 text-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDelete(cmd.id)}
+                className="text-gray-300 hover:text-red-500 text-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                Del
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="border-t border-gray-100 px-3 py-2 space-y-1.5">
+        <p className="text-[10px] font-medium text-gray-400 uppercase">
+          {editingId ? "Edit command" : "New command"}
+        </p>
+        <input
+          type="text"
+          placeholder="Name (e.g. signature)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
+        />
+        <input
+          type="text"
+          placeholder="Description (optional)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
+        />
+        <textarea
+          placeholder="Content to insert..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={3}
+          className="w-full rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A] resize-none"
+        />
+        <div className="flex gap-1.5">
+          <button
+            onClick={handleSave}
+            disabled={saving || !name.trim() || !content.trim()}
+            className="px-3 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+          >
+            {saving ? "Saving..." : editingId ? "Update" : "Create"}
+          </button>
+          {editingId && (
+            <button
+              onClick={() => { setEditingId(null); setName(""); setDescription(""); setContent(""); }}
+              className="px-3 py-1 rounded border border-gray-200 text-gray-500 text-xs font-medium"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface SlashCommandMenuProps {
   editor: Editor;
   query: string;
@@ -708,10 +891,41 @@ export default function SlashCommandMenu({
   const [usageCounts] = useState(() => getUsageCounts());
   const [showDocSearch, setShowDocSearch] = useState(false);
   const [showSnippetMenu, setShowSnippetMenu] = useState(false);
+  const [showCommandManager, setShowCommandManager] = useState(false);
+  const [customCommands, setCustomCommands] = useState<CustomCommandItem[]>([]);
   // Saved position for inserting after slash cleanup
   const slashCleanupRef = useRef<{ from: number; to: number } | null>(null);
 
-  const filtered = COMMANDS.filter((cmd) => {
+  // Fetch custom commands on mount
+  useEffect(() => {
+    fetch("/api/commands")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: CustomCommandItem[]) => setCustomCommands(data))
+      .catch(() => {});
+  }, []);
+
+  // Convert custom commands to Command format
+  const customCommandItems: Command[] = useMemo(
+    () =>
+      customCommands.map((cc) => ({
+        id: `custom-${cc.id}`,
+        label: cc.name,
+        description: cc.description || "Custom command",
+        icon: "\u2726",
+        keywords: [cc.name.toLowerCase(), "custom"],
+        action: (ed: Editor) => {
+          ed.chain().focus().insertContent(cc.content).run();
+        },
+      })),
+    [customCommands]
+  );
+
+  const allBuiltInAndCustom = useMemo(
+    () => [...COMMANDS, ...customCommandItems],
+    [customCommandItems]
+  );
+
+  const filtered = allBuiltInAndCustom.filter((cmd) => {
     if (!query) return true;
     const q = query.toLowerCase();
     return (
@@ -845,6 +1059,15 @@ export default function SlashCommandMenu({
     onClose();
   }
 
+  if (showCommandManager) {
+    return (
+      <CustomCommandManager
+        position={position}
+        onClose={() => { setShowCommandManager(false); onClose(); }}
+      />
+    );
+  }
+
   if (showSnippetMenu) {
     return (
       <SnippetDropdown
@@ -928,6 +1151,7 @@ export default function SlashCommandMenu({
       )}
       {displayItems.rest.map((cmd, i) => {
         const globalIdx = displayItems.favorites.length + i;
+        const isCustom = cmd.id.startsWith("custom-");
         return (
           <button
             key={cmd.id}
@@ -943,16 +1167,31 @@ export default function SlashCommandMenu({
                 : "hover:bg-gray-50"
             }`}
           >
-            <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+            <span className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${isCustom ? "bg-purple-100 text-purple-600" : "bg-gray-100 text-gray-600"}`}>
               {cmd.icon}
             </span>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-900">{cmd.label}</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-gray-900">{cmd.label}</p>
+                {isCustom && (
+                  <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-600 leading-none">Custom</span>
+                )}
+              </div>
               <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
             </div>
           </button>
         );
       })}
+      {/* Manage custom commands link */}
+      <div className="border-t border-gray-100 mt-1">
+        <button
+          onClick={() => setShowCommandManager(true)}
+          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-400 hover:text-[#B8692A] hover:bg-gray-50 transition-colors"
+        >
+          <span className="w-4 h-4 flex items-center justify-center text-[10px]">+</span>
+          Manage custom commands...
+        </button>
+      </div>
     </div>
   );
 }
