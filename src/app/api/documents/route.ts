@@ -1,18 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const userEmail = session?.user?.email ?? undefined;
+  const showTrash = req.nextUrl.searchParams.get("trash") === "true";
 
   if (!userId) {
     // Unauthenticated: only return legacy docs (no owner) for backward compatibility
     const docs = await prisma.document.findMany({
-      where: { ownerId: null },
-      select: { id: true, title: true, ownerId: true, visibility: true, createdAt: true, updatedAt: true },
+      where: { ownerId: null, deletedAt: null },
+      select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, createdAt: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
     });
     return NextResponse.json(docs.map((d) => ({ ...d, role: "editor" })));
@@ -31,17 +32,31 @@ export async function GET() {
   const sharedDocIds = shares.map((s) => s.documentId);
   const shareRoleMap = new Map(shares.map((s) => [s.documentId, s.role]));
 
+  const trashFilter = showTrash ? { deletedAt: { not: null } } : { deletedAt: null };
+
   const docs = await prisma.document.findMany({
     where: {
-      OR: [
-        { ownerId: userId },            // docs I own
-        { ownerId: null },               // legacy docs (no owner)
-        { id: { in: sharedDocIds } },    // docs shared with me
+      AND: [
+        trashFilter,
+        {
+          OR: [
+            { ownerId: userId },            // docs I own
+            ...(showTrash ? [] : [{ ownerId: null }]),  // legacy docs (not in trash view)
+            { id: { in: sharedDocIds } },    // docs shared with me
+          ],
+        },
       ],
     },
-    select: { id: true, title: true, ownerId: true, visibility: true, createdAt: true, updatedAt: true },
+    select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, createdAt: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },
   });
+
+  // Fetch user's starred document IDs
+  const stars = await prisma.documentStar.findMany({
+    where: { userId },
+    select: { documentId: true },
+  });
+  const starredIds = new Set(stars.map((s) => s.documentId));
 
   const result = docs.map((d) => {
     let role: string;
@@ -52,7 +67,7 @@ export async function GET() {
     } else {
       role = shareRoleMap.get(d.id) ?? "viewer";
     }
-    return { ...d, role };
+    return { ...d, role, starred: starredIds.has(d.id) };
   });
 
   return NextResponse.json(result);

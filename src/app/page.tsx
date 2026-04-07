@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
@@ -11,8 +11,10 @@ interface Doc {
   id: string;
   title: string;
   updatedAt: string;
+  deletedAt?: string | null;
   role?: string;
   ownerId?: string | null;
+  starred?: boolean;
 }
 
 function formatDate(dateStr: string) {
@@ -27,7 +29,7 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-type Tab = "all" | "recent" | "shared";
+type Tab = "all" | "recent" | "shared" | "starred" | "trash";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -44,6 +46,12 @@ export default function Home() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [searchResults, setSearchResults] = useState<{ id: string; title: string; snippet: string; updatedAt: string }[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [trashDocs, setTrashDocs] = useState<Doc[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
+  const [confirmPermanentDelete, setConfirmPermanentDelete] = useState<Doc | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,18 +61,75 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Fetch trash docs when the Trash tab is active
+  useEffect(() => {
+    if (activeTab !== "trash") return;
+    setTrashLoading(true);
+    fetch("/api/documents?trash=true")
+      .then((r) => r.json())
+      .then(setTrashDocs)
+      .finally(() => setTrashLoading(false));
+  }, [activeTab]);
+
+  async function restoreDoc(doc: Doc) {
+    await fetch(`/api/documents/${doc.id}/restore`, { method: "POST" });
+    setTrashDocs((prev) => prev.filter((d) => d.id !== doc.id));
+    // Refresh main docs list
+    fetch("/api/documents").then((r) => r.json()).then(setDocs);
+  }
+
+  async function permanentDeleteDoc(doc: Doc) {
+    setConfirmPermanentDelete(null);
+    await fetch(`/api/documents/${doc.id}/permanent`, { method: "DELETE" });
+    setTrashDocs((prev) => prev.filter((d) => d.id !== doc.id));
+  }
+
+  // Debounced full-text search
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    const q = search.trim();
+    if (!q) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    searchTimerRef.current = setTimeout(() => {
+      fetch(`/api/documents/search?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data)) setSearchResults(data);
+          else setSearchResults([]);
+        })
+        .catch(() => setSearchResults([]))
+        .finally(() => setSearchLoading(false));
+    }, 300);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [search]);
+
+  async function toggleStar(docId: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const res = await fetch(`/api/documents/${docId}/star`, { method: "POST" });
+    const data = await res.json();
+    setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, starred: data.starred } : d));
+  }
+
   const filteredDocs = (() => {
     let result = docs;
-    if (activeTab === "recent") {
+    if (activeTab === "starred") {
+      result = docs.filter((d) => d.starred);
+    } else if (activeTab === "recent") {
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       result = docs
         .filter((d) => new Date(d.updatedAt).getTime() >= cutoff)
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-    }
-    if (activeTab === "shared") {
+    } else if (activeTab === "shared") {
       result = docs.filter((d) => d.role && d.role !== "owner" && d.ownerId !== null);
     }
-    if (search.trim()) {
+    if (search.trim() && !searchResults) {
       const q = search.toLowerCase();
       result = result.filter((d) => (d.title || "Untitled").toLowerCase().includes(q));
     }
@@ -73,6 +138,14 @@ export default function Home() {
     } else {
       result = [...result].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     }
+    // Starred documents float to top (before the sort order within each group)
+    if (activeTab !== "starred") {
+      result = [...result].sort((a, b) => {
+        if (a.starred && !b.starred) return -1;
+        if (!a.starred && b.starred) return 1;
+        return 0;
+      });
+    }
     return result;
   })();
 
@@ -80,6 +153,8 @@ export default function Home() {
     all: "All Documents",
     recent: "Recent",
     shared: "Shared with me",
+    starred: "Starred",
+    trash: "Trash",
   };
 
   async function createDocFromTemplate(templateId: string) {
@@ -167,6 +242,7 @@ export default function Home() {
               { label: "All Documents", tab: "all" as Tab },
               { label: "Recent", tab: "recent" as Tab },
               { label: "Shared with me", tab: "shared" as Tab },
+              { label: "Starred", tab: "starred" as Tab },
             ] as { label: string; tab: Tab }[]
           ).map(({ label, tab }) => (
             <button
@@ -178,9 +254,17 @@ export default function Home() {
                   : "text-white/50 hover:text-white hover:bg-white/5"
               }`}
             >
+              {tab === "starred" && (
+                <svg className="inline h-3.5 w-3.5 mr-1 -mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              )}
               {label}
               {tab === "all" && docs.length > 0 && (
                 <span className="ml-1.5 text-xs text-white/30">{docs.length}</span>
+              )}
+              {tab === "starred" && docs.filter((d) => d.starred).length > 0 && (
+                <span className="ml-1.5 text-xs text-white/30">{docs.filter((d) => d.starred).length}</span>
               )}
             </button>
           ))}
@@ -251,6 +335,7 @@ export default function Home() {
                 { label: "All", tab: "all" as Tab },
                 { label: "Recent", tab: "recent" as Tab },
                 { label: "Shared", tab: "shared" as Tab },
+                { label: "Starred", tab: "starred" as Tab },
               ] as { label: string; tab: Tab }[]
             ).map(({ label, tab }) => (
               <button
@@ -274,7 +359,7 @@ export default function Home() {
           <div className="flex items-center gap-2 flex-1 max-w-sm">
             <input
               type="text"
-              placeholder="Search documents..."
+              placeholder="Search titles and content..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 min-w-0 rounded-lg border border-black/10 bg-white/60 px-3 py-1.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
@@ -313,7 +398,44 @@ export default function Home() {
 
         {/* Document list */}
         <main className="flex-1 overflow-y-auto px-6 py-6">
-          {loading ? (
+          {/* Full-text search results overlay */}
+          {searchResults !== null ? (
+            <div className="space-y-2 max-w-3xl">
+              {searchLoading ? (
+                <div className="flex items-center gap-2 text-gray-400 text-sm py-8 justify-center">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Searching...
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <p className="text-gray-400 text-sm">No results for &ldquo;{search}&rdquo; in titles or content.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-400 mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{search}&rdquo;</p>
+                  {searchResults.map((result) => (
+                    <Link
+                      key={result.id}
+                      href={`/doc/${result.id}`}
+                      className="block bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
+                    >
+                      <p className="font-medium text-gray-900">{result.title || "Untitled"}</p>
+                      {result.snippet && (
+                        <p
+                          className="text-xs text-gray-500 mt-1 line-clamp-2"
+                          dangerouslySetInnerHTML={{ __html: result.snippet }}
+                        />
+                      )}
+                      <span className="text-xs text-gray-400 mt-1 block">{formatDate(result.updatedAt)}</span>
+                    </Link>
+                  ))}
+                </>
+              )}
+            </div>
+          ) : loading ? (
             <div className="space-y-2 max-w-3xl">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="bg-[#FFFEF9] rounded-xl px-5 py-4 animate-pulse">
@@ -368,6 +490,19 @@ export default function Home() {
                     onChange={() => toggleSelect(doc.id)}
                     className="shrink-0 h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A] md:opacity-0 md:group-hover:opacity-100 transition-opacity checked:!opacity-100 cursor-pointer"
                   />
+                  <button
+                    onClick={(e) => toggleStar(doc.id, e)}
+                    className={`shrink-0 p-0.5 rounded transition-colors ${
+                      doc.starred
+                        ? "text-amber-500"
+                        : "text-gray-300 hover:text-amber-400 md:opacity-0 md:group-hover:opacity-100"
+                    }`}
+                    title={doc.starred ? "Unstar document" : "Star document"}
+                  >
+                    <svg className="h-4 w-4" fill={doc.starred ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </button>
                   <Link
                     href={`/doc/${doc.id}`}
                     className="flex-1 flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"

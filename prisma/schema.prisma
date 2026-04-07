@@ -13,6 +13,7 @@ model Document {
   ownerId    String?
   visibility String             @default("private")
   templateId String?
+  deletedAt  DateTime?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
   shares     DocumentShare[]
@@ -54,6 +55,15 @@ model User {
   name      String
   password  String
   createdAt DateTime @default(now())
+}
+
+model DocumentStar {
+  id         String   @id @default(uuid())
+  documentId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, userId])
 }
 
 model Notification {
