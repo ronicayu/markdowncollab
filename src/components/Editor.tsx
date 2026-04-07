@@ -10,6 +10,9 @@ import { SuggestionMark } from "@/extensions/suggestion-mark";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { Markdown } from "tiptap-markdown";
 import Image from "@tiptap/extension-image";
+import Underline from "@tiptap/extension-underline";
+import { Highlight } from "@tiptap/extension-highlight";
+import { TextAlign } from "@tiptap/extension-text-align";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
@@ -144,6 +147,7 @@ export default function Editor({
         allowBase64: false,
         HTMLAttributes: { class: "editor-image" },
       }),
+      Underline,
       RemoteCursors.configure({
         provider,
         currentUser: userName,

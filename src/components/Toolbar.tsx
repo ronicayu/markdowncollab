@@ -53,6 +53,13 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       isActive: () => editor.isActive("italic"),
     },
     {
+      label: "Underline",
+      shortcut: "Mod+U",
+      icon: <span className="text-sm font-serif underline font-bold">U</span>,
+      action: () => editor.chain().focus().toggleUnderline().run(),
+      isActive: () => editor.isActive("underline"),
+    },
+    {
       label: "Strikethrough",
       shortcut: "Mod+Shift+S",
       icon: (
