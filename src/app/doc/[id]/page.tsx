@@ -25,6 +25,8 @@ import FloatingCommentButton from "@/components/FloatingCommentButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import TypingIndicator from "@/components/TypingIndicator";
 import SaveTemplateDialog from "@/components/SaveTemplateDialog";
+import PresentationMode from "@/components/PresentationMode";
+import PinnedNotes from "@/components/PinnedNotes";
 import {
   getSuggestions,
   getComments,
@@ -585,6 +587,8 @@ export default function DocumentPage({
   }, []);
 
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [presentationContent, setPresentationContent] = useState("");
 
   const handleSaveAsTemplate = useCallback(async (name: string, description: string) => {
     if (!editor) return;
@@ -653,6 +657,12 @@ export default function DocumentPage({
         focusMode={focusMode}
         onToggleFocusMode={toggleFocusMode}
         onSaveAsTemplate={() => setSaveTemplateOpen(true)}
+        onPresent={() => {
+          if (editor) {
+            setPresentationContent(editor.getHTML());
+            setPresentationMode(true);
+          }
+        }}
       />
       {userRole !== "viewer" && !focusMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
@@ -665,7 +675,8 @@ export default function DocumentPage({
           </div>
         )}
         {ydoc && provider && (
-          <div className={`flex-1 transition-all duration-300 ${focusMode ? "max-w-[700px] mx-auto" : ""}`}>
+          <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode ? "max-w-[700px] mx-auto" : ""}`}>
+            {!focusMode && <PinnedNotes ydoc={ydoc} userName={userName} />}
             <ErrorBoundary>
               <Editor
                 documentId={id}
@@ -787,6 +798,12 @@ export default function DocumentPage({
         onClose={() => setSaveTemplateOpen(false)}
         onSave={handleSaveAsTemplate}
       />
+      {presentationMode && (
+        <PresentationMode
+          content={presentationContent}
+          onExit={() => setPresentationMode(false)}
+        />
+      )}
     </div>
   );
 }
