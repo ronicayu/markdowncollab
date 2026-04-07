@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { DocumentVersion, VersionPreview, VersionListResponse } from "@/types";
+import DiffViewer from "./DiffViewer";
 
 interface VersionHistoryPanelProps {
   documentId: string;
@@ -9,6 +10,7 @@ interface VersionHistoryPanelProps {
   onClose: () => void;
   userName: string;
   onRestoreComplete?: () => void;
+  getCurrentMarkdown?: () => string;
 }
 
 export default function VersionHistoryPanel({
@@ -17,6 +19,7 @@ export default function VersionHistoryPanel({
   onClose,
   userName,
   onRestoreComplete,
+  getCurrentMarkdown,
 }: VersionHistoryPanelProps) {
   const [versions, setVersions] = useState<DocumentVersion[]>([]);
   const [total, setTotal] = useState(0);
@@ -27,6 +30,8 @@ export default function VersionHistoryPanel({
   const [restoreTarget, setRestoreTarget] = useState<DocumentVersion | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [savingManual, setSavingManual] = useState(false);
+  const [diffData, setDiffData] = useState<{ oldText: string; newText: string; oldLabel: string } | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
 
   const fetchVersions = useCallback(async () => {
     setLoading(true);
@@ -104,6 +109,29 @@ export default function VersionHistoryPanel({
       console.error("Failed to save version:", err);
     } finally {
       setSavingManual(false);
+    }
+  }
+
+  async function handleCompare(version: DocumentVersion) {
+    if (!getCurrentMarkdown) return;
+    setDiffLoading(true);
+    try {
+      const res = await fetch(
+        `/api/documents/${documentId}/versions/${version.id}`
+      );
+      if (res.ok) {
+        const data: VersionPreview = await res.json();
+        const currentMd = getCurrentMarkdown();
+        setDiffData({
+          oldText: data.markdown,
+          newText: currentMd,
+          oldLabel: `${formatTime(version.createdAt)} - ${formatDate(version.createdAt)}`,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load version for comparison:", err);
+    } finally {
+      setDiffLoading(false);
     }
   }
 
@@ -282,28 +310,43 @@ export default function VersionHistoryPanel({
                   </p>
                   <div className="flex flex-col gap-1">
                     {group.items.map((version) => (
-                      <button
+                      <div
                         key={version.id}
-                        onClick={() => handlePreview(version)}
                         className="w-full text-left px-2.5 py-2 rounded-md border border-transparent hover:border-[#D4A978] hover:bg-[#FFFEF9] transition-colors group"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-medium text-gray-700">
-                            {formatTime(version.createdAt)}
-                          </span>
-                          {typeBadge(version.type)}
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] text-gray-500 truncate">
-                            {version.title}
-                          </span>
-                        </div>
-                        {version.createdByName && (
-                          <span className="text-[10px] text-gray-400">
-                            by {version.createdByName}
-                          </span>
+                        <button
+                          onClick={() => handlePreview(version)}
+                          className="w-full text-left"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-gray-700">
+                              {formatTime(version.createdAt)}
+                            </span>
+                            {typeBadge(version.type)}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[11px] text-gray-500 truncate">
+                              {version.title}
+                            </span>
+                          </div>
+                          {version.createdByName && (
+                            <span className="text-[10px] text-gray-400">
+                              by {version.createdByName}
+                            </span>
+                          )}
+                        </button>
+                        {getCurrentMarkdown && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCompare(version);
+                            }}
+                            className="mt-1 text-[10px] font-medium text-[#B8692A] hover:text-[#96541F] opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            Compare with current
+                          </button>
                         )}
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -497,6 +540,88 @@ export default function VersionHistoryPanel({
                 {restoring ? "Restoring..." : "Restore"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diff comparison modal */}
+      {(diffData || diffLoading) && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => {
+            setDiffData(null);
+            setDiffLoading(false);
+          }}
+        >
+          <div
+            className="bg-[#FFFEF9] rounded-xl shadow-xl mx-4 max-w-4xl w-full max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {diffLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <svg
+                  className="h-6 w-6 animate-spin text-gray-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
+              </div>
+            ) : diffData ? (
+              <>
+                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Version Comparison
+                  </h3>
+                  <button
+                    onClick={() => setDiffData(null)}
+                    className="p-1 rounded text-gray-400 hover:text-gray-600"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex-1 overflow-hidden px-5 py-4">
+                  <DiffViewer
+                    oldText={diffData.oldText}
+                    newText={diffData.newText}
+                    oldLabel={diffData.oldLabel}
+                    newLabel="Current document"
+                  />
+                </div>
+                <div className="flex items-center justify-end px-5 py-3 border-t border-gray-100">
+                  <button
+                    onClick={() => setDiffData(null)}
+                    className="text-xs font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5"
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       )}
