@@ -64,6 +64,9 @@ export default function Editor({
   const [showReplace, setShowReplace] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [wordCount, setWordCount] = useState({ words: 0, chars: 0 });
+  const [wordGoal, setWordGoal] = useState<number | null>(null);
+  const [showGoalInput, setShowGoalInput] = useState(false);
+  const [goalInputValue, setGoalInputValue] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -95,6 +98,12 @@ export default function Editor({
       color: cursorColor,
     });
   }, [provider, userName, cursorColor]);
+
+  // Load word goal from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(`wordGoal:${documentId}`);
+    if (stored) setWordGoal(parseInt(stored, 10));
+  }, [documentId]);
 
   // Track save status from Yjs sync events
   useEffect(() => {
@@ -440,7 +449,102 @@ export default function Editor({
             })()
           ) : ""}
         </span>
-        <span>{wordCount.words} words · {wordCount.chars} characters</span>
+        <span
+          className="cursor-pointer hover:text-gray-600 transition-colors relative"
+          onClick={() => {
+            setGoalInputValue(wordGoal ? String(wordGoal) : "");
+            setShowGoalInput(true);
+          }}
+          title="Click to set a word count goal"
+        >
+          {wordGoal ? (
+            <span className="flex items-center gap-2">
+              <span>{wordCount.words} / {wordGoal} words</span>
+              <span className="inline-flex items-center w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <span
+                  className={`h-full rounded-full transition-all ${
+                    wordCount.words >= wordGoal
+                      ? "bg-green-500"
+                      : wordCount.words >= wordGoal * 0.5
+                      ? "bg-amber-400"
+                      : "bg-gray-400"
+                  }`}
+                  style={{ width: `${Math.min(100, (wordCount.words / wordGoal) * 100)}%` }}
+                />
+              </span>
+              <span className={`text-[10px] ${
+                wordCount.words >= wordGoal
+                  ? "text-green-600"
+                  : wordCount.words >= wordGoal * 0.5
+                  ? "text-amber-500"
+                  : "text-gray-400"
+              }`}>
+                {Math.min(100, Math.round((wordCount.words / wordGoal) * 100))}%
+              </span>
+            </span>
+          ) : (
+            <span>{wordCount.words} words · {wordCount.chars} characters</span>
+          )}
+        </span>
+        {showGoalInput && (
+          <div className="absolute bottom-8 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50">
+            <p className="text-xs font-medium text-gray-700 mb-2">Set word count goal</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g. 500"
+                value={goalInputValue}
+                onChange={(e) => setGoalInputValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const val = parseInt(goalInputValue, 10);
+                    if (val > 0) {
+                      setWordGoal(val);
+                      localStorage.setItem(`wordGoal:${documentId}`, String(val));
+                    } else {
+                      setWordGoal(null);
+                      localStorage.removeItem(`wordGoal:${documentId}`);
+                    }
+                    setShowGoalInput(false);
+                  } else if (e.key === "Escape") {
+                    setShowGoalInput(false);
+                  }
+                }}
+                className="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
+                autoFocus
+              />
+              <button
+                onClick={() => {
+                  const val = parseInt(goalInputValue, 10);
+                  if (val > 0) {
+                    setWordGoal(val);
+                    localStorage.setItem(`wordGoal:${documentId}`, String(val));
+                  } else {
+                    setWordGoal(null);
+                    localStorage.removeItem(`wordGoal:${documentId}`);
+                  }
+                  setShowGoalInput(false);
+                }}
+                className="px-2 py-1 text-xs bg-amber-500 text-white rounded hover:bg-amber-600"
+              >
+                Set
+              </button>
+              {wordGoal && (
+                <button
+                  onClick={() => {
+                    setWordGoal(null);
+                    localStorage.removeItem(`wordGoal:${documentId}`);
+                    setShowGoalInput(false);
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded hover:bg-gray-300"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       {slashMenu && editor && (
         <SlashCommandMenu
