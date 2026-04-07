@@ -446,3 +446,107 @@ body {
   background-color: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
 }
+
+/* Print styles */
+@media print {
+  /* Hide non-content UI elements */
+  [role="toolbar"],
+  [aria-label="Sidebar"],
+  [aria-label="Text formatting"],
+  .skip-to-content,
+  .typing-indicator,
+  .remote-cursor-caret,
+  .remote-cursor-label,
+  .remote-cursor-selection,
+  .collaboration-cursor__caret,
+  .collaboration-cursor__label,
+  .animate-fade-in,
+  .drag-handle {
+    display: none !important;
+  }
+
+  /* Hide sidebar, topbar, comment sidebar, outline sidebar, notification bell, floating buttons, footer status bar */
+  aside,
+  nav,
+  header,
+  footer,
+  [data-topbar],
+  [data-sidebar],
+  [data-comment-sidebar],
+  [data-outline-sidebar] {
+    display: none !important;
+  }
+
+  /* Hide sticky bottom status bar in editor */
+  .sticky.bottom-0 {
+    display: none !important;
+  }
+
+  /* Reset background and colors */
+  html, body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  /* Show only editor content area */
+  .ProseMirror {
+    background: white !important;
+    color: black !important;
+    max-width: none !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Remove max-width constraints */
+  .prose {
+    max-width: none !important;
+  }
+
+  /* Proper page margins */
+  @page {
+    margin: 2cm;
+  }
+
+  /* Optional: page break before h1 */
+  .ProseMirror h1 {
+    page-break-before: always;
+    border-bottom: none !important;
+  }
+  .ProseMirror h1:first-child {
+    page-break-before: auto;
+  }
+
+  /* Ensure images don't break across pages */
+  .ProseMirror img {
+    page-break-inside: avoid;
+  }
+
+  /* Clean up table borders for print */
+  .ProseMirror .editor-table td,
+  .ProseMirror .editor-table th {
+    border-color: #333 !important;
+  }
+
+  /* Links: show URL after link text */
+  .ProseMirror a.editor-link::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* Remove decorative highlights */
+  .search-match,
+  .search-match-current {
+    background: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Comment highlights: remove for print */
+  .ProseMirror mark.comment-highlight {
+    background: none !important;
+    border-bottom: none !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+  }
+}
