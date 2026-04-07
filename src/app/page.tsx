@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
@@ -46,6 +46,8 @@ export default function Home() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; title: string; snippet: string; updatedAt: string }[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -176,6 +178,28 @@ export default function Home() {
       router.push(`/doc/${doc.id}`);
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleImportMarkdown(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const title = file.name.replace(/\.md$/i, "") || "Imported Document";
+      const res = await fetch("/api/documents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      const doc = await res.json();
+      sessionStorage.setItem(`template:${doc.id}`, text);
+      router.push(`/doc/${doc.id}`);
+    } finally {
+      setImporting(false);
+      // Reset input so re-importing the same file works
+      if (importInputRef.current) importInputRef.current.value = "";
     }
   }
 
@@ -383,6 +407,30 @@ export default function Home() {
             </button>
           </div>
           {session && <NotificationBell />}
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".md,text/markdown"
+            className="hidden"
+            onChange={handleImportMarkdown}
+          />
+          <button
+            onClick={() => importInputRef.current?.click()}
+            disabled={importing}
+            className="flex items-center gap-2 border border-[#B8692A]/30 text-[#B8692A] hover:bg-amber-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {importing ? (
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            )}
+            <span className="hidden sm:inline">{importing ? "Importing..." : "Import"}</span>
+          </button>
           <button
             onClick={() => setShowTemplatePicker(true)}
             disabled={creating}
