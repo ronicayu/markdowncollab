@@ -1,8 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
 import { parseEmbedUrl } from "@/extensions/embed-block";
+
+const STORAGE_KEY = "slashCommandUsage";
+
+function getUsageCounts(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function incrementUsage(commandId: string) {
+  const counts = getUsageCounts();
+  counts[commandId] = (counts[commandId] || 0) + 1;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(counts));
+  } catch {
+    // Storage full or unavailable — silently ignore
+  }
+}
 
 interface Command {
   id: string;
@@ -362,6 +383,7 @@ export default function SlashCommandMenu({
 }: SlashCommandMenuProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [usageCounts] = useState(() => getUsageCounts());
 
   const filtered = COMMANDS.filter((cmd) => {
     if (!query) return true;
@@ -371,6 +393,28 @@ export default function SlashCommandMenu({
       cmd.keywords.some((k) => k.startsWith(q))
     );
   });
+
+  // Determine favorites: top 3 most-used, but only if user has used at least 3 different commands
+  const { favoriteIds, hasFavorites } = useMemo(() => {
+    const entries = Object.entries(usageCounts).filter(([, count]) => count > 0);
+    if (entries.length < 3) return { favoriteIds: new Set<string>(), hasFavorites: false };
+    entries.sort((a, b) => b[1] - a[1]);
+    const top3 = entries.slice(0, 3).map(([id]) => id);
+    return { favoriteIds: new Set(top3), hasFavorites: true };
+  }, [usageCounts]);
+
+  // Build display list: favorites first (if no query), then all
+  const displayItems = useMemo(() => {
+    if (query || !hasFavorites) return { favorites: [] as Command[], rest: filtered };
+    const favorites = filtered.filter((cmd) => favoriteIds.has(cmd.id));
+    const rest = filtered.filter((cmd) => !favoriteIds.has(cmd.id));
+    return { favorites, rest };
+  }, [filtered, query, hasFavorites, favoriteIds]);
+
+  const allItems = useMemo(
+    () => [...displayItems.favorites, ...displayItems.rest],
+    [displayItems]
+  );
 
   // Reset selected index when filter changes
   useEffect(() => {
@@ -390,13 +434,13 @@ export default function SlashCommandMenu({
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
+        setSelectedIndex((i) => Math.min(i + 1, allItems.length - 1));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setSelectedIndex((i) => Math.max(i - 1, 0));
       } else if (e.key === "Enter") {
         e.preventDefault();
-        runCommand(filtered[selectedIndex]);
+        runCommand(allItems[selectedIndex]);
       } else if (e.key === "Escape") {
         e.preventDefault();
         onClose();
@@ -404,7 +448,7 @@ export default function SlashCommandMenu({
     }
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [filtered, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allItems, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function runCommand(cmd: Command | undefined) {
     if (!cmd) return;
@@ -421,11 +465,12 @@ export default function SlashCommandMenu({
         return true;
       })
       .run();
+    incrementUsage(cmd.id);
     cmd.action(editor);
     onClose();
   }
 
-  if (filtered.length === 0) {
+  if (allItems.length === 0) {
     onClose();
     return null;
   }
@@ -444,34 +489,75 @@ export default function SlashCommandMenu({
       style={style}
       role="listbox"
       aria-label="Slash commands"
-      aria-activedescendant={filtered[selectedIndex] ? `slash-cmd-${filtered[selectedIndex].id}` : undefined}
+      aria-activedescendant={allItems[selectedIndex] ? `slash-cmd-${allItems[selectedIndex].id}` : undefined}
       className="w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-y-auto max-h-72"
       onMouseDown={(e) => e.preventDefault()} // prevent editor blur
     >
-      {filtered.map((cmd, i) => (
-        <button
-          key={cmd.id}
-          id={`slash-cmd-${cmd.id}`}
-          role="option"
-          aria-selected={i === selectedIndex}
-          data-selected={i === selectedIndex ? "true" : "false"}
-          onMouseEnter={() => setSelectedIndex(i)}
-          onClick={() => runCommand(cmd)}
-          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-            i === selectedIndex
-              ? "bg-amber-50"
-              : "hover:bg-gray-50"
-          }`}
-        >
-          <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
-            {cmd.icon}
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-900">{cmd.label}</p>
-            <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
+      {displayItems.favorites.length > 0 && (
+        <>
+          <div className="px-3 pt-1.5 pb-0.5">
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Frequently used</p>
           </div>
-        </button>
-      ))}
+          {displayItems.favorites.map((cmd, i) => {
+            const globalIdx = i;
+            return (
+              <button
+                key={cmd.id}
+                id={`slash-cmd-${cmd.id}`}
+                role="option"
+                aria-selected={globalIdx === selectedIndex}
+                data-selected={globalIdx === selectedIndex ? "true" : "false"}
+                onMouseEnter={() => setSelectedIndex(globalIdx)}
+                onClick={() => runCommand(cmd)}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+                  globalIdx === selectedIndex
+                    ? "bg-amber-50"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+                  {cmd.icon}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{cmd.label}</p>
+                  <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
+                </div>
+              </button>
+            );
+          })}
+          <div className="mx-3 my-1 border-t border-gray-100" />
+          <div className="px-3 pt-0.5 pb-0.5">
+            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">All commands</p>
+          </div>
+        </>
+      )}
+      {displayItems.rest.map((cmd, i) => {
+        const globalIdx = displayItems.favorites.length + i;
+        return (
+          <button
+            key={cmd.id}
+            id={`slash-cmd-${cmd.id}`}
+            role="option"
+            aria-selected={globalIdx === selectedIndex}
+            data-selected={globalIdx === selectedIndex ? "true" : "false"}
+            onMouseEnter={() => setSelectedIndex(globalIdx)}
+            onClick={() => runCommand(cmd)}
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+              globalIdx === selectedIndex
+                ? "bg-amber-50"
+                : "hover:bg-gray-50"
+            }`}
+          >
+            <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+              {cmd.icon}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900">{cmd.label}</p>
+              <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
