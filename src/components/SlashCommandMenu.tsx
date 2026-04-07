@@ -191,6 +191,40 @@ const COMMANDS: Command[] = [
     action: (editor) =>
       (editor.commands as unknown as { setCallout: (attrs: { type: string }) => boolean }).setCallout({ type: "danger" }),
   },
+  {
+    id: "footnote",
+    label: "Footnote",
+    description: "Insert a footnote reference",
+    icon: "\u00B9",
+    keywords: ["footnote", "note", "reference", "cite"],
+    action: (editor) => {
+      // Count existing footnotes in the document to determine the next number
+      const docText = editor.state.doc.textContent;
+      const superscripts = ["\u00B9", "\u00B2", "\u00B3", "\u2074", "\u2075", "\u2076", "\u2077", "\u2078", "\u2079"];
+      // Count footnote entries at the bottom (lines starting with a number + period)
+      const footnoteMatches = docText.match(/\n\d+\.\s/g);
+      const nextNum = (footnoteMatches ? footnoteMatches.length : 0) + 1;
+      const superscript = nextNum <= 9 ? superscripts[nextNum - 1] : `[${nextNum}]`;
+
+      // Insert superscript at cursor position
+      editor.chain().focus().insertContent(superscript).run();
+
+      // Check if document already has a footnote divider
+      const hasDivider = docText.includes("\n---\n") && /\n\d+\.\s/.test(docText);
+
+      // Move to end of document and append footnote
+      const endPos = editor.state.doc.content.size;
+      editor.chain().focus().setTextSelection(endPos).run();
+
+      if (!hasDivider && nextNum === 1) {
+        // Insert divider + first footnote
+        editor.chain().focus().insertContent("<p></p><hr><p>" + nextNum + ". [footnote text]</p>").run();
+      } else {
+        // Append footnote entry
+        editor.chain().focus().insertContent("<p>" + nextNum + ". [footnote text]</p>").run();
+      }
+    },
+  },
 ];
 
 interface SlashCommandMenuProps {
