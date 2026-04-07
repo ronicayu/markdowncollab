@@ -22,6 +22,7 @@ import CommentSidebar from "@/components/CommentSidebar";
 import VersionHistoryPanel from "@/components/VersionHistoryPanel";
 import OutlineSidebar from "@/components/OutlineSidebar";
 import FloatingCommentButton from "@/components/FloatingCommentButton";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import {
   getSuggestions,
   getComments,
@@ -590,20 +591,24 @@ export default function DocumentPage({
       {userRole !== "viewer" && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       <div className="flex flex-1 overflow-hidden">
         <div className="hidden lg:block">
-          <OutlineSidebar editor={editor} />
+          <ErrorBoundary>
+            <OutlineSidebar editor={editor} />
+          </ErrorBoundary>
         </div>
         {ydoc && provider && (
-          <Editor
-            documentId={id}
-            userName={userName}
-            ydoc={ydoc}
-            provider={provider}
-            onEditorReady={handleEditorReady}
-            activeCommentId={activeCommentId}
-            editable={userRole !== "viewer"}
-            initialContent={templateContent}
-            onToggleShortcutsHelp={toggleShortcutsHelp}
-          />
+          <ErrorBoundary>
+            <Editor
+              documentId={id}
+              userName={userName}
+              ydoc={ydoc}
+              provider={provider}
+              onEditorReady={handleEditorReady}
+              activeCommentId={activeCommentId}
+              editable={userRole !== "viewer"}
+              initialContent={templateContent}
+              onToggleShortcutsHelp={toggleShortcutsHelp}
+            />
+          </ErrorBoundary>
         )}
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
         <FloatingCommentButton
@@ -612,6 +617,7 @@ export default function DocumentPage({
           commentFormOpen={commentFormOpen}
         />
         <div className="hidden md:block">
+          <ErrorBoundary>
           <CommentSidebar
             suggestions={suggestions}
             comments={comments}
@@ -630,6 +636,7 @@ export default function DocumentPage({
             currentUserName={userName ?? undefined}
             currentUserId={(session?.user as any)?.id}
           />
+          </ErrorBoundary>
         </div>
         {versionHistoryOpen && (
           <VersionHistoryPanel
