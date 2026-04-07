@@ -18,6 +18,7 @@ import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import { TocBlock } from "@/extensions/toc-block";
+import { EmbedBlock, parseEmbedUrl } from "@/extensions/embed-block";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo, useState } from "react";
@@ -148,6 +149,7 @@ export default function Editor({
       }),
       MermaidBlock,
       TocBlock,
+      EmbedBlock,
       Placeholder.configure({
         placeholder: "Start typing, or press / for commands...",
       }),
@@ -235,6 +237,26 @@ export default function Editor({
               });
               return true;
             }
+          }
+        }
+
+        // Handle YouTube/Loom URL paste → embed block
+        const pastedText = event.clipboardData?.getData('text/plain') || '';
+        if (pastedText.trim() && !pastedText.includes('\n')) {
+          const embedResult = parseEmbedUrl(pastedText);
+          if (embedResult) {
+            event.preventDefault();
+            const { schema } = view.state;
+            const embedNode = schema.nodes.embedBlock;
+            if (embedNode) {
+              const node = embedNode.create({
+                src: embedResult.embedUrl,
+                provider: embedResult.provider,
+              });
+              const tr = view.state.tr.replaceSelectionWith(node);
+              view.dispatch(tr);
+            }
+            return true;
           }
         }
 

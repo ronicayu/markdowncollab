@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Editor } from "@tiptap/core";
+import { parseEmbedUrl } from "@/extensions/embed-block";
 
 interface Command {
   id: string;
@@ -154,6 +155,30 @@ const COMMANDS: Command[] = [
     keywords: ["table", "grid", "spreadsheet"],
     action: (editor) =>
       editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+  },
+  {
+    id: "embed",
+    label: "Embed Video",
+    description: "YouTube or Loom video embed",
+    icon: "\u{1F3AC}",
+    keywords: ["embed", "video", "youtube", "loom", "iframe"],
+    action: (editor) => {
+      const url = window.prompt("Paste a YouTube or Loom URL:");
+      if (!url) return;
+      const result = parseEmbedUrl(url);
+      if (result) {
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: "embedBlock",
+            attrs: { src: result.embedUrl, provider: result.provider },
+          })
+          .run();
+      } else {
+        window.alert("Unsupported URL. Please paste a YouTube or Loom link.");
+      }
+    },
   },
   {
     id: "emoji",
