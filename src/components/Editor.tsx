@@ -27,7 +27,7 @@ import { PollBlock } from "@/extensions/poll-block";
 import "katex/dist/katex.min.css";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import SlashCommandMenu from "./SlashCommandMenu";
 import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
@@ -83,6 +83,9 @@ export default function Editor({
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrollable, setIsScrollable] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   async function uploadImage(file: File): Promise<string | null> {
     const formData = new FormData();
@@ -140,6 +143,35 @@ export default function Editor({
     const interval = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(interval);
   }, []);
+
+  // Reading progress bar: track scroll position
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const maxScroll = scrollHeight - clientHeight;
+    const scrollable = maxScroll > 10;
+    setIsScrollable(scrollable);
+    if (scrollable) {
+      setScrollProgress((scrollTop / maxScroll) * 100);
+    } else {
+      setScrollProgress(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    // Check on mount and after content changes
+    handleScroll();
+    const observer = new ResizeObserver(handleScroll);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      observer.disconnect();
+    };
+  }, [handleScroll]);
 
   const editor = useEditor({
     editable,
@@ -513,7 +545,18 @@ export default function Editor({
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-[#FFFEF9] relative">
+    <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-[#FFFEF9] relative">
+      {isScrollable && (
+        <div
+          className="reading-progress-bar"
+          style={{ width: `${scrollProgress}%` }}
+          role="progressbar"
+          aria-valuenow={Math.round(scrollProgress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Reading progress"
+        />
+      )}
       {searchOpen && editor && (
         <SearchBar
           query={searchQuery}
