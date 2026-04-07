@@ -13,6 +13,7 @@ import Image from "@tiptap/extension-image";
 import { Highlight } from "@tiptap/extension-highlight";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { MermaidBlock } from "@/extensions/mermaid-block";
+import { TocBlock } from "@/extensions/toc-block";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo, useState } from "react";
@@ -142,6 +143,7 @@ export default function Editor({
         },
       }),
       MermaidBlock,
+      TocBlock,
       Placeholder.configure({
         placeholder: "Start typing, or press / for commands...",
       }),
