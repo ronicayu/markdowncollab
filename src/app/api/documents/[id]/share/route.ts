@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/access-control";
 import { logActivity } from "@/lib/activity-log";
+import { fireWebhook } from "@/lib/webhook";
 
 async function getSessionInfo() {
   const session = await getServerSession(authOptions);
@@ -73,6 +74,14 @@ export async function POST(
       "shared",
       `Shared with ${email} as ${role}`
     );
+
+    // Fire webhook for document share
+    if (userId) {
+      fireWebhook(userId, "document.shared", {
+        documentId: id,
+        data: { email, role },
+      });
+    }
 
     return NextResponse.json(share, { status: 201 });
   } catch (error: any) {

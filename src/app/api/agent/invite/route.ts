@@ -5,6 +5,7 @@ import { generateSuggestions } from "@/lib/agent";
 import { addSuggestion } from "@/lib/suggestion-store";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limiter";
+import { fireWebhook } from "@/lib/webhook";
 
 const WS_URL = process.env.WS_URL || "ws://localhost:3000/ws";
 
@@ -176,6 +177,15 @@ export async function POST(request: NextRequest) {
       });
 
       suggestionsCount++;
+    }
+
+    // Fire webhook for agent completion
+    if (doc?.ownerId) {
+      fireWebhook(doc.ownerId, "agent.completed", {
+        documentId,
+        documentTitle: doc.title ?? undefined,
+        data: { suggestionsCount },
+      });
     }
 
     return NextResponse.json({ success: true, suggestionsCount });

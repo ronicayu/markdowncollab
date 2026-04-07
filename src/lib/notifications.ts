@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { fireWebhook } from "@/lib/webhook";
 
 export type NotificationType =
   | "comment"
@@ -59,4 +60,13 @@ export async function createNotification(
       message,
     },
   });
+
+  // Fire webhook for comment/mention notifications
+  if (actorId && (type === "comment" || type === "reply" || type === "mention")) {
+    fireWebhook(actorId, "comment.created", {
+      documentId,
+      documentTitle,
+      data: { type, message },
+    });
+  }
 }
