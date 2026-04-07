@@ -21,6 +21,7 @@ const SHORTCUT_DATA: ShortcutCategory[] = [
       { keys: "Mod+U", action: "Underline" },
       { keys: "Mod+E", action: "Inline code" },
       { keys: "Mod+Shift+X", action: "Strikethrough" },
+      { keys: "Mod+Shift+H", action: "Highlight" },
       { keys: "Mod+K", action: "Insert link" },
     ],
   },
@@ -41,19 +42,33 @@ const SHORTCUT_DATA: ShortcutCategory[] = [
     ],
   },
   {
+    title: "Alignment",
+    shortcuts: [
+      { keys: "Mod+Shift+L", action: "Align left" },
+      { keys: "Mod+Shift+E", action: "Align center" },
+      { keys: "Mod+Shift+R", action: "Align right" },
+    ],
+  },
+  {
+    title: "Lists",
+    shortcuts: [
+      { keys: "Tab", action: "Indent list item" },
+      { keys: "Shift+Tab", action: "Outdent list item" },
+    ],
+  },
+  {
     title: "Editing",
     shortcuts: [
       { keys: "Mod+F", action: "Find" },
       { keys: "Mod+H", action: "Find & Replace" },
       { keys: "Mod+Z", action: "Undo" },
       { keys: "Mod+Shift+Z", action: "Redo" },
-      { keys: "Tab", action: "Indent list" },
-      { keys: "Shift+Tab", action: "Outdent list" },
     ],
   },
   {
     title: "Navigation",
     shortcuts: [
+      { keys: "Mod+P", action: "Command palette" },
       { keys: "Mod+/", action: "Show this help" },
       { keys: "Escape", action: "Close dialog / search" },
     ],
