@@ -20,6 +20,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Editor as TiptapEditor } from "@tiptap/core";
 import SlashCommandMenu from "./SlashCommandMenu";
 import { SearchReplace, searchReplacePluginKey } from "@/extensions/search-replace";
+import { YjsUndo } from "@/extensions/yjs-undo";
 import * as TablePkg from "@tiptap/extension-table";
 const { Table, TableRow, TableCell, TableHeader } = TablePkg;
 import SearchBar from "./SearchBar";
@@ -131,6 +132,7 @@ export default function Editor({
       Collaboration.configure({
         document: ydoc,
       }),
+      YjsUndo,
       Markdown.configure({
         html: true,
         transformPastedText: false,
@@ -148,6 +150,12 @@ export default function Editor({
         HTMLAttributes: { class: "editor-image" },
       }),
       Underline,
+      Highlight.configure({
+        multicolor: false,
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
       RemoteCursors.configure({
         provider,
         currentUser: userName,

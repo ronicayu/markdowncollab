@@ -73,6 +73,18 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       isActive: () => editor.isActive("strike"),
     },
     {
+      label: "Highlight",
+      shortcut: "Mod+Shift+H",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          <path strokeLinecap="round" d="M3 21h18" stroke="currentColor" strokeWidth={2.5} style={{ color: '#facc15' }} />
+        </svg>
+      ),
+      action: () => editor.chain().focus().toggleHighlight().run(),
+      isActive: () => editor.isActive("highlight"),
+    },
+    {
       label: "Inline code",
       shortcut: "Mod+E",
       icon: (
@@ -107,6 +119,40 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       separator: true,
     },
     {
+      label: "Align left",
+      shortcut: "Mod+Shift+L",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" d="M3 6h18M3 10h12M3 14h18M3 18h12" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().setTextAlign('left').run(),
+      isActive: () => editor.isActive({ textAlign: 'left' }),
+    },
+    {
+      label: "Align center",
+      shortcut: "Mod+Shift+E",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" d="M3 6h18M6 10h12M3 14h18M6 18h12" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().setTextAlign('center').run(),
+      isActive: () => editor.isActive({ textAlign: 'center' }),
+    },
+    {
+      label: "Align right",
+      shortcut: "Mod+Shift+R",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" d="M3 6h18M9 10h12M3 14h18M9 18h12" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().setTextAlign('right').run(),
+      isActive: () => editor.isActive({ textAlign: 'right' }),
+      separator: true,
+    },
+    {
       label: "Bullet list",
       shortcut: "Mod+Shift+8",
       icon: (
@@ -134,6 +180,28 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       ),
       action: () => editor.chain().focus().toggleOrderedList().run(),
       isActive: () => editor.isActive("orderedList"),
+    },
+    {
+      label: "Outdent",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11 7h8M11 12h8M3 17h16" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 4L3 8l4 4" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().liftListItem('listItem').run(),
+      isActive: () => false,
+    },
+    {
+      label: "Indent",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11 7h8M11 12h8M3 17h16" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 4l4 4-4 4" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().sinkListItem('listItem').run(),
+      isActive: () => false,
     },
     {
       label: "Blockquote",
@@ -213,6 +281,31 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       ),
       action: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
       isActive: () => editor.isActive("table"),
+      separator: true,
+    },
+    {
+      label: "Undo",
+      shortcut: "Mod+Z",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a5 5 0 015 5v0a5 5 0 01-5 5H9" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 6l-4 4 4 4" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().undo().run(),
+      isActive: () => false,
+    },
+    {
+      label: "Redo",
+      shortcut: "Mod+Shift+Z",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 10H11a5 5 0 00-5 5v0a5 5 0 005 5h4" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 6l4 4-4 4" />
+        </svg>
+      ),
+      action: () => editor.chain().focus().redo().run(),
+      isActive: () => false,
       separator: true,
     },
     {

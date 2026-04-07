@@ -21,6 +21,7 @@ const SHORTCUT_DATA: ShortcutCategory[] = [
       { keys: "Mod+U", action: "Underline" },
       { keys: "Mod+E", action: "Inline code" },
       { keys: "Mod+Shift+X", action: "Strikethrough" },
+      { keys: "Mod+K", action: "Insert link" },
     ],
   },
   {
