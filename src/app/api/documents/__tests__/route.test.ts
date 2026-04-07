@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
@@ -8,6 +9,9 @@ vi.mock("@/lib/prisma", () => ({
     },
     documentShare: {
       findMany: vi.fn(),
+    },
+    documentStar: {
+      findMany: vi.fn().mockResolvedValue([]),
     },
   },
 }));
@@ -49,7 +53,8 @@ describe("GET /api/documents", () => {
 
     // Import after mocks
     const { GET } = await import("../route");
-    const res = await GET();
+    const req = new NextRequest("http://localhost/api/documents");
+    const res = await GET(req);
     const data = await res.json();
 
     expect(data.length).toBeGreaterThanOrEqual(1);
@@ -64,7 +69,8 @@ describe("GET /api/documents", () => {
     ] as any);
 
     const { GET } = await import("../route");
-    const res = await GET();
+    const req = new NextRequest("http://localhost/api/documents");
+    const res = await GET(req);
     const data = await res.json();
 
     expect(data).toHaveLength(1);

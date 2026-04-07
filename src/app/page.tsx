@@ -243,6 +243,7 @@ export default function Home() {
               { label: "Recent", tab: "recent" as Tab },
               { label: "Shared with me", tab: "shared" as Tab },
               { label: "Starred", tab: "starred" as Tab },
+              { label: "Trash", tab: "trash" as Tab },
             ] as { label: string; tab: Tab }[]
           ).map(({ label, tab }) => (
             <button
@@ -257,6 +258,11 @@ export default function Home() {
               {tab === "starred" && (
                 <svg className="inline h-3.5 w-3.5 mr-1 -mt-0.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              )}
+              {tab === "trash" && (
+                <svg className="inline h-3.5 w-3.5 mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               )}
               {label}
@@ -336,6 +342,7 @@ export default function Home() {
                 { label: "Recent", tab: "recent" as Tab },
                 { label: "Shared", tab: "shared" as Tab },
                 { label: "Starred", tab: "starred" as Tab },
+                { label: "Trash", tab: "trash" as Tab },
               ] as { label: string; tab: Tab }[]
             ).map(({ label, tab }) => (
               <button
@@ -433,6 +440,52 @@ export default function Home() {
                     </Link>
                   ))}
                 </>
+              )}
+            </div>
+          ) : activeTab === "trash" ? (
+            <div className="space-y-2 max-w-3xl">
+              {trashLoading ? (
+                <div className="flex items-center gap-2 text-gray-400 text-sm py-8 justify-center">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Loading...
+                </div>
+              ) : trashDocs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <p className="text-gray-400 text-sm">Trash is empty.</p>
+                </div>
+              ) : (
+                trashDocs.map((doc) => {
+                  const deletedDaysAgo = doc.deletedAt
+                    ? Math.floor((Date.now() - new Date(doc.deletedAt).getTime()) / 86400000)
+                    : 0;
+                  return (
+                    <div key={doc.id} className="flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 border border-transparent">
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-500 truncate">{doc.title || "Untitled"}</p>
+                        <p className="text-xs text-gray-400">
+                          Deleted {deletedDaysAgo === 0 ? "today" : deletedDaysAgo === 1 ? "yesterday" : `${deletedDaysAgo}d ago`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-4">
+                        <button
+                          onClick={() => restoreDoc(doc)}
+                          className="px-3 py-1.5 text-xs font-medium text-[#B8692A] border border-[#B8692A]/30 rounded-lg hover:bg-amber-50 transition-colors"
+                        >
+                          Restore
+                        </button>
+                        <button
+                          onClick={() => setConfirmPermanentDelete(doc)}
+                          className="px-3 py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          Delete permanently
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           ) : loading ? (
@@ -604,9 +657,9 @@ export default function Home() {
             className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Delete document?</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Move to trash?</h3>
             <p className="text-xs text-gray-500 mb-4">
-              &ldquo;{confirmDelete.title || "Untitled"}&rdquo; will be permanently deleted.
+              &ldquo;{confirmDelete.title || "Untitled"}&rdquo; will be moved to trash. You can restore it later.
             </p>
             <div className="flex gap-2 justify-end">
               <button
@@ -620,6 +673,38 @@ export default function Home() {
                 className="px-3 py-1.5 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent delete confirmation modal */}
+      {confirmPermanentDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30"
+          onClick={() => setConfirmPermanentDelete(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Permanently delete?</h3>
+            <p className="text-xs text-gray-500 mb-4">
+              &ldquo;{confirmPermanentDelete.title || "Untitled"}&rdquo; will be permanently deleted. This cannot be undone.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setConfirmPermanentDelete(null)}
+                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => permanentDeleteDoc(confirmPermanentDelete)}
+                className="px-3 py-1.5 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              >
+                Delete forever
               </button>
             </div>
           </div>
