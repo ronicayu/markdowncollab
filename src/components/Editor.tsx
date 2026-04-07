@@ -36,6 +36,7 @@ import { DragHandle } from "@tiptap/extension-drag-handle";
 import "./drag-handle.css";
 import SearchBar from "./SearchBar";
 import LinkDialog from "./LinkDialog";
+import TableSortMenu from "./TableSortMenu";
 
 
 interface EditorProps {
@@ -591,6 +592,7 @@ export default function Editor({
           onClose={() => setSlashMenu(null)}
         />
       )}
+      {editor && <TableSortMenu editor={editor} />}
     </div>
   );
 }
