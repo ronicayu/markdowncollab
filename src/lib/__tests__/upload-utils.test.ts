@@ -22,9 +22,10 @@ describe("validateImageFile", () => {
     expect(result).toEqual({ valid: true, error: null });
   });
 
-  it("accepts a valid SVG file", () => {
+  it("rejects SVG files to prevent XSS", () => {
     const result = validateImageFile("image/svg+xml", 8000);
-    expect(result).toEqual({ valid: true, error: null });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("not supported");
   });
 
   it("rejects an unsupported MIME type", () => {
@@ -54,6 +55,6 @@ describe("validateImageFile", () => {
     expect(ALLOWED_MIME_TYPES).toContain("image/jpeg");
     expect(ALLOWED_MIME_TYPES).toContain("image/gif");
     expect(ALLOWED_MIME_TYPES).toContain("image/webp");
-    expect(ALLOWED_MIME_TYPES).toContain("image/svg+xml");
+    expect(ALLOWED_MIME_TYPES).not.toContain("image/svg+xml");
   });
 });
