@@ -105,6 +105,20 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       isActive: () => editor.isActive("strike"),
     },
     {
+      label: "Superscript",
+      shortcut: "Mod+.",
+      icon: <span className="text-xs font-bold">x<sup className="text-[9px]">2</sup></span>,
+      action: () => editor.chain().focus().toggleSuperscript().run(),
+      isActive: () => editor.isActive("superscript"),
+    },
+    {
+      label: "Subscript",
+      shortcut: "Mod+,",
+      icon: <span className="text-xs font-bold">x<sub className="text-[9px]">2</sub></span>,
+      action: () => editor.chain().focus().toggleSubscript().run(),
+      isActive: () => editor.isActive("subscript"),
+    },
+    {
       label: "Highlight",
       shortcut: "Mod+Shift+H",
       icon: (

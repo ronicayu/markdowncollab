@@ -14,6 +14,8 @@ import { Highlight } from "@tiptap/extension-highlight";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Color } from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
+import { Superscript } from "@tiptap/extension-superscript";
+import { Subscript } from "@tiptap/extension-subscript";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import { TocBlock } from "@/extensions/toc-block";
 import type * as Y from "yjs";
@@ -179,6 +181,8 @@ export default function Editor({
       }),
       TextStyle,
       Color,
+      Superscript,
+      Subscript,
       TaskList,
       TaskItem.configure({
         nested: true,
