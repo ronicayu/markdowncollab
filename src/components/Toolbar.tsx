@@ -44,11 +44,42 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   const [isMac, setIsMac] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [autoNumbering, setAutoNumbering] = useState(false);
   const colorBtnRef = useRef<HTMLDivElement>(null);
   const emojiBtnRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
   }, []);
+
+  // Load auto-numbering preference from localStorage
+  useEffect(() => {
+    const docId = window.location.pathname.split("/doc/")[1]?.split("/")[0] || "";
+    if (!docId) return;
+    const stored = localStorage.getItem(`autoNumber:${docId}`);
+    if (stored === "true") {
+      setAutoNumbering(true);
+      // Apply class to editor container
+      const editorEl = document.querySelector(".ProseMirror");
+      if (editorEl) editorEl.classList.add("auto-number-headings");
+    }
+  }, []);
+
+  function toggleAutoNumbering() {
+    const docId = window.location.pathname.split("/doc/")[1]?.split("/")[0] || "";
+    const next = !autoNumbering;
+    setAutoNumbering(next);
+    const editorEl = document.querySelector(".ProseMirror");
+    if (editorEl) {
+      if (next) {
+        editorEl.classList.add("auto-number-headings");
+      } else {
+        editorEl.classList.remove("auto-number-headings");
+      }
+    }
+    if (docId) {
+      localStorage.setItem(`autoNumber:${docId}`, String(next));
+    }
+  }
 
   // Close color picker on outside click
   useEffect(() => {
@@ -478,6 +509,21 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
           )}
         </div>
       ))}
+      {/* Auto-number headings toggle */}
+      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
+      <button
+        onClick={toggleAutoNumbering}
+        title="Auto-number headings"
+        aria-label="Auto-number headings"
+        aria-pressed={autoNumbering ? "true" : "false"}
+        className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
+          autoNumbering
+            ? "bg-[var(--accent)]/10 text-[var(--accent)]"
+            : "text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]"
+        }`}
+      >
+        <span className="text-xs font-bold tracking-tight">#</span>
+      </button>
       {/* Separator before help button */}
       <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
       <button
