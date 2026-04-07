@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
 import NotificationBell from "@/components/NotificationBell";
+import WelcomeModal from "@/components/WelcomeModal";
 
 interface Tag {
   id: string;
@@ -879,6 +880,8 @@ export default function Home() {
         onClose={() => setShowTemplatePicker(false)}
         onSelect={createDocFromTemplate}
       />
+
+      <WelcomeModal />
 
       {/* Delete confirmation modal */}
       {confirmDelete && (
