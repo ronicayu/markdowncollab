@@ -54,6 +54,10 @@ interface TopBarProps {
   onToggleFocusMode?: () => void;
   onSaveAsTemplate?: () => void;
   onPresent?: () => void;
+  onToggleChat?: () => void;
+  chatOpen?: boolean;
+  documentStatus?: string;
+  onStatusChange?: (status: string) => void;
 }
 
 export default function TopBar({
@@ -71,6 +75,10 @@ export default function TopBar({
   onToggleFocusMode,
   onSaveAsTemplate,
   onPresent,
+  onToggleChat,
+  chatOpen,
+  documentStatus,
+  onStatusChange,
 }: TopBarProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
@@ -180,6 +188,17 @@ export default function TopBar({
         {userRole === "viewer" && (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
             View only
+          </span>
+        )}
+        {documentStatus && (
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+            documentStatus === "approved"
+              ? "bg-green-100 text-green-800"
+              : documentStatus === "in_review"
+              ? "bg-amber-100 text-amber-800"
+              : "bg-gray-100 text-gray-600"
+          }`}>
+            {documentStatus === "approved" ? "Approved" : documentStatus === "in_review" ? "In Review" : "Draft"}
           </span>
         )}
       </div>
@@ -311,6 +330,26 @@ export default function TopBar({
           <span className="hidden sm:inline">History</span>
         </button>
 
+        {/* AI Chat toggle */}
+        {onToggleChat && (
+          <button
+            onClick={onToggleChat}
+            className={`flex items-center gap-1.5 h-8 px-2 sm:px-3 text-sm font-medium transition-colors rounded-md ${
+              chatOpen
+                ? "text-white bg-white/15"
+                : "text-white/60 hover:text-white hover:bg-white/8"
+            }`}
+            title="AI Chat"
+            aria-label="Toggle AI chat"
+            aria-pressed={chatOpen ? "true" : "false"}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+            <span className="hidden sm:inline">Chat</span>
+          </button>
+        )}
+
         {/* Invite Agent — icon-only on mobile, text on sm+ */}
         <button
           onClick={onInviteAgent}
@@ -363,6 +402,48 @@ export default function TopBar({
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
             </svg>
             <span className="hidden sm:inline">Sign in</span>
+          </button>
+        )}
+
+        {/* Status change buttons (owner only) */}
+        {userRole === "owner" && onStatusChange && documentStatus === "draft" && (
+          <button
+            onClick={() => onStatusChange("in_review")}
+            className="flex items-center gap-1 h-8 px-2 sm:px-3 text-amber-400 hover:text-amber-300 border border-amber-400/30 hover:border-amber-400/50 text-xs sm:text-sm font-medium rounded-md transition-colors"
+            title="Submit for review"
+          >
+            <span className="hidden sm:inline">Submit for Review</span>
+            <span className="sm:hidden">Review</span>
+          </button>
+        )}
+        {userRole === "owner" && onStatusChange && documentStatus === "in_review" && (
+          <>
+            <button
+              onClick={() => onStatusChange("approved")}
+              className="flex items-center gap-1 h-8 px-2 sm:px-3 text-green-400 hover:text-green-300 border border-green-400/30 hover:border-green-400/50 text-xs sm:text-sm font-medium rounded-md transition-colors"
+              title="Approve document"
+            >
+              <span className="hidden sm:inline">Approve</span>
+              <span className="sm:hidden">OK</span>
+            </button>
+            <button
+              onClick={() => onStatusChange("draft")}
+              className="flex items-center gap-1 h-8 px-2 sm:px-3 text-white/50 hover:text-white/70 border border-white/15 hover:border-white/25 text-xs sm:text-sm font-medium rounded-md transition-colors"
+              title="Request changes"
+            >
+              <span className="hidden sm:inline">Request Changes</span>
+              <span className="sm:hidden">Changes</span>
+            </button>
+          </>
+        )}
+        {userRole === "owner" && onStatusChange && documentStatus === "approved" && (
+          <button
+            onClick={() => onStatusChange("draft")}
+            className="flex items-center gap-1 h-8 px-2 sm:px-3 text-white/50 hover:text-white/70 border border-white/15 hover:border-white/25 text-xs sm:text-sm font-medium rounded-md transition-colors"
+            title="Revert to draft"
+          >
+            <span className="hidden sm:inline">Revert to Draft</span>
+            <span className="sm:hidden">Draft</span>
           </button>
         )}
 

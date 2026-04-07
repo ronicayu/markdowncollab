@@ -149,16 +149,41 @@ export default function DocumentPage({
   const [templateContent, setTemplateContent] = useState<string | null>(null);
   const [docTitle, setDocTitle] = useState(id);
   const [userRole, setUserRole] = useState<"owner" | "editor" | "viewer" | null>(null);
-  // Fetch document title and role on mount
+  const [docStatus, setDocStatus] = useState<string>("draft");
+  // Fetch document title, role, and status on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((doc) => {
         if (doc?.title) setDocTitle(doc.title);
         if (doc?.role) setUserRole(doc.role);
+        if (doc?.status) setDocStatus(doc.status);
       })
       .catch(() => {});
   }, [id]);
+
+  const handleStatusChange = useCallback(
+    async (newStatus: string) => {
+      try {
+        const res = await fetch(`/api/documents/${id}/status`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setDocStatus(data.status);
+          toast(`Status changed to ${data.status === "in_review" ? "In Review" : data.status === "approved" ? "Approved" : "Draft"}`);
+        } else {
+          const err = await res.json();
+          toast(err.error || "Failed to change status", "error");
+        }
+      } catch {
+        toast("Failed to change status", "error");
+      }
+    },
+    [id]
+  );
 
   // Track document view on mount
   useEffect(() => {
@@ -661,6 +686,8 @@ export default function DocumentPage({
         versionHistoryOpen={versionHistoryOpen}
         focusMode={focusMode}
         onToggleFocusMode={toggleFocusMode}
+        documentStatus={docStatus}
+        onStatusChange={handleStatusChange}
         onSaveAsTemplate={() => setSaveTemplateOpen(true)}
         onPresent={() => {
           if (editor) {

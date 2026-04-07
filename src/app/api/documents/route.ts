@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     if (folderIdParam) unauthWhere.folderId = folderIdParam;
     const docs = await prisma.document.findMany({
       where: unauthWhere,
-      select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, folderId: true, createdAt: true, updatedAt: true },
+      select: { id: true, title: true, ownerId: true, visibility: true, status: true, deletedAt: true, folderId: true, createdAt: true, updatedAt: true },
       orderBy: { updatedAt: "desc" },
     });
     return NextResponse.json(docs.map((d) => ({ ...d, role: "editor" })));
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
         },
       ],
     },
-    select: { id: true, title: true, ownerId: true, visibility: true, deletedAt: true, folderId: true, createdAt: true, updatedAt: true },
+    select: { id: true, title: true, ownerId: true, visibility: true, status: true, deletedAt: true, folderId: true, createdAt: true, updatedAt: true },
     orderBy: { updatedAt: "desc" },
   });
 

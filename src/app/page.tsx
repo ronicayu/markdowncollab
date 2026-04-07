@@ -30,6 +30,7 @@ interface Doc {
   ownerId?: string | null;
   starred?: boolean;
   folderId?: string | null;
+  status?: string;
 }
 
 function formatDate(dateStr: string) {
@@ -1009,6 +1010,15 @@ export default function Home() {
                                 : "bg-gray-100 text-gray-500"
                             }`}>
                               {doc.role === "editor" ? "Editor" : "Viewer"}
+                            </span>
+                          )}
+                          {doc.status && doc.status !== "draft" && (
+                            <span className={`inline-flex items-center ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
+                              doc.status === "approved"
+                                ? "bg-green-50 text-green-700"
+                                : "bg-amber-50 text-amber-700"
+                            }`}>
+                              {doc.status === "approved" ? "Approved" : "In Review"}
                             </span>
                           )}
                           {(docTags[doc.id] || []).length > 0 && (
