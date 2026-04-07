@@ -601,6 +601,211 @@ body {
   }
 }
 
+/* Two-Column Layout Block */
+.ProseMirror .columns-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+  min-height: 3rem;
+}
+.ProseMirror .columns-block-column {
+  border: 1px dashed var(--code-border);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  min-height: 2rem;
+}
+.ProseMirror .columns-block-column:focus-within {
+  border-color: var(--accent);
+  background-color: rgba(184, 105, 42, 0.03);
+}
+@media (max-width: 640px) {
+  .ProseMirror .columns-block {
+    grid-template-columns: 1fr;
+  }
+}
+@media print {
+  .ProseMirror .columns-block {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .ProseMirror .columns-block-column {
+    border: 1px solid #ccc;
+  }
+}
+
+/* Diff Viewer styles */
+.diff-viewer {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+.diff-viewer-row {
+  display: flex;
+  min-width: 0;
+}
+.diff-line-number {
+  width: 3rem;
+  text-align: right;
+  padding: 0 0.5rem;
+  color: var(--text-muted);
+  user-select: none;
+  flex-shrink: 0;
+}
+.diff-line-content {
+  flex: 1;
+  padding: 0 0.5rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.diff-added {
+  background-color: #dcfce7;
+  color: #166534;
+}
+.diff-removed {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+.dark .diff-added {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+}
+.dark .diff-removed {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+.diff-unchanged {
+  color: var(--text-secondary);
+}
+
+/* Math block (KaTeX) */
+.ProseMirror .math-block {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  position: relative;
+}
+.ProseMirror .math-block-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ProseMirror .math-block .math-block-label {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  user-select: none;
+}
+.ProseMirror .math-block .math-block-editor {
+  width: 100%;
+  min-height: 2.5rem;
+  background: transparent;
+  border: none;
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  resize: none;
+  outline: none;
+  line-height: 1.5;
+}
+.ProseMirror .math-block .math-block-display {
+  cursor: pointer;
+  min-height: 1.5rem;
+  overflow-x: auto;
+}
+.ProseMirror .math-block .math-block-placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+.ProseMirror .math-block .math-block-error {
+  color: #ef4444;
+  font-size: 0.8125rem;
+  font-family: monospace;
+}
+
+/* Details / collapsible block */
+.ProseMirror .details-block {
+  border: 1px solid var(--code-border);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+.ProseMirror .details-block-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.ProseMirror .details-block-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: var(--code-bg);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+.ProseMirror .details-block-summary:hover {
+  background: rgba(0,0,0,0.04);
+}
+.dark .ProseMirror .details-block-summary:hover {
+  background: rgba(255,255,255,0.04);
+}
+.ProseMirror .details-block-chevron {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  width: 1rem;
+  text-align: center;
+}
+.ProseMirror .details-block-summary-input {
+  flex: 1;
+  border: 1px solid var(--code-border);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  background: var(--editor-bg);
+  color: var(--text-primary);
+  outline: none;
+}
+.ProseMirror .details-block-summary-text {
+  flex: 1;
+}
+.ProseMirror .details-block-body {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--code-border);
+}
+.ProseMirror .details-block-body-editor {
+  width: 100%;
+  min-height: 2.5rem;
+  background: transparent;
+  border: none;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  resize: none;
+  outline: none;
+  line-height: 1.7;
+  font-family: inherit;
+}
+.ProseMirror .details-block-body-text {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: text;
+  min-height: 1.5rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
 /* Embed block — responsive 16:9 iframe container */
 .ProseMirror .embed-block,
 .embed-block {

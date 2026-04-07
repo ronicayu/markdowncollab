@@ -285,6 +285,33 @@ const COMMANDS: Command[] = [
     },
   },
   {
+    id: "columns",
+    label: "Two Columns",
+    description: "Side-by-side layout",
+    icon: "\u258B\u258F",
+    keywords: ["columns", "layout", "side", "split", "two"],
+    action: (editor) =>
+      (editor.commands as unknown as { setColumns: () => boolean }).setColumns(),
+  },
+  {
+    id: "math",
+    label: "Math Equation",
+    description: "LaTeX math block (KaTeX)",
+    icon: "\u03A3",
+    keywords: ["math", "latex", "equation", "formula", "katex"],
+    action: (editor) =>
+      editor.chain().focus().insertContent({ type: "mathBlock", attrs: { content: "" } }).run(),
+  },
+  {
+    id: "details",
+    label: "Collapsible Section",
+    description: "Expandable details block",
+    icon: "\u25B6",
+    keywords: ["details", "collapse", "collapsible", "toggle", "accordion", "expand"],
+    action: (editor) =>
+      editor.chain().focus().insertContent({ type: "detailsBlock", attrs: { summary: "Details", body: "" } }).run(),
+  },
+  {
     id: "footnote",
     label: "Footnote",
     description: "Insert a footnote reference",

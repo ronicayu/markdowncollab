@@ -19,6 +19,9 @@ import { Subscript } from "@tiptap/extension-subscript";
 import { MermaidBlock } from "@/extensions/mermaid-block";
 import { TocBlock } from "@/extensions/toc-block";
 import { EmbedBlock, parseEmbedUrl } from "@/extensions/embed-block";
+import { MathBlock } from "@/extensions/math-block";
+import { DetailsBlock } from "@/extensions/details-block";
+import "katex/dist/katex.min.css";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo, useState } from "react";
@@ -150,6 +153,8 @@ export default function Editor({
       MermaidBlock,
       TocBlock,
       EmbedBlock,
+      MathBlock,
+      DetailsBlock,
       Placeholder.configure({
         placeholder: "Start typing, or press / for commands...",
       }),
@@ -515,7 +520,7 @@ export default function Editor({
               </span>
             </span>
           ) : (
-            <span>{wordCount.words} words · {wordCount.chars} characters</span>
+            <span>{wordCount.words} words · {wordCount.chars} characters · {wordCount.words < 200 ? "< 1" : Math.ceil(wordCount.words / 200)} min read</span>
           )}
         </span>
         {showGoalInput && (

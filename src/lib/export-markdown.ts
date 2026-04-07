@@ -56,9 +56,21 @@ export function xmlFragmentToMarkdown(fragment: Y.XmlFragment): string {
       } else if (tag === "embedBlock") {
         const src = child.getAttribute("src") || "";
         md += `[Video](${src})\n\n`;
+      } else if (tag === "mathBlock") {
+        const mathContent = child.getAttribute("content") || "";
+        md += `$$\n${mathContent}\n$$\n\n`;
+      } else if (tag === "detailsBlock") {
+        const summary = child.getAttribute("summary") || "Details";
+        const body = child.getAttribute("body") || "";
+        md += `<details><summary>${summary}</summary>\n\n${body}\n\n</details>\n\n`;
       } else if (tag === "tocBlock") {
         // Export TOC as a markdown comment — the actual TOC is auto-generated
         md += "<!-- Table of Contents -->\n\n";
+      } else if (tag === "columnsBlock") {
+        // No markdown equivalent for columns — render both columns sequentially
+        md += xmlFragmentToMarkdown(child);
+      } else if (tag === "column") {
+        md += xmlFragmentToMarkdown(child);
       } else if (tag === "table") {
         md += tableToMarkdown(child);
         md += "\n";
