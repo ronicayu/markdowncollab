@@ -1,0 +1,33 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+export async function GET() {
+  const tags = await prisma.tag.findMany({
+    orderBy: { name: "asc" },
+  });
+  return NextResponse.json(tags);
+}
+
+export async function POST(req: Request) {
+  const { name, color } = await req.json();
+  if (!name || typeof name !== "string" || !name.trim()) {
+    return NextResponse.json({ error: "Tag name is required" }, { status: 400 });
+  }
+  const trimmed = name.trim();
+
+  // Check if tag already exists (case-insensitive for SQLite)
+  const existing = await prisma.tag.findFirst({
+    where: { name: trimmed },
+  });
+  if (existing) {
+    return NextResponse.json(existing);
+  }
+
+  const tag = await prisma.tag.create({
+    data: {
+      name: trimmed,
+      color: color || "#6b7280",
+    },
+  });
+  return NextResponse.json(tag, { status: 201 });
+}

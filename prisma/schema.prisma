@@ -66,6 +66,21 @@ model DocumentStar {
   @@unique([documentId, userId])
 }
 
+model Tag {
+  id    String @id @default(uuid())
+  name  String @unique
+  color String @default("#6b7280")
+}
+
+model DocumentTag {
+  id         String @id @default(uuid())
+  documentId String
+  tagId      String
+  @@unique([documentId, tagId])
+  @@index([documentId])
+  @@index([tagId])
+}
+
 model Notification {
   id            String   @id @default(uuid())
   userId        String

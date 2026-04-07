@@ -7,6 +7,12 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
 import NotificationBell from "@/components/NotificationBell";
 
+interface Tag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface Doc {
   id: string;
   title: string;
@@ -54,13 +60,37 @@ export default function Home() {
   const [trashDocs, setTrashDocs] = useState<Doc[]>([]);
   const [trashLoading, setTrashLoading] = useState(false);
   const [confirmPermanentDelete, setConfirmPermanentDelete] = useState<Doc | null>(null);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [docTags, setDocTags] = useState<Record<string, Tag[]>>({});
+  const [tagFilterId, setTagFilterId] = useState<string | null>(null);
+  const [tagPopoverDocId, setTagPopoverDocId] = useState<string | null>(null);
+  const [newTagName, setNewTagName] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     fetch("/api/documents")
       .then((r) => r.json())
-      .then(setDocs)
+      .then((fetchedDocs: Doc[]) => {
+        setDocs(fetchedDocs);
+        // Fetch tags for all documents
+        fetchedDocs.forEach((doc) => {
+          fetch(`/api/documents/${doc.id}/tags`)
+            .then((r) => r.json())
+            .then((tags: Tag[]) => {
+              setDocTags((prev) => ({ ...prev, [doc.id]: tags }));
+            })
+            .catch(() => {});
+        });
+      })
       .finally(() => setLoading(false));
+  }, []);
+
+  // Fetch all tags for the filter sidebar
+  useEffect(() => {
+    fetch("/api/tags")
+      .then((r) => r.json())
+      .then(setAllTags)
+      .catch(() => {});
   }, []);
 
   // Fetch trash docs when the Trash tab is active
@@ -84,6 +114,51 @@ export default function Home() {
     setConfirmPermanentDelete(null);
     await fetch(`/api/documents/${doc.id}/permanent`, { method: "DELETE" });
     setTrashDocs((prev) => prev.filter((d) => d.id !== doc.id));
+  }
+
+  async function addTagToDoc(docId: string, tagId: string) {
+    const res = await fetch(`/api/documents/${docId}/tags`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tagId }),
+    });
+    const tag = await res.json();
+    if (tag && tag.id) {
+      setDocTags((prev) => {
+        const existing = prev[docId] || [];
+        if (existing.some((t) => t.id === tag.id)) return prev;
+        return { ...prev, [docId]: [...existing, tag] };
+      });
+    }
+  }
+
+  async function removeTagFromDoc(docId: string, tagId: string) {
+    await fetch(`/api/documents/${docId}/tags`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tagId }),
+    });
+    setDocTags((prev) => ({
+      ...prev,
+      [docId]: (prev[docId] || []).filter((t) => t.id !== tagId),
+    }));
+  }
+
+  async function createAndAddTag(docId: string, name: string) {
+    const res = await fetch("/api/tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    const tag = await res.json();
+    if (tag && tag.id) {
+      setAllTags((prev) => {
+        if (prev.some((t) => t.id === tag.id)) return prev;
+        return [...prev, tag].sort((a, b) => a.name.localeCompare(b.name));
+      });
+      await addTagToDoc(docId, tag.id);
+    }
+    setNewTagName("");
   }
 
   // Debounced full-text search
@@ -130,6 +205,10 @@ export default function Home() {
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     } else if (activeTab === "shared") {
       result = docs.filter((d) => d.role && d.role !== "owner" && d.ownerId !== null);
+    }
+    // Tag filter
+    if (tagFilterId) {
+      result = result.filter((d) => (docTags[d.id] || []).some((t) => t.id === tagFilterId));
     }
     if (search.trim() && !searchResults) {
       const q = search.toLowerCase();
@@ -299,6 +378,33 @@ export default function Home() {
             </button>
           ))}
         </nav>
+        {allTags.length > 0 && (
+          <div className="px-3 py-3 border-t border-white/10">
+            <p className="text-xs text-white/30 uppercase tracking-wider mb-2 px-3">Tags</p>
+            <div className="space-y-0.5">
+              <button
+                onClick={() => setTagFilterId(null)}
+                className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors ${
+                  !tagFilterId ? "bg-white/10 text-white font-medium" : "text-white/50 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                All tags
+              </button>
+              {allTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => setTagFilterId(tagFilterId === tag.id ? null : tag.id)}
+                  className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 ${
+                    tagFilterId === tag.id ? "bg-white/10 text-white font-medium" : "text-white/50 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="px-4 py-4 border-t border-white/10">
           {session ? (
             <div className="flex items-center gap-2">
@@ -645,6 +751,25 @@ export default function Home() {
                               {doc.role === "editor" ? "Editor" : "Viewer"}
                             </span>
                           )}
+                          {(docTags[doc.id] || []).length > 0 && (
+                            <div className="flex items-center gap-1 mt-1 flex-wrap">
+                              {(docTags[doc.id] || []).map((tag) => (
+                                <span
+                                  key={tag.id}
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium text-white"
+                                  style={{ backgroundColor: tag.color }}
+                                >
+                                  {tag.name}
+                                  <button
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeTagFromDoc(doc.id, tag.id); }}
+                                    className="hover:opacity-70 ml-0.5"
+                                  >
+                                    x
+                                  </button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           </>
                         )}
                       </div>
@@ -653,8 +778,68 @@ export default function Home() {
                       {formatDate(doc.updatedAt)}
                     </span>
                   </Link>
-                  {/* Duplicate + Delete buttons — appear on hover */}
+                  {/* Tag popover */}
+                  {tagPopoverDocId === doc.id && (
+                    <div
+                      className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-gray-700">Add tag</p>
+                        <button onClick={() => setTagPopoverDocId(null)} className="text-gray-400 hover:text-gray-600 text-xs">
+                          x
+                        </button>
+                      </div>
+                      <div className="space-y-1 max-h-32 overflow-y-auto mb-2">
+                        {allTags.map((tag) => {
+                          const isApplied = (docTags[doc.id] || []).some((t) => t.id === tag.id);
+                          return (
+                            <button
+                              key={tag.id}
+                              onClick={() => isApplied ? removeTagFromDoc(doc.id, tag.id) : addTagToDoc(doc.id, tag.id)}
+                              className={`w-full text-left flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors ${
+                                isApplied ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                              }`}
+                            >
+                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                              <span className="truncate text-gray-700">{tag.name}</span>
+                              {isApplied && <span className="ml-auto text-xs text-gray-400">&#10003;</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <form
+                        onSubmit={(e) => { e.preventDefault(); if (newTagName.trim()) createAndAddTag(doc.id, newTagName.trim()); }}
+                        className="flex items-center gap-1"
+                      >
+                        <input
+                          type="text"
+                          value={newTagName}
+                          onChange={(e) => setNewTagName(e.target.value)}
+                          placeholder="New tag..."
+                          className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newTagName.trim()}
+                          className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+                        >
+                          Add
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                  {/* Tag + Duplicate + Delete buttons — appear on hover */}
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTagPopoverDocId(tagPopoverDocId === doc.id ? null : doc.id); setNewTagName(""); }}
+                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+                      title="Manage tags"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                    </button>
                     <button
                       onClick={(e) => { e.preventDefault(); duplicateDoc(doc); }}
                       className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
