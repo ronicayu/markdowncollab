@@ -213,6 +213,53 @@ const COMMANDS: Command[] = [
       (editor.commands as unknown as { setCallout: (attrs: { type: string }) => boolean }).setCallout({ type: "danger" }),
   },
   {
+    id: "date",
+    label: "Date",
+    description: "Insert today's date",
+    icon: "\uD83D\uDCC5",
+    keywords: ["date", "today", "day"],
+    action: (editor) => {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      editor.chain().focus().insertContent(`${yyyy}-${mm}-${dd}`).run();
+    },
+  },
+  {
+    id: "time",
+    label: "Time",
+    description: "Insert current time",
+    icon: "\uD83D\uDD50",
+    keywords: ["time", "clock", "now"],
+    action: (editor) => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const h = hours % 12 || 12;
+      editor.chain().focus().insertContent(`${h}:${minutes} ${ampm}`).run();
+    },
+  },
+  {
+    id: "datetime",
+    label: "Date & Time",
+    description: "Insert date and time",
+    icon: "\uD83D\uDCC5\uD83D\uDD50",
+    keywords: ["datetime", "date", "time", "now", "timestamp"],
+    action: (editor) => {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const h = hours % 12 || 12;
+      editor.chain().focus().insertContent(`${yyyy}-${mm}-${dd} ${h}:${minutes} ${ampm}`).run();
+    },
+  },
+  {
     id: "footnote",
     label: "Footnote",
     description: "Insert a footnote reference",
