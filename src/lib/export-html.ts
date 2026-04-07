@@ -48,6 +48,12 @@ export function xmlFragmentToHtml(fragment: Y.XmlFragment): string {
         } else {
           html += `<pre><code>${text}</code></pre>`;
         }
+      } else if (tag === "image") {
+        const src = child.getAttribute("src") || "";
+        const alt = child.getAttribute("alt") || "";
+        html += `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
+      } else if (tag === "table") {
+        html += tableToHtml(child);
       } else if (tag === "horizontalRule") {
         html += "<hr>";
       } else {
@@ -150,6 +156,34 @@ function listItemsToHtml(listElement: Y.XmlElement): string {
       html += `<li>${liContent}</li>`;
     }
   }
+  return html;
+}
+
+/**
+ * Convert a Tiptap table XmlElement to an HTML table.
+ * Expects children: tableRow elements, each containing tableHeader or tableCell elements.
+ */
+function tableToHtml(table: Y.XmlElement): string {
+  let html = "<table>";
+
+  for (let i = 0; i < table.length; i++) {
+    const row = table.get(i);
+    if (!(row instanceof Y.XmlElement) || row.nodeName !== "tableRow") continue;
+
+    html += "<tr>";
+    for (let j = 0; j < row.length; j++) {
+      const cell = row.get(j);
+      if (!(cell instanceof Y.XmlElement)) continue;
+
+      const isHeader = cell.nodeName === "tableHeader";
+      const tag = isHeader ? "th" : "td";
+      const content = getElementHtml(cell);
+      html += `<${tag}>${content}</${tag}>`;
+    }
+    html += "</tr>";
+  }
+
+  html += "</table>";
   return html;
 }
 
