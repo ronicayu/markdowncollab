@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { DocumentVersion, VersionPreview, VersionListResponse } from "@/types";
 import DiffViewer from "./DiffViewer";
 import DocumentTimeline from "./DocumentTimeline";
+import WordCloud from "./WordCloud";
 
 interface ActivityEntry {
   id: string;
@@ -43,7 +44,7 @@ export default function VersionHistoryPanel({
   const [savingManual, setSavingManual] = useState(false);
   const [diffData, setDiffData] = useState<{ oldText: string; newText: string; oldLabel: string } | null>(null);
   const [diffLoading, setDiffLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"versions" | "activity" | "timeline">("versions");
+  const [activeTab, setActiveTab] = useState<"versions" | "activity" | "timeline" | "wordcloud">("versions");
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [activityTotal, setActivityTotal] = useState(0);
   const [activityPage, setActivityPage] = useState(1);
@@ -310,6 +311,16 @@ export default function VersionHistoryPanel({
           >
             Timeline
           </button>
+          <button
+            onClick={() => setActiveTab("wordcloud")}
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+              activeTab === "wordcloud"
+                ? "text-[#B8692A] border-b-2 border-[#B8692A]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Words
+          </button>
         </div>
 
         {activeTab === "versions" && (
@@ -475,6 +486,12 @@ export default function VersionHistoryPanel({
 
         {activeTab === "timeline" && (
           <DocumentTimeline documentId={documentId} />
+        )}
+
+        {activeTab === "wordcloud" && (
+          <div className="flex-1 overflow-y-auto px-2 py-3">
+            <WordCloud text={getCurrentMarkdown ? getCurrentMarkdown() : ""} />
+          </div>
         )}
 
         {activeTab === "activity" && (
