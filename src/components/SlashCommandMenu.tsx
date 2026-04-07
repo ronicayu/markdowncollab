@@ -109,6 +109,15 @@ const COMMANDS: Command[] = [
       editor.chain().focus().setNode("mermaidBlock", { content: "graph LR\n  A --> B" }).run(),
   },
   {
+    id: "plantuml",
+    label: "PlantUML Diagram",
+    description: "UML diagrams via PlantUML",
+    icon: "\uD83C\uDF31",
+    keywords: ["plantuml", "uml", "diagram", "sequence", "class"],
+    action: (editor) =>
+      editor.chain().focus().setNode("codeBlock", { language: "plantuml" }).insertContent("@startuml\nAlice -> Bob: Hello\n@enduml").run(),
+  },
+  {
     id: "link",
     label: "Link",
     description: "Insert a hyperlink",

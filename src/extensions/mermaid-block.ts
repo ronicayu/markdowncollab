@@ -15,6 +15,7 @@ import type { CodeBlockOptions } from "@tiptap/extension-code-block";
 import type { NodeViewRenderer, NodeViewRendererProps } from "@tiptap/core";
 import type { NodeView } from "@tiptap/pm/view";
 import MermaidNodeView from "@/components/MermaidNodeView";
+import PlantUMLNodeView from "@/components/PlantUMLNodeView";
 import CodeBlockLanguageSelector from "@/components/CodeBlockLanguageSelector";
 
 export const MermaidBlock = CodeBlock.extend<CodeBlockOptions>({
@@ -24,6 +25,7 @@ export const MermaidBlock = CodeBlock.extend<CodeBlockOptions>({
 
   addNodeView(): NodeViewRenderer {
     const mermaidRenderer = ReactNodeViewRenderer(MermaidNodeView);
+    const plantumlRenderer = ReactNodeViewRenderer(PlantUMLNodeView);
     const codeBlockRenderer = ReactNodeViewRenderer(CodeBlockLanguageSelector);
 
     return (props: NodeViewRendererProps): NodeView => {
@@ -31,6 +33,10 @@ export const MermaidBlock = CodeBlock.extend<CodeBlockOptions>({
 
       if (node.attrs.language === "mermaid") {
         return mermaidRenderer(props);
+      }
+
+      if (node.attrs.language === "plantuml") {
+        return plantumlRenderer(props);
       }
 
       // For all other languages use the CodeBlockLanguageSelector React
