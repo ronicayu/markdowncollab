@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { DocumentVersion, VersionPreview, VersionListResponse } from "@/types";
 import DiffViewer from "./DiffViewer";
+import DocumentTimeline from "./DocumentTimeline";
 
 interface ActivityEntry {
   id: string;
@@ -42,7 +43,7 @@ export default function VersionHistoryPanel({
   const [savingManual, setSavingManual] = useState(false);
   const [diffData, setDiffData] = useState<{ oldText: string; newText: string; oldLabel: string } | null>(null);
   const [diffLoading, setDiffLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"versions" | "activity">("versions");
+  const [activeTab, setActiveTab] = useState<"versions" | "activity" | "timeline">("versions");
   const [activities, setActivities] = useState<ActivityEntry[]>([]);
   const [activityTotal, setActivityTotal] = useState(0);
   const [activityPage, setActivityPage] = useState(1);
@@ -299,6 +300,16 @@ export default function VersionHistoryPanel({
           >
             Activity
           </button>
+          <button
+            onClick={() => setActiveTab("timeline")}
+            className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+              activeTab === "timeline"
+                ? "text-[#B8692A] border-b-2 border-[#B8692A]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Timeline
+          </button>
         </div>
 
         {activeTab === "versions" && (
@@ -460,6 +471,10 @@ export default function VersionHistoryPanel({
           )}
         </div>
         </>
+        )}
+
+        {activeTab === "timeline" && (
+          <DocumentTimeline documentId={documentId} />
         )}
 
         {activeTab === "activity" && (
