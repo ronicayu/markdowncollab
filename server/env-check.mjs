@@ -12,6 +12,7 @@ const OPTIONAL_VARS = [
   { name: "ANTHROPIC_API_KEY", warning: "AI agent features will be disabled" },
   { name: "GOOGLE_CLIENT_ID", warning: "Google OAuth sign-in will be unavailable" },
   { name: "GOOGLE_CLIENT_SECRET", warning: "Google OAuth sign-in will be unavailable" },
+  { name: "GIT_EXPORT_PATH", warning: "Auto-save to git will be disabled (set to a local git repo path to enable)" },
 ];
 
 export function validateEnv() {

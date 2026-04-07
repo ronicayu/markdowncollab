@@ -53,6 +53,7 @@ interface TopBarProps {
   focusMode?: boolean;
   onToggleFocusMode?: () => void;
   onSaveAsTemplate?: () => void;
+  onPresent?: () => void;
 }
 
 export default function TopBar({
@@ -69,6 +70,7 @@ export default function TopBar({
   focusMode,
   onToggleFocusMode,
   onSaveAsTemplate,
+  onPresent,
 }: TopBarProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
@@ -206,6 +208,21 @@ export default function TopBar({
               </div>
             ))}
           </div>
+        )}
+
+        {/* Present button */}
+        {onPresent && (
+          <button
+            onClick={onPresent}
+            className="flex items-center gap-1.5 h-8 px-2 sm:px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+            title="Present as slides"
+            aria-label="Present as slides"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+            </svg>
+            <span className="hidden sm:inline">Present</span>
+          </button>
         )}
 
         {/* Export dropdown */}

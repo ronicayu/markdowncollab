@@ -12,6 +12,7 @@ import { WebSocketServer } from "ws";
 import * as Y from "yjs";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
+import { execSync } from "child_process";
 import * as syncProtocol from "y-protocols/sync";
 import * as awarenessProtocol from "y-protocols/awareness";
 import * as encoding from "lib0/encoding";
@@ -63,6 +64,50 @@ const messageAwareness = 1;
 
 const markdownDir = process.env.MARKDOWN_DIR || "./documents";
 if (!existsSync(markdownDir)) mkdirSync(markdownDir, { recursive: true });
+
+const gitExportPath = process.env.GIT_EXPORT_PATH || null;
+if (gitExportPath && !existsSync(gitExportPath)) {
+  mkdirSync(gitExportPath, { recursive: true });
+}
+
+/**
+ * Sanitize a document title for use as a filename.
+ * Replaces spaces with hyphens, removes special chars, lowercases.
+ */
+function sanitizeTitleForFilename(title) {
+  return title
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\-_]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    || "untitled";
+}
+
+/**
+ * Export a document's markdown to a git repository (fire-and-forget).
+ * Only runs if GIT_EXPORT_PATH env var is set.
+ */
+function gitExportDocument(title, markdown) {
+  if (!gitExportPath) return;
+  try {
+    const slug = sanitizeTitleForFilename(title);
+    const filePath = join(gitExportPath, `${slug}.md`);
+    writeFileSync(filePath, markdown, "utf-8");
+    execSync(`git add . && git commit -m "Update ${title.replace(/"/g, '\\"')}"`, {
+      cwd: gitExportPath,
+      stdio: "ignore",
+      timeout: 10000,
+    });
+    console.log(`Git export: committed ${slug}.md`);
+  } catch (err) {
+    // Fire-and-forget: log but don't crash
+    if (err.status !== 1) {
+      // status 1 = nothing to commit, which is fine
+      console.error(`Git export error:`, err.message);
+    }
+  }
+}
 
 const docs = new Map();
 
@@ -358,6 +403,18 @@ function getDoc(docName) {
           const markdown = xmlFragmentToMarkdown(yxml);
           const mdPath = join(markdownDir, docName + ".md");
           writeFileSync(mdPath, markdown, "utf-8");
+
+          // Git export (opt-in via GIT_EXPORT_PATH env var)
+          if (gitExportPath) {
+            wsDbClient.document.findUnique({ where: { id: docName }, select: { title: true } })
+              .then((dbDoc) => {
+                const title = dbDoc?.title || docName;
+                gitExportDocument(title, markdown);
+              })
+              .catch(() => {
+                gitExportDocument(docName, markdown);
+              });
+          }
         }
       } catch (err) {
         console.error(`Error saving markdown for ${docName}:`, err.message);
