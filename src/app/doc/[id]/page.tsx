@@ -32,15 +32,18 @@ import ReminderDialog from "@/components/ReminderDialog";
 import {
   getSuggestions,
   getComments,
+  getRevisionRequests,
   updateSuggestionStatus,
   addComment,
   resolveComment,
   addReplyToComment,
   toggleCommentReaction,
+  addRevisionRequest,
+  resolveRevisionRequest,
 } from "@/lib/suggestion-store";
 import { toast } from "@/lib/toast";
 import { getUserColor } from "@/lib/cursor-utils";
-import type { Suggestion, Comment } from "@/types";
+import type { Suggestion, Comment, RevisionRequest } from "@/types";
 
 const ADJECTIVES = [
   "Swift",
@@ -220,6 +223,7 @@ export default function DocumentPage({
 
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [revisionRequests, setRevisionRequests] = useState<RevisionRequest[]>([]);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [hasSelection, setHasSelection] = useState(false);
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null);
@@ -304,16 +308,20 @@ export default function DocumentPage({
   useEffect(() => {
     const suggMap = ydoc.getMap("suggestions");
     const commMap = ydoc.getMap("comments");
+    const revMap = ydoc.getMap("revision_requests");
     const updateState = () => {
       setSuggestions(getSuggestions(ydoc));
       setComments(getComments(ydoc));
+      setRevisionRequests(getRevisionRequests(ydoc));
     };
     suggMap.observe(updateState);
     commMap.observe(updateState);
+    revMap.observe(updateState);
     updateState();
     return () => {
       suggMap.unobserve(updateState);
       commMap.unobserve(updateState);
+      revMap.unobserve(updateState);
       provider.destroy();
       ydoc.destroy();
     };
@@ -447,6 +455,50 @@ export default function DocumentPage({
       toast("Comment added");
     },
     [editor, userName, ydoc, id]
+  );
+
+  const handleAddRevisionRequest = useCallback(
+    (text: string, assignee: string) => {
+      if (!editor || !userName) return;
+      const sel = lastSelectionRef.current;
+      if (!sel) return;
+      const { from, to } = sel;
+
+      const yxml = ydoc.getXmlFragment("default");
+      const startRelPos = Y.encodeRelativePosition(
+        Y.createRelativePositionFromTypeIndex(yxml, from - 1)
+      );
+      const endRelPos = Y.encodeRelativePosition(
+        Y.createRelativePositionFromTypeIndex(yxml, to - 1)
+      );
+
+      const request: RevisionRequest = {
+        id: generateId(),
+        documentId: id,
+        authorName: userName,
+        authorType: "human",
+        content: text,
+        assignee,
+        status: "open",
+        startRelPos,
+        endRelPos,
+        createdAt: new Date().toISOString(),
+        resolvedAt: null,
+      };
+
+      addRevisionRequest(ydoc, request);
+      lastSelectionRef.current = null;
+      toast("Revision request added");
+    },
+    [editor, userName, ydoc, id]
+  );
+
+  const handleResolveRevisionRequest = useCallback(
+    (reqId: string) => {
+      resolveRevisionRequest(ydoc, reqId);
+      toast("Revision request resolved");
+    },
+    [ydoc]
   );
 
   const handleEditorReady = useCallback(
@@ -771,6 +823,9 @@ export default function DocumentPage({
             documentId={id}
             currentUserName={userName ?? undefined}
             currentUserId={(session?.user as any)?.id}
+            revisionRequests={revisionRequests}
+            onAddRevisionRequest={handleAddRevisionRequest}
+            onResolveRevisionRequest={handleResolveRevisionRequest}
           />
           </ErrorBoundary>
         </div>}

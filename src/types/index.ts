@@ -36,6 +36,20 @@ export interface Comment {
   reactions?: Record<string, string[]>;
 }
 
+export interface RevisionRequest {
+  id: string;
+  documentId: string;
+  authorName: string;
+  authorType: "human" | "agent";
+  content: string;
+  assignee: string;
+  status: "open" | "resolved";
+  startRelPos: Uint8Array;
+  endRelPos: Uint8Array;
+  createdAt: string;
+  resolvedAt: string | null;
+}
+
 export interface Collaborator {
   name: string;
   color: string;

@@ -1,5 +1,5 @@
 import * as Y from "yjs";
-import type { Suggestion, Comment, CommentReply } from "@/types";
+import type { Suggestion, Comment, CommentReply, RevisionRequest } from "@/types";
 
 export function getSuggestionMap(ydoc: Y.Doc): Y.Map<string> {
   return ydoc.getMap<string>("suggestions");
@@ -163,6 +163,66 @@ export function addReplyToComment(
     if (!parsed.replies) parsed.replies = [];
     parsed.replies.push(reply);
     map.set(commentId, JSON.stringify(parsed));
+  } catch {
+    // skip malformed entries
+  }
+}
+
+// --- Revision Requests ---
+
+interface SerializedRevisionRequest
+  extends Omit<RevisionRequest, "startRelPos" | "endRelPos"> {
+  startRelPos: number[];
+  endRelPos: number[];
+}
+
+export function getRevisionRequestMap(ydoc: Y.Doc): Y.Map<string> {
+  return ydoc.getMap<string>("revision_requests");
+}
+
+export function addRevisionRequest(
+  ydoc: Y.Doc,
+  request: RevisionRequest
+): void {
+  const map = getRevisionRequestMap(ydoc);
+  const serialized: SerializedRevisionRequest = {
+    ...request,
+    startRelPos: encodeRelPos(request.startRelPos),
+    endRelPos: encodeRelPos(request.endRelPos),
+  };
+  map.set(request.id, JSON.stringify(serialized));
+}
+
+export function getRevisionRequests(ydoc: Y.Doc): RevisionRequest[] {
+  const map = getRevisionRequestMap(ydoc);
+  const results: RevisionRequest[] = [];
+  map.forEach((value: string) => {
+    try {
+      const parsed: SerializedRevisionRequest = JSON.parse(value);
+      results.push({
+        ...parsed,
+        startRelPos: decodeRelPos(parsed.startRelPos),
+        endRelPos: decodeRelPos(parsed.endRelPos),
+      });
+    } catch {
+      // skip malformed entries
+    }
+  });
+  return results;
+}
+
+export function resolveRevisionRequest(
+  ydoc: Y.Doc,
+  id: string
+): void {
+  const map = getRevisionRequestMap(ydoc);
+  const raw = map.get(id);
+  if (!raw) return;
+  try {
+    const parsed: SerializedRevisionRequest = JSON.parse(raw);
+    parsed.status = "resolved";
+    parsed.resolvedAt = new Date().toISOString();
+    map.set(id, JSON.stringify(parsed));
   } catch {
     // skip malformed entries
   }

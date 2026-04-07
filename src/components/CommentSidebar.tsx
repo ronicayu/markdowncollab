@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { Suggestion, Comment } from "@/types";
+import type { Suggestion, Comment, RevisionRequest } from "@/types";
 import SuggestionCard from "./SuggestionCard";
 import CommentCard from "./CommentCard";
+import RevisionRequestCard from "./RevisionRequestCard";
 import MentionAutocomplete, { type MentionUser } from "./MentionAutocomplete";
 import { formatMention, notifyMentions } from "@/lib/mention-utils";
 
@@ -29,6 +30,9 @@ interface CommentSidebarProps {
   documentId?: string;
   currentUserName?: string;
   currentUserId?: string;
+  revisionRequests?: RevisionRequest[];
+  onAddRevisionRequest?: (text: string, assignee: string) => void;
+  onResolveRevisionRequest?: (id: string) => void;
 }
 
 export default function CommentSidebar({
@@ -49,9 +53,15 @@ export default function CommentSidebar({
   documentId,
   currentUserName,
   currentUserId,
+  revisionRequests,
+  onAddRevisionRequest,
+  onResolveRevisionRequest,
 }: CommentSidebarProps) {
   const [commentText, setCommentText] = useState("");
   const [showInput, setShowInput] = useState(false);
+  const [showRevisionInput, setShowRevisionInput] = useState(false);
+  const [revisionText, setRevisionText] = useState("");
+  const [revisionAssignee, setRevisionAssignee] = useState("");
   const [filter, setFilter] = useState<Filter>("open");
   const [collapsed, setCollapsed] = useState(true);
   const [mentionUsers, setMentionUsers] = useState<MentionUser[]>([]);
@@ -299,10 +309,106 @@ export default function CommentSidebar({
         </div>
       )}
 
-      {filteredComments.length === 0 && pendingSuggestions.length === 0 && !showInput && (
+      {/* Revision Requests */}
+      {revisionRequests && revisionRequests.length > 0 && (
+        <div className="flex flex-col gap-2 mt-3">
+          <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">
+            Revision Requests ({revisionRequests.filter((r) =>
+              filter === "open" ? r.status === "open" :
+              filter === "resolved" ? r.status === "resolved" : true
+            ).length})
+          </p>
+          {revisionRequests
+            .filter((r) =>
+              filter === "open" ? r.status === "open" :
+              filter === "resolved" ? r.status === "resolved" : true
+            )
+            .map((r) => (
+              <RevisionRequestCard
+                key={r.id}
+                request={r}
+                onClick={onClickItem}
+                onResolve={onResolveRevisionRequest || (() => {})}
+                isActive={r.id === activeCommentId}
+              />
+            ))}
+        </div>
+      )}
+
+      {/* Request Change button */}
+      {hasSelection && onAddRevisionRequest && filter !== "resolved" && (
+        <>
+          {!showRevisionInput ? (
+            <button
+              onClick={() => setShowRevisionInput(true)}
+              className="mt-3 w-full text-xs font-medium text-orange-600 hover:text-orange-700 border border-orange-200 rounded-md px-3 py-2 hover:bg-orange-50 transition-colors"
+            >
+              Request Change
+            </button>
+          ) : (
+            <div className="mt-3 rounded-lg border border-orange-300 bg-[#FFFEF9] p-3">
+              <p className="text-xs text-gray-500 mb-2">Request a change on selected text:</p>
+              <textarea
+                autoFocus
+                value={revisionText}
+                onChange={(e) => setRevisionText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setShowRevisionInput(false);
+                    setRevisionText("");
+                    setRevisionAssignee("");
+                  }
+                }}
+                placeholder="Describe the requested change..."
+                className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-orange-400 mb-2"
+                rows={2}
+              />
+              <input
+                type="text"
+                value={revisionAssignee}
+                onChange={(e) => setRevisionAssignee(e.target.value)}
+                placeholder="Assignee name..."
+                className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:border-orange-400 mb-2"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowRevisionInput(false);
+                    setRevisionText("");
+                    setRevisionAssignee("");
+                  }}
+                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (revisionText.trim() && revisionAssignee.trim()) {
+                      onAddRevisionRequest(revisionText.trim(), revisionAssignee.trim());
+                      setRevisionText("");
+                      setRevisionAssignee("");
+                      setShowRevisionInput(false);
+                    }
+                  }}
+                  disabled={!revisionText.trim() || !revisionAssignee.trim()}
+                  className="text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 px-3 py-1 rounded-md"
+                >
+                  Request
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {filteredComments.length === 0 && pendingSuggestions.length === 0 && !showInput &&
+        (!revisionRequests || revisionRequests.filter((r) =>
+          filter === "open" ? r.status === "open" :
+          filter === "resolved" ? r.status === "resolved" : true
+        ).length === 0) && (
         <p className="text-xs text-gray-400">
           {filter === "resolved"
-            ? "No resolved comments yet."
+            ? "No resolved items yet."
             : hasSelection
             ? 'Select text and click "+ Comment" to leave a comment.'
             : "Select text in the editor to add comments."}
