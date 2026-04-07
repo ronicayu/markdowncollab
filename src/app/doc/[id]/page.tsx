@@ -17,7 +17,7 @@ import Editor from "@/components/Editor";
 import Toolbar from "@/components/Toolbar";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import TopBar from "@/components/TopBar";
-import type { Collaborator } from "@/components/TopBar";
+import type { Collaborator, BreadcrumbSegment } from "@/components/TopBar";
 import CommentSidebar from "@/components/CommentSidebar";
 import VersionHistoryPanel from "@/components/VersionHistoryPanel";
 import OutlineSidebar from "@/components/OutlineSidebar";
@@ -28,6 +28,7 @@ import SaveTemplateDialog from "@/components/SaveTemplateDialog";
 import PresentationMode from "@/components/PresentationMode";
 import PinnedNotes from "@/components/PinnedNotes";
 import AIChatSidebar from "@/components/AIChatSidebar";
+import ReminderDialog from "@/components/ReminderDialog";
 import {
   getSuggestions,
   getComments,
@@ -151,7 +152,8 @@ export default function DocumentPage({
   const [docTitle, setDocTitle] = useState(id);
   const [userRole, setUserRole] = useState<"owner" | "editor" | "viewer" | null>(null);
   const [docStatus, setDocStatus] = useState<string>("draft");
-  // Fetch document title, role, and status on mount
+  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbSegment[]>([]);
+  // Fetch document title, role, status, and breadcrumbs on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
       .then((res) => (res.ok ? res.json() : null))
@@ -159,6 +161,15 @@ export default function DocumentPage({
         if (doc?.title) setDocTitle(doc.title);
         if (doc?.role) setUserRole(doc.role);
         if (doc?.status) setDocStatus(doc.status);
+        // Fetch folder breadcrumb path if document is in a folder
+        if (doc?.folderId) {
+          fetch(`/api/folders/${doc.folderId}`)
+            .then((r) => (r.ok ? r.json() : []))
+            .then((path: BreadcrumbSegment[]) => {
+              if (Array.isArray(path)) setBreadcrumbs(path);
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {});
   }, [id]);
@@ -700,6 +711,7 @@ export default function DocumentPage({
         }}
         onToggleChat={toggleChat}
         chatOpen={chatOpen}
+        breadcrumbs={breadcrumbs}
       />
       {userRole !== "viewer" && !focusMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}

@@ -8,6 +8,28 @@ async function getSessionUserId(): Promise<string | null> {
   return ((session?.user as any)?.id as string) ?? null;
 }
 
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  // Build the folder path chain (walk up parent pointers)
+  const path: { id: string; name: string }[] = [];
+  let currentId: string | null = id;
+  const visited = new Set<string>();
+
+  while (currentId && !visited.has(currentId)) {
+    visited.add(currentId);
+    const folder = await prisma.folder.findUnique({
+      where: { id: currentId },
+      select: { id: true, name: true, parentId: true },
+    });
+    if (!folder) break;
+    path.unshift({ id: folder.id, name: folder.name });
+    currentId = folder.parentId;
+  }
+
+  return NextResponse.json(path);
+}
+
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const userId = await getSessionUserId();
