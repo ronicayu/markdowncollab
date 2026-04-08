@@ -143,6 +143,10 @@ export default function Home() {
   const [reactionPickerDocId, setReactionPickerDocId] = useState<string | null>(null);
   const [bulkTagging, setBulkTagging] = useState(false);
   const [merging, setMerging] = useState(false);
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkShareOpen, setBulkShareOpen] = useState(false);
+  const [bulkShareEmail, setBulkShareEmail] = useState("");
+  const [bulkShareRole, setBulkShareRole] = useState<"viewer" | "editor">("viewer");
   const router = useRouter();
 
   // Hydrate localStorage-backed state on the client to avoid SSR mismatch
@@ -536,16 +540,20 @@ export default function Home() {
     if (!file) return;
     setImporting(true);
     try {
-      const text = await file.text();
-      const title = file.name.replace(/\.md$/i, "") || "Imported Document";
-      const res = await fetch("/api/documents", {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/documents/import", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: formData,
       });
-      const doc = await res.json();
-      sessionStorage.setItem(`template:${doc.id}`, text);
-      router.push(`/doc/${doc.id}`);
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "Import failed");
+        return;
+      }
+      const { id, format, content } = await res.json();
+      sessionStorage.setItem(`import:${id}`, JSON.stringify({ format, content }));
+      router.push(`/doc/${id}`);
     } finally {
       setImporting(false);
       // Reset input so re-importing the same file works
@@ -657,6 +665,33 @@ export default function Home() {
       )
     );
     setBulkTagging(false);
+  }
+
+  async function bulkMoveToFolder(folderId: string | null) {
+    const ids = [...selected];
+    await fetch("/api/documents/bulk/move", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ documentIds: ids, folderId }),
+    });
+    setDocs((prev) =>
+      prev.map((d) => (selected.has(d.id) ? { ...d, folderId: folderId } : d))
+    );
+    setSelected(new Set());
+    setBulkMoveOpen(false);
+  }
+
+  async function bulkShare() {
+    if (!bulkShareEmail.trim()) return;
+    const ids = [...selected];
+    await fetch("/api/documents/bulk/share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ documentIds: ids, email: bulkShareEmail, role: bulkShareRole }),
+    });
+    setBulkShareEmail("");
+    setBulkShareRole("viewer");
+    setBulkShareOpen(false);
   }
 
   async function mergeDocuments() {
@@ -1193,7 +1228,7 @@ export default function Home() {
           <input
             ref={importInputRef}
             type="file"
-            accept=".md,text/markdown"
+            accept=".md,.docx,.html,.htm,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/html"
             className="hidden"
             onChange={handleImportMarkdown}
           />
