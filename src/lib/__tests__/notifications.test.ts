@@ -58,6 +58,7 @@ describe("createNotification", () => {
         actorName: "Alice",
         actorId: "actor-1",
         message: "Alice commented on My Doc",
+        snippet: null,
       },
     });
   });
