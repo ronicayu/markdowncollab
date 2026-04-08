@@ -394,6 +394,62 @@ export default function Editor({
           "prose prose-base max-w-none focus:outline-none min-h-[500px] p-6",
         spellcheck: spellcheckEnabled ? "true" : "false",
       },
+      // Auto-close brackets/quotes: when user types an opening bracket,
+      // insert the closing pair and position cursor between them.
+      // Only applies in regular text (not code blocks). Toggle via localStorage.
+      handleKeyDown(view, event) {
+        // Check if auto-close is enabled (default: on)
+        let autoCloseEnabled = true;
+        try {
+          const stored = localStorage.getItem("autoCloseBrackets");
+          if (stored === "false") autoCloseEnabled = false;
+        } catch {}
+        if (!autoCloseEnabled) return false;
+
+        const pairs: Record<string, string> = {
+          "(": ")",
+          "[": "]",
+          "{": "}",
+          '"': '"',
+          "`": "`",
+        };
+
+        const closing = pairs[event.key];
+        if (!closing) return false;
+
+        // Don't apply inside code blocks
+        const { $from } = view.state.selection;
+        const parentName = $from.parent.type.name;
+        if (parentName === "codeBlock") return false;
+
+        // For quotes/backticks, don't auto-close if the character before cursor
+        // is a word character (likely mid-word apostrophe or similar)
+        if (event.key === '"' || event.key === "`") {
+          const textBefore = $from.parent.textBetween(0, $from.parentOffset, undefined, "\ufffc");
+          if (textBefore && /\w$/.test(textBefore)) return false;
+        }
+
+        event.preventDefault();
+        const { tr } = view.state;
+        const { from, to } = view.state.selection;
+        if (from !== to) {
+          // Wrap selection with pair
+          const selectedText = view.state.doc.textBetween(from, to);
+          tr.replaceWith(from, to, view.state.schema.text(event.key + selectedText + closing));
+          tr.setSelection(
+            // @ts-expect-error - TextSelection import
+            view.state.selection.constructor.create(tr.doc, from + 1, from + 1 + selectedText.length)
+          );
+        } else {
+          tr.insertText(event.key + closing, from);
+          tr.setSelection(
+            // @ts-expect-error - TextSelection import
+            view.state.selection.constructor.create(tr.doc, from + 1)
+          );
+        }
+        view.dispatch(tr);
+        return true;
+      },
       // Convert plain-text markdown-style lists when pasted so that
       // "- item1\n- item2\n- item3" becomes a proper <ul> list.
       // transformPastedHTML receives the HTML string that ProseMirror will parse.
