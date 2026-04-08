@@ -56,6 +56,7 @@ import { IssueLinker } from "@/extensions/issue-linker";
 import WordFrequencyTable from "./WordFrequencyTable";
 import { Extension } from "@tiptap/core";
 import { createHeatmapPlugin, heatmapPluginKey } from "@/extensions/heatmap-plugin";
+import { HeadingAnchor, initAnchorScrolling } from "@/extensions/heading-anchor";
 
 
 interface EditorProps {
@@ -334,6 +335,7 @@ export default function Editor({
         currentUser: userName,
       }),
       IssueLinker,
+      HeadingAnchor,
       Extension.create({
         name: "heatmap",
         addProseMirrorPlugins() {
@@ -609,6 +611,33 @@ export default function Editor({
       editor.off("selectionUpdate", handleSelectionUpdate);
     };
   }, [editor, typewriterMode]);
+
+  // Init heading anchor smooth scrolling
+  useEffect(() => {
+    initAnchorScrolling();
+  }, []);
+
+  // Handle clicks on heading anchor pseudo-elements to copy link
+  useEffect(() => {
+    if (!editor) return;
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains("heading-anchor-target")) {
+        // Check if click is in the left margin area (pseudo-element region)
+        const rect = target.getBoundingClientRect();
+        if (e.clientX < rect.left) {
+          const slug = target.getAttribute("data-slug");
+          if (slug) {
+            const url = `${window.location.origin}${window.location.pathname}#${slug}`;
+            navigator.clipboard.writeText(url).catch(() => {});
+          }
+        }
+      }
+    };
+    const editorEl = editor.view.dom;
+    editorEl.addEventListener("click", handleClick);
+    return () => editorEl.removeEventListener("click", handleClick);
+  }, [editor]);
 
   // Toggle heatmap
   useEffect(() => {
