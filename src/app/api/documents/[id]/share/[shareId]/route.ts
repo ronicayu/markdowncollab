@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/access-control";
+import { logActivity } from "@/lib/activity-log";
 
 export async function DELETE(
   _req: Request,
@@ -18,7 +19,15 @@ export async function DELETE(
     return NextResponse.json({ error: "Only the document owner can remove shares" }, { status: 403 });
   }
 
+  const share = await prisma.documentShare.findUnique({ where: { id: shareId, documentId: id } });
+  if (!share) {
+    return NextResponse.json({ error: "Share not found" }, { status: 404 });
+  }
+
   await prisma.documentShare.delete({ where: { id: shareId, documentId: id } });
+
+  const userName = session?.user?.name ?? "Unknown";
+  await logActivity(id, userId ?? null, userName, "share_removed", `Removed share for ${share.email ?? share.id}`);
 
   return NextResponse.json({ ok: true });
 }
