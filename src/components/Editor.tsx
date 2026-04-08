@@ -684,6 +684,8 @@ export default function Editor({
             })()
           ) : ""}
         </span>
+        {/* Focus Timer */}
+        <FocusTimer documentId={documentId} />
         {/* Health Score Badge */}
         {healthScore && (
           <div className="relative">
