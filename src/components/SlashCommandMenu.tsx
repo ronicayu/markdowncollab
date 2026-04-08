@@ -688,6 +688,38 @@ const COMMANDS: Command[] = [
         .run();
     },
   },
+  {
+    id: "draw",
+    label: "Drawing Canvas",
+    description: "Freehand drawing canvas",
+    icon: "\u{1F3A8}",
+    keywords: ["draw", "canvas", "sketch", "whiteboard", "drawing"],
+    action: (editor) =>
+      editor.chain().focus().insertContent({ type: "canvasBlock", attrs: { dataUrl: "" } }).run(),
+  },
+  {
+    id: "event",
+    label: "Calendar Event",
+    description: "Insert a calendar event card",
+    icon: "\uD83D\uDCC5",
+    keywords: ["event", "calendar", "meeting", "date", "schedule"],
+    action: (editor) => {
+      const title = window.prompt("Event title:");
+      if (!title) return;
+      const date = window.prompt("Event date (YYYY-MM-DD):");
+      if (!date) return;
+      const time = window.prompt("Event time (optional, e.g. 2:00 PM):") ?? "";
+      const description = window.prompt("Description (optional):") ?? "";
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "eventBlock",
+          attrs: { title, date, time, description },
+        })
+        .run();
+    },
+  },
 ];
 
 interface CustomCommandItem {

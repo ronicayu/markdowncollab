@@ -24,6 +24,8 @@ import { DetailsBlock } from "@/extensions/details-block";
 import { ToggleList, ToggleItem } from "@/extensions/toggle-list";
 import { StatusBadge } from "@/extensions/status-badge";
 import { PollBlock } from "@/extensions/poll-block";
+import { CanvasBlock } from "@/extensions/canvas-block";
+import { EventBlock } from "@/extensions/event-block";
 import "katex/dist/katex.min.css";
 import type * as Y from "yjs";
 import type { WebsocketProvider } from "y-websocket";
@@ -224,6 +226,8 @@ export default function Editor({
       ToggleItem,
       StatusBadge,
       PollBlock,
+      CanvasBlock,
+      EventBlock,
       Placeholder.configure({
         placeholder: "Start typing, or press / for commands...",
       }),
