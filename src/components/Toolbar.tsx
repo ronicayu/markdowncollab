@@ -13,6 +13,9 @@ import {
   loadMacros,
   saveMacro,
   deleteMacro,
+  loadMacrosFromApi,
+  saveMacroToApi,
+  deleteMacroFromApi,
   recordedKeyFromEvent,
   replayMacro,
   type RecordedKey,
@@ -83,6 +86,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
     setMacros(loadMacros());
+    loadMacrosFromApi().then((m) => setMacros(m));
     setHiddenSections(getHiddenSections());
   }, []);
 
@@ -147,7 +151,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       createdAt: new Date().toISOString(),
     };
     saveMacro(macro);
-    setMacros(loadMacros());
+    saveMacroToApi(macro).then(() => loadMacrosFromApi().then((m) => setMacros(m)));
     setMacroName("");
     setShowMacroName(false);
   }
@@ -165,7 +169,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
 
   function handleDeleteMacro(name: string) {
     deleteMacro(name);
-    setMacros(loadMacros());
+    deleteMacroFromApi(name).then(() => loadMacrosFromApi().then((m) => setMacros(m)));
   }
 
   // Close macro menu on outside click

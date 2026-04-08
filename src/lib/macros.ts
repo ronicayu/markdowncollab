@@ -59,6 +59,46 @@ export function recordedKeyFromEvent(e: KeyboardEvent): RecordedKey {
   };
 }
 
+export async function loadMacrosFromApi(documentId?: string): Promise<Macro[]> {
+  try {
+    const url = documentId ? `/api/macros?documentId=${documentId}` : "/api/macros";
+    const res = await fetch(url);
+    if (!res.ok) return loadMacros();
+    const data = await res.json();
+    return data.map((m: any) => ({ name: m.name, keys: m.steps, createdAt: m.createdAt }));
+  } catch {
+    return loadMacros();
+  }
+}
+
+export async function saveMacroToApi(macro: Macro, documentId?: string): Promise<void> {
+  try {
+    await fetch("/api/macros", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: macro.name, steps: macro.keys, documentId }),
+    });
+  } catch {
+    saveMacro(macro);
+  }
+}
+
+export async function deleteMacroFromApi(name: string): Promise<void> {
+  try {
+    const macros = await loadMacrosFromApi();
+    const macro = macros.find(m => m.name === name);
+    if (macro) {
+      await fetch("/api/macros", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: (macro as any).id }),
+      });
+    }
+  } catch {
+    deleteMacro(name);
+  }
+}
+
 export function replayMacro(
   target: HTMLElement,
   keys: RecordedKey[],
