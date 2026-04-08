@@ -91,6 +91,18 @@ function getUserName(): string {
   return name;
 }
 
+function useMediaQuery(maxWidth: number): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`);
+    setMatches(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [maxWidth]);
+  return matches;
+}
+
 function collectActiveCommentIds(editorInstance: import("@tiptap/core").Editor): Set<string> {
   const ids = new Set<string>();
   editorInstance.state.doc.descendants((node) => {
@@ -450,9 +462,10 @@ export default function DocumentPage({
   // Set awareness user info when userName is ready
   useEffect(() => {
     if (!userName) return;
-    const color = getUserColor(userName);
+    const userId = (session?.user as any)?.id as string | undefined;
+    const color = getUserColor(userId || userName);
     provider.awareness.setLocalStateField("user", { name: userName, color });
-  }, [provider, userName]);
+  }, [provider, userName, session]);
 
   // Track live collaborators from awareness
   useEffect(() => {
@@ -1018,6 +1031,53 @@ export default function DocumentPage({
   const [chatOpen, setChatOpen] = useState(false);
   const toggleChat = useCallback(() => setChatOpen((prev) => !prev), []);
 
+  // Mobile sidebar collapse & swipe gestures
+  const isMobile = useMediaQuery(768);
+  const [showOutline, setShowOutline] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+
+  // Auto-collapse sidebars on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setShowOutline(false);
+      setShowComments(false);
+      setChatOpen(false);
+    }
+  }, [isMobile]);
+
+  // Swipe gesture detection for mobile sidebars
+  useEffect(() => {
+    if (!isMobile) return;
+    let startX = 0;
+    let startY = 0;
+    const threshold = 50;
+
+    function onTouchStart(e: TouchEvent) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }
+    function onTouchEnd(e: TouchEvent) {
+      const dx = e.changedTouches[0].clientX - startX;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dy) > Math.abs(dx)) return;
+      if (dx > threshold) {
+        // Swipe right: open outline, close comments
+        setShowOutline(true);
+        setShowComments(false);
+      } else if (dx < -threshold) {
+        // Swipe left: open comments, close outline
+        setShowComments(true);
+        setShowOutline(false);
+      }
+    }
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isMobile]);
+
   function toggleVersionHistory() {
     setVersionHistoryOpen((prev) => !prev);
   }
@@ -1392,9 +1452,16 @@ export default function DocumentPage({
       )}
       {!focusMode && !zenMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
       <div className="flex flex-1 overflow-hidden">
+        {/* Mobile sidebar overlay backdrop */}
+        {isMobile && (showOutline || showComments) && (
+          <div
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={() => { setShowOutline(false); setShowComments(false); }}
+          />
+        )}
         {!focusMode && !zenMode && (
-          <div className="hidden lg:flex shrink-0" style={{ width: leftSidebarWidth }}>
-            <div className="flex-1 overflow-hidden">
+          <div className={`${isMobile ? (showOutline ? "fixed inset-y-0 left-0 z-50 flex" : "hidden") : "hidden lg:flex"} shrink-0`} style={{ width: leftSidebarWidth }}>
+            <div className="flex-1 overflow-hidden bg-[#F2E8D5]">
               <ErrorBoundary>
                 <OutlineSidebar editor={editor} documentId={id} ydoc={ydoc} currentUser={userName ?? undefined} />
                 <RelatedDocs documentId={id} />
@@ -1485,14 +1552,14 @@ export default function DocumentPage({
             commentFormOpen={commentFormOpen}
           />
         )}
-        {!focusMode && !zenMode && <div className="hidden md:flex shrink-0" style={{ width: rightSidebarWidth }}>
+        {!focusMode && !zenMode && <div className={`${isMobile ? (showComments ? "fixed inset-y-0 right-0 z-50 flex" : "hidden") : "hidden md:flex"} shrink-0`} style={{ width: rightSidebarWidth }}>
           <div
             onMouseDown={(e) => startResize("right", e)}
             className="w-1 hover:w-1.5 bg-transparent hover:bg-[#B8692A]/30 transition-colors shrink-0"
             style={{ cursor: "col-resize" }}
             title="Drag to resize sidebar"
           />
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden bg-[#F2E8D5]">
           <ErrorBoundary>
           <CommentSidebar
             suggestions={suggestions}
