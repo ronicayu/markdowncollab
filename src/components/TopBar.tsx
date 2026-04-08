@@ -383,6 +383,9 @@ export default function TopBar({
               <a href={`/api/documents/${documentId}/export/docx`} onClick={() => setMobileMenuOpen(false)} className="mobile-menu-item pl-11">
                 Word (.docx)
               </a>
+              <a href={`/api/documents/${documentId}/export/html`} onClick={() => setMobileMenuOpen(false)} className="mobile-menu-item pl-11">
+                HTML (.html)
+              </a>
               {onPresent && (
                 <button onClick={() => { onPresent(); setMobileMenuOpen(false); }} className="mobile-menu-item">
                   <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -879,6 +882,13 @@ export default function TopBar({
                 className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
               >
                 <span>Word (.docx)</span>
+              </a>
+              <a
+                href={`/api/documents/${documentId}/export/html`}
+                onClick={() => setExportOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+              >
+                <span>HTML (.html)</span>
               </a>
               <div className="border-t border-white/10 my-1" />
               <button
