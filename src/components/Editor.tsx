@@ -111,6 +111,8 @@ export default function Editor({
   const [lastSavedByName, setLastSavedByName] = useState<string | null>(null);
   const [typewriterMode, setTypewriterMode] = useState(false);
   const [showWordFrequency, setShowWordFrequency] = useState(false);
+  const [hasTextSelection, setHasTextSelection] = useState(false);
+  const [expandLoading, setExpandLoading] = useState(false);
   const [spellcheckEnabled, setSpellcheckEnabled] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -540,6 +542,10 @@ export default function Editor({
       }
     },
     onSelectionUpdate({ editor: ed }) {
+      // Track if there's a text selection for "Expand with AI" button
+      const { from, to } = ed.state.selection;
+      setHasTextSelection(from !== to);
+
       // Close menu if cursor moves away from a slash position
       const { state } = ed;
       const { $from } = state.selection;
@@ -743,6 +749,43 @@ export default function Editor({
             })()
           ) : ""}
         </span>
+        {/* Expand with AI — shown when text is selected */}
+        {hasTextSelection && editor && (
+          <button
+            onClick={async () => {
+              if (!editor || expandLoading) return;
+              const { from, to } = editor.state.selection;
+              const selectedText = editor.state.doc.textBetween(from, to, " ");
+              if (!selectedText.trim()) return;
+              setExpandLoading(true);
+              try {
+                const res = await fetch("/api/agent/expand", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ text: selectedText }),
+                });
+                if (res.ok) {
+                  const { expanded } = await res.json();
+                  if (expanded) {
+                    editor.chain().focus().deleteRange({ from, to }).insertContentAt(from, expanded).run();
+                  }
+                }
+              } catch (err) {
+                console.error("Expand failed:", err);
+              } finally {
+                setExpandLoading(false);
+              }
+            }}
+            disabled={expandLoading}
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 disabled:opacity-50 transition-colors"
+            title="Expand selected text with AI"
+          >
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+            </svg>
+            {expandLoading ? "Expanding..." : "Expand with AI"}
+          </button>
+        )}
         {/* Cursor Chat */}
         <CursorChat provider={provider} userName={userName} />
         {/* Session History */}
