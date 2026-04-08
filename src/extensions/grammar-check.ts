@@ -98,10 +98,54 @@ export const GrammarCheck = Extension.create({
 
               const tooltip = document.createElement("div");
               tooltip.className = "grammar-tooltip";
-              tooltip.innerHTML = `
-                <div style="font-size:12px;font-weight:500;color:#b91c1c;margin-bottom:2px">${message}</div>
-                ${suggestion ? `<div style="font-size:11px;color:#4b5563">Suggestion: <em>${suggestion}</em></div>` : ""}
-              `;
+
+              const messageEl = document.createElement("div");
+              messageEl.style.cssText = "font-size:12px;font-weight:500;color:#b91c1c;margin-bottom:2px";
+              messageEl.textContent = message;
+              tooltip.appendChild(messageEl);
+
+              if (suggestion) {
+                const suggEl = document.createElement("div");
+                suggEl.style.cssText = "font-size:11px;color:#4b5563;margin-bottom:4px";
+                suggEl.innerHTML = `Suggestion: <em>${suggestion}</em>`;
+                tooltip.appendChild(suggEl);
+
+                const fixBtn = document.createElement("button");
+                fixBtn.textContent = "Fix";
+                fixBtn.style.cssText = "font-size:11px;font-weight:600;color:white;background:#b91c1c;border:none;border-radius:4px;padding:2px 10px;cursor:pointer;margin-top:2px;transition:background 0.15s";
+                fixBtn.addEventListener("mouseenter", () => { fixBtn.style.background = "#991b1b"; });
+                fixBtn.addEventListener("mouseleave", () => { fixBtn.style.background = "#b91c1c"; });
+                fixBtn.addEventListener("click", (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // Find the decoration position from the target element
+                  const pos = view.posAtDOM(target, 0);
+                  const pluginState = grammarCheckPluginKey.getState(view.state);
+                  if (pluginState?.issues) {
+                    const issue = pluginState.issues.find(
+                      (iss: GrammarIssue) => pos >= iss.from && pos <= iss.to
+                    );
+                    if (issue && issue.suggestion) {
+                      // Apply the fix
+                      const tr = view.state.tr
+                        .replaceWith(issue.from, issue.to, view.state.schema.text(issue.suggestion));
+                      // Remove decorations for this issue
+                      const remainingIssues = pluginState.issues.filter(
+                        (iss: GrammarIssue) => iss.from !== issue.from || iss.to !== issue.to
+                      );
+                      tr.setMeta(grammarCheckPluginKey, { issues: remainingIssues });
+                      view.dispatch(tr);
+                    }
+                  }
+                  // Remove tooltip
+                  if (storage.tooltip?.parentNode) {
+                    storage.tooltip.parentNode.removeChild(storage.tooltip);
+                    storage.tooltip = null;
+                  }
+                });
+                tooltip.appendChild(fixBtn);
+              }
+
               const rect = target.getBoundingClientRect();
               tooltip.style.cssText = `
                 position:fixed;
@@ -114,7 +158,7 @@ export const GrammarCheck = Extension.create({
                 padding:8px 12px;
                 box-shadow:0 4px 12px rgba(0,0,0,0.1);
                 max-width:300px;
-                pointer-events:none;
+                pointer-events:auto;
               `;
               document.body.appendChild(tooltip);
               storage.tooltip = tooltip;
@@ -122,7 +166,21 @@ export const GrammarCheck = Extension.create({
             },
             mouseout(_view, event) {
               const target = event.target as HTMLElement;
+              const related = (event as MouseEvent).relatedTarget as HTMLElement | null;
+              // Don't remove tooltip if mouse moved to the tooltip itself (for Fix button)
               if (target.classList?.contains("grammar-error") && storage.tooltip?.parentNode) {
+                if (related && storage.tooltip.contains(related)) {
+                  // Mouse moved into tooltip — keep it
+                  // Add a mouseleave listener on the tooltip to remove it
+                  const handleTooltipLeave = () => {
+                    if (storage.tooltip?.parentNode) {
+                      storage.tooltip.parentNode.removeChild(storage.tooltip);
+                      storage.tooltip = null;
+                    }
+                  };
+                  storage.tooltip.addEventListener("mouseleave", handleTooltipLeave, { once: true });
+                  return false;
+                }
                 storage.tooltip.parentNode.removeChild(storage.tooltip);
                 storage.tooltip = null;
               }
