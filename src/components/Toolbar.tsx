@@ -18,6 +18,7 @@ import {
   type RecordedKey,
   type Macro,
 } from "@/lib/macros";
+import ToolbarSettings, { getHiddenSections, type ToolbarSectionId } from "./ToolbarSettings";
 
 interface ToolbarProps {
   editor: Editor | null;
@@ -31,6 +32,7 @@ interface ToolbarButton {
   action: () => void;
   isActive: () => boolean;
   separator?: boolean;
+  section?: ToolbarSectionId;
 }
 
 function formatShortcut(shortcut: string, mac: boolean): string {
@@ -75,10 +77,13 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   const [showMacroName, setShowMacroName] = useState(false);
   const [macroName, setMacroName] = useState("");
   const macroBtnRef = useRef<HTMLDivElement>(null);
+  const [hiddenSections, setHiddenSections] = useState<Set<ToolbarSectionId>>(new Set());
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
     setMacros(loadMacros());
+    setHiddenSections(getHiddenSections());
   }, []);
 
   // Load auto-numbering preference from localStorage
@@ -231,6 +236,20 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
   }, [showColorPicker]);
+
+  const sectionForLabel: Record<string, ToolbarSectionId> = {
+    "Bold": "formatting", "Italic": "formatting", "Underline": "formatting",
+    "Strikethrough": "formatting", "Superscript": "formatting", "Subscript": "formatting",
+    "Highlight": "formatting", "Text color": "formatting", "Link": "formatting", "Inline code": "formatting",
+    "Heading 1": "headings", "Heading 2": "headings", "Heading 3": "headings",
+    "Align left": "alignment", "Align center": "alignment", "Align right": "alignment",
+    "Bullet list": "lists", "Ordered list": "lists", "Task list": "lists",
+    "Outdent": "lists", "Indent": "lists",
+    "Blockquote": "blocks", "Code block": "blocks", "Mermaid diagram": "blocks",
+    "Emoji": "blocks", "Horizontal rule": "blocks", "Table": "blocks",
+    "Undo": "history", "Redo": "history",
+    "Find & Replace": "search",
+  };
 
   if (!editor) return null;
 
@@ -597,10 +616,15 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
     },
   ];
 
+  const visibleButtons = buttons.filter((btn) => {
+    const section = sectionForLabel[btn.label];
+    return !section || !hiddenSections.has(section);
+  });
+
   return (
     <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative" role="toolbar" aria-label="Text formatting">
     <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1.5 scrollbar-none">
-      {buttons.map((btn, i) => (
+      {visibleButtons.map((btn, i) => (
         <div key={btn.label} className="flex items-center" ref={btn.label === "Text color" ? colorBtnRef : undefined}>
           {btn.separator && i > 0 && (
             <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
@@ -649,7 +673,8 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
         </div>
       ))}
       {/* Auto-number headings toggle */}
-      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
+      {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
+      {!hiddenSections.has("advanced") && (
       <button
         onClick={toggleAutoNumbering}
         title="Auto-number headings"
@@ -663,9 +688,10 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       >
         <span className="text-xs font-bold tracking-tight">#</span>
       </button>
+      )}
       {/* Save as snippet */}
-      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
-      <div className="relative" ref={snippetBtnRef}>
+      {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
+      {!hiddenSections.has("advanced") && <div className="relative" ref={snippetBtnRef}>
         <button
           onClick={() => {
             if (!editor) return;
@@ -702,10 +728,10 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
             </button>
           </div>
         )}
-      </div>
+      </div>}
       {/* Personal highlight */}
-      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
-      <div className="relative" ref={highlightBtnRef}>
+      {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
+      {!hiddenSections.has("advanced") && <div className="relative" ref={highlightBtnRef}>
         <button
           onClick={() => {
             if (!editor) return;
@@ -760,10 +786,10 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
             </button>
           </div>
         )}
-      </div>
+      </div>}
       {/* Macro record/play */}
-      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
-      <div className="relative flex items-center gap-0.5" ref={macroBtnRef}>
+      {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
+      {!hiddenSections.has("advanced") && <div className="relative flex items-center gap-0.5" ref={macroBtnRef}>
         {!macroRecording ? (
           <button
             onClick={startMacroRecording}
@@ -844,9 +870,12 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
             </button>
           </div>
         )}
-      </div>
+      </div>}
       {/* Separator before help button */}
+      {!hiddenSections.has("advanced") && (
       <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
+      )}
+      {!hiddenSections.has("advanced") && (
       <button
         onClick={onToggleShortcutsHelp}
         title={`Keyboard shortcuts (${isMac ? "\u2318" : "Ctrl"}+/)`}
@@ -859,6 +888,31 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
           <circle cx="12" cy="17" r="0.5" fill="currentColor" />
         </svg>
       </button>
+      )}
+      {/* Toolbar settings gear icon */}
+      <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
+      <div className="relative">
+        <button
+          onClick={() => setShowSettings((v) => !v)}
+          title="Toolbar settings"
+          aria-label="Toolbar settings"
+          className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
+            showSettings
+              ? "bg-[var(--accent)]/10 text-[var(--accent)]"
+              : "text-[var(--text-muted)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-secondary)]"
+          }`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+        <ToolbarSettings
+          open={showSettings}
+          onClose={() => setShowSettings(false)}
+          onChange={setHiddenSections}
+        />
+      </div>
     </div>
     {/* Scroll fade hint for mobile */}
     <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--toolbar-bg)] to-transparent pointer-events-none" />
