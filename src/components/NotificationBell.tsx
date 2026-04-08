@@ -7,6 +7,7 @@ interface Notification {
   id: string;
   type: string;
   message: string;
+  snippet?: string;
   documentId: string;
   documentTitle: string;
   actorName: string;
@@ -195,6 +196,11 @@ export default function NotificationBell() {
                       <p className="text-sm text-gray-700 line-clamp-2">
                         {notif.message}
                       </p>
+                      {notif.snippet && (
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 italic bg-gray-50 rounded px-1.5 py-1">
+                          &ldquo;{notif.snippet}&rdquo;
+                        </p>
+                      )}
                       <p className="text-xs text-gray-400 mt-0.5">
                         {timeAgo(notif.createdAt)}
                       </p>

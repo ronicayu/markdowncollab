@@ -135,6 +135,7 @@ model Notification {
   actorName     String
   actorId       String?
   message       String
+  snippet       String?
   read          Boolean  @default(false)
   createdAt     DateTime @default(now())
 

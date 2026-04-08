@@ -15,6 +15,7 @@ interface CreateNotificationParams {
   documentTitle: string;
   actorName: string;
   actorId?: string;
+  snippet?: string;
 }
 
 export function buildNotificationMessage(
@@ -41,13 +42,16 @@ export function buildNotificationMessage(
 export async function createNotification(
   params: CreateNotificationParams
 ): Promise<void> {
-  const { userId, type, documentId, documentTitle, actorName, actorId } =
+  const { userId, type, documentId, documentTitle, actorName, actorId, snippet } =
     params;
 
   // Don't notify the actor about their own action
   if (actorId && actorId === userId) return;
 
   const message = buildNotificationMessage(type, actorName, documentTitle);
+
+  // Truncate snippet to first 100 chars
+  const trimmedSnippet = snippet ? snippet.slice(0, 100) : null;
 
   await prisma.notification.create({
     data: {
@@ -58,6 +62,7 @@ export async function createNotification(
       actorName,
       actorId: actorId ?? null,
       message,
+      snippet: trimmedSnippet,
     },
   });
 
