@@ -1423,6 +1423,7 @@ export default function Home() {
                     e.dataTransfer.effectAllowed = "move";
                   }}
                   className={`relative group flex items-center gap-2 ${focusedIndex === index ? "ring-2 ring-[#B8692A] rounded-xl" : ""}`}
+                >
                   <input
                     type="checkbox"
                     checked={selected.has(doc.id)}
