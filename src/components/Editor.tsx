@@ -127,6 +127,9 @@ export default function Editor({
     } catch { return true; }
   });
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
+  const draftKey = `draft:${documentId}`;
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [issueSettingsOpen, setIssueSettingsOpen] = useState(false);
   const [issuePatterns, setIssuePatterns] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -612,6 +615,86 @@ export default function Editor({
     };
   }, [editor, typewriterMode]);
 
+  // Auto-save draft to localStorage (debounced)
+  useEffect(() => {
+    if (!editor) return;
+    const onUpdate = () => {
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+      draftSaveTimerRef.current = setTimeout(() => {
+        try {
+          const html = editor.getHTML();
+          localStorage.setItem(draftKey, html);
+        } catch {
+          // Storage full or unavailable
+        }
+      }, 2000);
+    };
+    editor.on("update", onUpdate);
+    return () => {
+      editor.off("update", onUpdate);
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    };
+  }, [editor, draftKey]);
+
+  // Check for unsaved draft on load
+  useEffect(() => {
+    if (!editor) return;
+    const timer = setTimeout(() => {
+      try {
+        const savedDraft = localStorage.getItem(draftKey);
+        if (savedDraft) {
+          const currentHtml = editor.getHTML();
+          if (savedDraft !== currentHtml && savedDraft.length > 20) {
+            setShowDraftBanner(true);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }, 1500); // Wait for Yjs sync first
+    return () => clearTimeout(timer);
+  }, [editor, draftKey]);
+
+  // Clear draft on successful Yjs sync
+  useEffect(() => {
+    const onSync = (isSynced: boolean) => {
+      if (isSynced) {
+        // Don't clear immediately — give a short delay for the editor to update
+        setTimeout(() => {
+          // Only clear if the banner is not showing (user hasn't been prompted yet)
+          if (!showDraftBanner) {
+            // Keep the draft — don't clear here so recovery is possible
+          }
+        }, 500);
+      }
+    };
+    provider.on("sync", onSync);
+    return () => provider.off("sync", onSync);
+  }, [provider, draftKey, showDraftBanner]);
+
+  const handleRecoverDraft = useCallback(() => {
+    if (!editor) return;
+    try {
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        editor.commands.setContent(savedDraft);
+      }
+    } catch {
+      // ignore
+    }
+    setShowDraftBanner(false);
+    localStorage.removeItem(draftKey);
+  }, [editor, draftKey]);
+
+  const handleDismissDraft = useCallback(() => {
+    setShowDraftBanner(false);
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {
+      // ignore
+    }
+  }, [draftKey]);
+
   // Init heading anchor smooth scrolling
   useEffect(() => {
     initAnchorScrolling();
@@ -781,6 +864,26 @@ export default function Editor({
       )}
       {/* BubbleMenu removed: @tiptap/react v3 doesn't export BubbleMenu React component.
           Formatting is available via the static toolbar above. */}
+      {showDraftBanner && (
+        <div className="mx-6 mt-2 mb-1 flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5">
+          <svg className="h-4 w-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+          <span className="text-xs text-amber-800 flex-1">Unsaved draft found. Recover changes?</span>
+          <button
+            onClick={handleRecoverDraft}
+            className="px-2.5 py-1 rounded text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors"
+          >
+            Recover
+          </button>
+          <button
+            onClick={handleDismissDraft}
+            className="px-2.5 py-1 rounded text-xs font-medium text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
       <EditorContent editor={editor} />
       {editor && <AIAutoComplete editor={editor} enabled={autoCompleteEnabled} />}
       <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
