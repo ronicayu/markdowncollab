@@ -47,6 +47,7 @@ import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib
 import AIAutoComplete from "./AIAutoComplete";
 import FocusTimer from "./FocusTimer";
 import { GrammarCheck, grammarCheckPluginKey } from "@/extensions/grammar-check";
+import { ProgressBlock } from "@/extensions/progress-block";
 
 
 interface EditorProps {
@@ -287,6 +288,7 @@ export default function Editor({
         documentId,
       }),
       GrammarCheck,
+      ProgressBlock,
     ],
     editorProps: {
       attributes: {

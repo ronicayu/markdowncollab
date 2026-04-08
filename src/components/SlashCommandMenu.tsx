@@ -698,6 +698,26 @@ const COMMANDS: Command[] = [
       editor.chain().focus().insertContent({ type: "canvasBlock", attrs: { dataUrl: "" } }).run(),
   },
   {
+    id: "progress",
+    label: "Progress Bar",
+    description: "Visual progress indicator",
+    icon: "\u{1F4CA}",
+    keywords: ["progress", "bar", "percentage", "tracker", "completion"],
+    action: (editor) => {
+      const label = window.prompt("Progress bar label:", "Progress") ?? "Progress";
+      const valueStr = window.prompt("Initial value (0-100):", "0") ?? "0";
+      const value = Math.max(0, Math.min(100, parseInt(valueStr, 10) || 0));
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "progressBlock",
+          attrs: { label, value, color: "#B8692A" },
+        })
+        .run();
+    },
+  },
+  {
     id: "event",
     label: "Calendar Event",
     description: "Insert a calendar event card",
