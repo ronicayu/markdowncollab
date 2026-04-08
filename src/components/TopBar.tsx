@@ -118,6 +118,7 @@ export default function TopBar({
   const [editableTitle, setEditableTitle] = useState(title);
   const [showShareModal, setShowShareModal] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [preferredExportFormat, setPreferredExportFormat] = useState<string>("markdown");
   const [translateOpen, setTranslateOpen] = useState(false);
   const [avgRating, setAvgRating] = useState(0);
   const [userRating, setUserRating] = useState(0);
@@ -126,6 +127,19 @@ export default function TopBar({
   const [embedCodeOpen, setEmbedCodeOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [scheduleValue, setScheduleValue] = useState("");
+
+  // Load preferred export format from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("preferredExportFormat");
+      if (saved) setPreferredExportFormat(saved);
+    } catch {}
+  }, []);
+
+  const saveExportFormat = (format: string) => {
+    setPreferredExportFormat(format);
+    try { localStorage.setItem("preferredExportFormat", format); } catch {}
+  };
 
   // Fetch rating on mount
   useEffect(() => {
@@ -374,16 +388,16 @@ export default function TopBar({
                 <span>Export</span>
               </button>
               {/* Export sub-options */}
-              <a href={`/api/documents/${documentId}/export`} onClick={() => setMobileMenuOpen(false)} className="mobile-menu-item pl-11">
+              <a href={`/api/documents/${documentId}/export`} onClick={() => { setMobileMenuOpen(false); saveExportFormat("markdown"); }} className="mobile-menu-item pl-11">
                 Markdown (.md)
               </a>
-              <a href={`/api/documents/${documentId}/export/pdf`} onClick={() => setMobileMenuOpen(false)} className="mobile-menu-item pl-11">
+              <a href={`/api/documents/${documentId}/export/pdf`} onClick={() => { setMobileMenuOpen(false); saveExportFormat("pdf"); }} className="mobile-menu-item pl-11">
                 PDF (.pdf)
               </a>
-              <a href={`/api/documents/${documentId}/export/docx`} onClick={() => setMobileMenuOpen(false)} className="mobile-menu-item pl-11">
+              <a href={`/api/documents/${documentId}/export/docx`} onClick={() => { setMobileMenuOpen(false); saveExportFormat("docx"); }} className="mobile-menu-item pl-11">
                 Word (.docx)
               </a>
-              <a href={`/api/documents/${documentId}/export/html`} onClick={() => setMobileMenuOpen(false)} className="mobile-menu-item pl-11">
+              <a href={`/api/documents/${documentId}/export/html`} onClick={() => { setMobileMenuOpen(false); saveExportFormat("html"); }} className="mobile-menu-item pl-11">
                 HTML (.html)
               </a>
               {onPresent && (
@@ -862,34 +876,27 @@ export default function TopBar({
           </button>
           {exportOpen && (
             <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 py-1">
-              <a
-                href={`/api/documents/${documentId}/export`}
-                onClick={() => setExportOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
-              >
-                <span>Markdown (.md)</span>
-              </a>
-              <a
-                href={`/api/documents/${documentId}/export/pdf`}
-                onClick={() => setExportOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
-              >
-                <span>PDF (.pdf)</span>
-              </a>
-              <a
-                href={`/api/documents/${documentId}/export/docx`}
-                onClick={() => setExportOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
-              >
-                <span>Word (.docx)</span>
-              </a>
-              <a
-                href={`/api/documents/${documentId}/export/html`}
-                onClick={() => setExportOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
-              >
-                <span>HTML (.html)</span>
-              </a>
+              {[
+                { key: "markdown", label: "Markdown (.md)", href: `/api/documents/${documentId}/export` },
+                { key: "pdf", label: "PDF (.pdf)", href: `/api/documents/${documentId}/export/pdf` },
+                { key: "docx", label: "Word (.docx)", href: `/api/documents/${documentId}/export/docx` },
+                { key: "html", label: "HTML (.html)", href: `/api/documents/${documentId}/export/html` },
+              ]
+                .sort((a, b) => (a.key === preferredExportFormat ? -1 : b.key === preferredExportFormat ? 1 : 0))
+                .map((fmt) => (
+                <a
+                  key={fmt.key}
+                  href={fmt.href}
+                  onClick={() => { setExportOpen(false); saveExportFormat(fmt.key); }}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm transition-colors ${
+                    fmt.key === preferredExportFormat
+                      ? "text-white font-medium bg-white/5"
+                      : "text-white/70 hover:text-white hover:bg-white/8"
+                  }`}
+                >
+                  <span>{fmt.label}</span>
+                </a>
+              ))}
               <button
                 onClick={async () => {
                   setExportOpen(false);

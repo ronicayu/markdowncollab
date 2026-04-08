@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { estimateReadingTime } from "@/lib/reading-time";
 
 interface DocumentMetadataProps {
   documentId: string;
@@ -167,10 +168,16 @@ export default function DocumentMetadata({
               </>
             )}
             {wordCount > 0 && (
-              <MetadataRow
-                label="Word count"
-                value={`${wordCount.toLocaleString()} words`}
-              />
+              <>
+                <MetadataRow
+                  label="Word count"
+                  value={`${wordCount.toLocaleString()} words`}
+                />
+                <MetadataRow
+                  label="Reading time"
+                  value={estimateReadingTime(wordCount)}
+                />
+              </>
             )}
             <MetadataRow
               label="Versions"

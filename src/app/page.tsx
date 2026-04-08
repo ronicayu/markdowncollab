@@ -147,6 +147,7 @@ export default function Home() {
   const [bulkShareOpen, setBulkShareOpen] = useState(false);
   const [bulkShareEmail, setBulkShareEmail] = useState("");
   const [bulkShareRole, setBulkShareRole] = useState<"viewer" | "editor">("viewer");
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   // Hydrate localStorage-backed state on the client to avoid SSR mismatch
@@ -232,6 +233,30 @@ export default function Home() {
       .then((data: Folder[]) => { if (Array.isArray(data)) setFolders(data); })
       .catch(() => {});
   }, [session]);
+
+  // Fetch pinned document IDs
+  useEffect(() => {
+    if (!session) return;
+    fetch("/api/pins")
+      .then((r) => r.ok ? r.json() : [])
+      .then((pins: { documentId: string }[]) => {
+        setPinnedIds(new Set(pins.map((p) => p.documentId)));
+      })
+      .catch(() => {});
+  }, [session]);
+
+  async function togglePin(docId: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const res = await fetch(`/api/documents/${docId}/pin`, { method: "POST" });
+    if (!res.ok) return;
+    const { pinned } = await res.json();
+    setPinnedIds((prev) => {
+      const next = new Set(prev);
+      if (pinned) next.add(docId); else next.delete(docId);
+      return next;
+    });
+  }
 
   async function createFolder() {
     const name = newFolderName.trim();
@@ -461,6 +486,12 @@ export default function Home() {
     } else {
       result = [...result].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     }
+    // Pinned documents float to top
+    result = [...result].sort((a, b) => {
+      const ap = pinnedIds.has(a.id) ? 1 : 0;
+      const bp = pinnedIds.has(b.id) ? 1 : 0;
+      return bp - ap;
+    });
     // Starred documents float to top (before the sort order within each group)
     if (activeTab !== "starred") {
       result = [...result].sort((a, b) => {
@@ -1709,6 +1740,19 @@ export default function Home() {
                   >
                     <svg className="h-4 w-4" fill={doc.starred ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => togglePin(doc.id, e)}
+                    className={`shrink-0 p-0.5 rounded transition-colors ${
+                      pinnedIds.has(doc.id)
+                        ? "text-[#B8692A]"
+                        : "text-gray-300 hover:text-[#B8692A] md:opacity-0 md:group-hover:opacity-100"
+                    }`}
+                    title={pinnedIds.has(doc.id) ? "Unpin document" : "Pin document"}
+                  >
+                    <svg className="h-4 w-4" fill={pinnedIds.has(doc.id) ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 3l-4 4-4-4M12 7v10m-5 4h10" />
                     </svg>
                   </button>
                   <Link
