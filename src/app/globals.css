@@ -177,6 +177,9 @@ body {
 .ProseMirror .editor-table th {
   background-color: rgba(180, 120, 60, 0.1);
   font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 .ProseMirror .editor-table .selectedCell {
   background-color: rgba(180, 120, 60, 0.15);
