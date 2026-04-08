@@ -117,10 +117,10 @@ export const templates: Template[] = [
     name: "Project Brief",
     description: "Objective, scope, timeline, stakeholders",
     icon: "🎯",
-    content: `# Project Brief: [Title]
+    content: `# Project Brief: {{project_name}}
 
 **Date:** {{date}}
-**Owner:**
+**Author:** {{author}}
 
 ## Objective
 
@@ -187,7 +187,30 @@ export function getTemplateById(id: string): Template | undefined {
   return templates.find((t) => t.id === id);
 }
 
-export function substituteVariables(content: string): string {
+/**
+ * Extract all custom variable names from template content.
+ * Returns unique variable names excluding the built-in {{date}}.
+ */
+export function extractCustomVariables(content: string): string[] {
+  const matches = content.match(/\{\{(\w+)\}\}/g);
+  if (!matches) return [];
+  const vars = new Set<string>();
+  for (const match of matches) {
+    const name = match.slice(2, -2);
+    if (name !== "date") {
+      vars.add(name);
+    }
+  }
+  return Array.from(vars);
+}
+
+export function substituteVariables(content: string, customValues?: Record<string, string>): string {
   const today = new Date().toISOString().slice(0, 10);
-  return content.replace(/\{\{date\}\}/g, today);
+  let result = content.replace(/\{\{date\}\}/g, today);
+  if (customValues) {
+    for (const [key, value] of Object.entries(customValues)) {
+      result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
+    }
+  }
+  return result;
 }

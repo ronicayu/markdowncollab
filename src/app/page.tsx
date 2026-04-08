@@ -8,7 +8,9 @@ import TemplatePicker from "@/components/TemplatePicker";
 import NotificationBell from "@/components/NotificationBell";
 import WelcomeModal from "@/components/WelcomeModal";
 import DuplicateDialog from "@/components/DuplicateDialog";
+import TemplateVariableDialog from "@/components/TemplateVariableDialog";
 import { useTranslation } from "@/lib/i18n";
+import { templates, extractCustomVariables } from "@/lib/templates";
 
 interface Tag {
   id: string;
@@ -66,6 +68,9 @@ export default function Home() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
+  const [pendingTemplateVars, setPendingTemplateVars] = useState<string[]>([]);
+  const [pendingTemplateName, setPendingTemplateName] = useState("");
   const [duplicateDialogDoc, setDuplicateDialogDoc] = useState<Doc | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; title: string; snippet: string; updatedAt: string }[] | null>(null);
@@ -424,9 +429,25 @@ export default function Home() {
     trash: "Trash",
   };
 
-  async function createDocFromTemplate(templateId: string) {
+  async function createDocFromTemplate(templateId: string, templateVariables?: Record<string, string>) {
     setCreating(true);
     setShowTemplatePicker(false);
+
+    // Check for custom variables if not already provided
+    if (!templateVariables && templateId !== "blank") {
+      const template = templates.find((t) => t.id === templateId);
+      if (template) {
+        const customVars = extractCustomVariables(template.content);
+        if (customVars.length > 0) {
+          setCreating(false);
+          setPendingTemplateId(templateId);
+          setPendingTemplateVars(customVars);
+          setPendingTemplateName(template.name);
+          return;
+        }
+      }
+    }
+
     try {
       const res = await fetch("/api/documents", {
         method: "POST",
@@ -434,6 +455,7 @@ export default function Home() {
         body: JSON.stringify({
           title: "Untitled",
           templateId: templateId === "blank" ? undefined : templateId,
+          templateVariables,
         }),
       });
       const doc = await res.json();
@@ -444,6 +466,22 @@ export default function Home() {
     } finally {
       setCreating(false);
     }
+  }
+
+  function handleTemplateVariableConfirm(values: Record<string, string>) {
+    if (pendingTemplateId) {
+      const tid = pendingTemplateId;
+      setPendingTemplateId(null);
+      setPendingTemplateVars([]);
+      setPendingTemplateName("");
+      createDocFromTemplate(tid, values);
+    }
+  }
+
+  function handleTemplateVariableCancel() {
+    setPendingTemplateId(null);
+    setPendingTemplateVars([]);
+    setPendingTemplateName("");
   }
 
   async function handleImportMarkdown(e: ChangeEvent<HTMLInputElement>) {
@@ -1718,6 +1756,14 @@ export default function Home() {
         open={showTemplatePicker}
         onClose={() => setShowTemplatePicker(false)}
         onSelect={createDocFromTemplate}
+      />
+
+      <TemplateVariableDialog
+        open={pendingTemplateId !== null}
+        variables={pendingTemplateVars}
+        templateName={pendingTemplateName}
+        onConfirm={handleTemplateVariableConfirm}
+        onCancel={handleTemplateVariableCancel}
       />
 
       <WelcomeModal />
