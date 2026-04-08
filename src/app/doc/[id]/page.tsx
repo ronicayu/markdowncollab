@@ -34,6 +34,7 @@ import PinnedNotes from "@/components/PinnedNotes";
 import AIChatSidebar from "@/components/AIChatSidebar";
 import ReminderDialog from "@/components/ReminderDialog";
 import ExpirationDialog from "@/components/ExpirationDialog";
+import EditorMinimap from "@/components/EditorMinimap";
 import TabBar, { trackTab } from "@/components/TabBar";
 import {
   getSuggestions,
@@ -1111,6 +1112,8 @@ export default function DocumentPage({
             onClose={() => setChatOpen(false)}
           />
         )}
+        {/* Editor Minimap */}
+        {!focusMode && !zenMode && <EditorMinimap editor={editor} />}
       </div>
       {/* Mobile: floating comment button when text is selected */}
       {hasSelection && (
