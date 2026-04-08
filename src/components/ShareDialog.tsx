@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import QRCode from "qrcode";
+import { toast } from "@/lib/toast";
 
 interface Share {
   id: string;
@@ -143,8 +144,9 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
       await navigator.clipboard.writeText(linkUrl);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+      toast("Link copied to clipboard", "success");
     } catch {
-      // clipboard not available
+      toast("Failed to copy link — try selecting and copying manually", "error");
     }
   }
 

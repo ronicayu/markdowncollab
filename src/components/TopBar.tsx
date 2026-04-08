@@ -6,6 +6,7 @@ import ShareDialog from "@/components/ShareDialog";
 import ThemeEditor from "@/components/ThemeEditor";
 import FontSelector, { type FontOption } from "@/components/FontSelector";
 import { useTranslation, LOCALE_LABELS, type Locale } from "@/lib/i18n";
+import { toast } from "@/lib/toast";
 
 export interface Collaborator {
   name: string;
@@ -1296,8 +1297,9 @@ export default function TopBar({
                     await navigator.clipboard.writeText(shareUrl);
                     setCopied(true);
                     setTimeout(() => setCopied(false), 2000);
+                    toast("Link copied to clipboard", "success");
                   } catch {
-                    // clipboard not available
+                    toast("Failed to copy link — try selecting and copying manually", "error");
                   }
                 }}
                 className="shrink-0 text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
