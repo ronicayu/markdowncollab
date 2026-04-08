@@ -22,6 +22,8 @@ interface CommentSidebarProps {
   onReplyToComment: (commentId: string, text: string) => void;
   onToggleReaction?: (commentId: string, emoji: string) => void;
   hasSelection: boolean;
+  /** True when cursor is inside a block but no text is selected */
+  hasCursorInBlock?: boolean;
   activeCommentId?: string | null;
   /** Increment this value to imperatively open the comment form (e.g. from the floating button). */
   openFormTrigger?: number;
@@ -33,6 +35,7 @@ interface CommentSidebarProps {
   revisionRequests?: RevisionRequest[];
   onAddRevisionRequest?: (text: string, assignee: string) => void;
   onResolveRevisionRequest?: (id: string) => void;
+  onAddBlockComment?: (text: string) => void;
 }
 
 export default function CommentSidebar({
@@ -56,6 +59,8 @@ export default function CommentSidebar({
   revisionRequests,
   onAddRevisionRequest,
   onResolveRevisionRequest,
+  hasCursorInBlock,
+  onAddBlockComment,
 }: CommentSidebarProps) {
   const [commentText, setCommentText] = useState("");
   const [showInput, setShowInput] = useState(false);
@@ -111,7 +116,13 @@ export default function CommentSidebar({
   function handleSubmit() {
     if (!commentText.trim()) return;
     const text = commentText.trim();
-    onAddComment(text);
+    if (hasSelection) {
+      onAddComment(text);
+    } else if (hasCursorInBlock && onAddBlockComment) {
+      onAddBlockComment(text);
+    } else {
+      onAddComment(text);
+    }
     // Fire-and-forget mention notifications
     if (documentId && currentUserName) {
       notifyMentions(documentId, text, currentUserName, currentUserId);
@@ -197,12 +208,12 @@ export default function CommentSidebar({
           <option value="resolved">Resolved</option>
           <option value="all">All</option>
         </select>
-        {hasSelection && filter !== "resolved" && (
+        {(hasSelection || hasCursorInBlock) && filter !== "resolved" && (
           <button
             onClick={() => setShowInput(true)}
             className="text-xs font-medium text-[#B8692A] hover:text-[#96541F] shrink-0"
           >
-            + Comment
+            {hasSelection ? "+ Comment" : "+ Block Comment"}
           </button>
         )}
       </div>
@@ -210,7 +221,7 @@ export default function CommentSidebar({
       {/* New comment input */}
       {showInput && (
         <div className="mb-3 rounded-lg border border-[#D4A978] bg-[#FFFEF9] p-3">
-          <p className="text-xs text-gray-500 mb-2">Comment on selected text:</p>
+          <p className="text-xs text-gray-500 mb-2">{hasSelection ? "Comment on selected text:" : "Comment on this block:"}</p>
           <div className="relative">
             <MentionAutocomplete
               users={mentionUsers}
@@ -411,7 +422,9 @@ export default function CommentSidebar({
             ? "No resolved items yet."
             : hasSelection
             ? 'Select text and click "+ Comment" to leave a comment.'
-            : "Select text in the editor to add comments."}
+            : hasCursorInBlock
+            ? 'Click "+ Block Comment" to comment on the current block.'
+            : "Select text or place cursor in a block to add comments."}
         </p>
       )}
     </div>

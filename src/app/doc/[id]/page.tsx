@@ -397,9 +397,12 @@ export default function DocumentPage({
   // Incrementing counter used to imperatively open the comment form from the floating button
   const [openFormTrigger, setOpenFormTrigger] = useState(0);
 
+  const [hasCursorInBlock, setHasCursorInBlock] = useState(false);
+
   // Track text selection state for comment button
   // Save last non-collapsed selection so we can use it even after blur
   const lastSelectionRef = useRef<{ from: number; to: number } | null>(null);
+  const lastBlockPosRef = useRef<{ from: number; to: number } | null>(null);
   useEffect(() => {
     if (!editor) return;
     const onSelectionUpdate = () => {
@@ -408,6 +411,19 @@ export default function DocumentPage({
       setHasSelection(hasText);
       if (hasText) {
         lastSelectionRef.current = { from, to };
+        setHasCursorInBlock(false);
+      } else {
+        // Cursor is in a block without selection
+        const { $from } = editor.state.selection;
+        const blockNode = $from.parent;
+        if (blockNode && (blockNode.type.name === "paragraph" || blockNode.type.name === "heading")) {
+          const blockStart = $from.before($from.depth);
+          const blockEnd = $from.after($from.depth);
+          lastBlockPosRef.current = { from: blockStart, to: blockEnd };
+          setHasCursorInBlock(true);
+        } else {
+          setHasCursorInBlock(false);
+        }
       }
     };
     editor.on("selectionUpdate", onSelectionUpdate);
@@ -613,6 +629,49 @@ export default function DocumentPage({
 
       lastSelectionRef.current = null;
       toast("Comment added");
+    },
+    [editor, userName, ydoc, id]
+  );
+
+  const handleAddBlockComment = useCallback(
+    (text: string) => {
+      if (!editor || !userName) return;
+      const blockPos = lastBlockPosRef.current;
+      if (!blockPos) return;
+      const { from, to } = blockPos;
+
+      const yxml = ydoc.getXmlFragment("default");
+      const startRelPos = Y.encodeRelativePosition(
+        Y.createRelativePositionFromTypeIndex(yxml, from - 1)
+      );
+      const endRelPos = Y.encodeRelativePosition(
+        Y.createRelativePositionFromTypeIndex(yxml, to - 1)
+      );
+
+      const comment: Comment = {
+        id: generateId(),
+        documentId: id,
+        authorName: userName,
+        authorType: "human",
+        content: text,
+        startRelPos,
+        endRelPos,
+        parentCommentId: null,
+        resolved: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      addComment(ydoc, comment);
+
+      // Apply highlight mark to the entire block text
+      editor
+        .chain()
+        .setTextSelection({ from: from + 1, to: to - 1 })
+        .setMark("commentMark", { commentId: comment.id })
+        .run();
+
+      lastBlockPosRef.current = null;
+      toast("Block comment added");
     },
     [editor, userName, ydoc, id]
   );
@@ -1285,6 +1344,7 @@ export default function DocumentPage({
             onReplyToComment={handleReplyToComment}
             onToggleReaction={handleToggleReaction}
             hasSelection={hasSelection}
+            hasCursorInBlock={hasCursorInBlock}
             activeCommentId={activeCommentId}
             openFormTrigger={openFormTrigger}
             onFormOpenChange={setCommentFormOpen}
@@ -1294,6 +1354,7 @@ export default function DocumentPage({
             revisionRequests={revisionRequests}
             onAddRevisionRequest={handleAddRevisionRequest}
             onResolveRevisionRequest={handleResolveRevisionRequest}
+            onAddBlockComment={handleAddBlockComment}
           />
           </ErrorBoundary>
           </div>
