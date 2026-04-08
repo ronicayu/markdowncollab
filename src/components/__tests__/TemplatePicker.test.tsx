@@ -33,11 +33,11 @@ describe("TemplatePicker", () => {
     });
   });
 
-  it("calls onSelect with template id when a card is clicked", async () => {
+  it("calls onSelect with template id when a card is double-clicked", async () => {
     const onSelect = vi.fn();
     render(<TemplatePicker open={true} onClose={vi.fn()} onSelect={onSelect} />);
     await waitFor(() => expect(screen.getByText("Meeting Notes")).toBeInTheDocument());
-    fireEvent.click(screen.getByText("Meeting Notes"));
+    fireEvent.doubleClick(screen.getByText("Meeting Notes"));
     expect(onSelect).toHaveBeenCalledWith("meeting-notes");
   });
 

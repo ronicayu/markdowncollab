@@ -10,7 +10,7 @@ describe("GET /api/templates", () => {
     expect(data.length).toBeGreaterThanOrEqual(7);
   });
 
-  it("each template has id, name, description, icon but not content", async () => {
+  it("each template has id, name, description, icon and content for preview", async () => {
     const response = await GET();
     const data = await response.json();
     for (const t of data) {
@@ -18,7 +18,7 @@ describe("GET /api/templates", () => {
       expect(t.name).toBeTruthy();
       expect(t.description).toBeTruthy();
       expect(t.icon).toBeTruthy();
-      expect(t).not.toHaveProperty("content");
+      expect(t).toHaveProperty("content");
     }
   });
 });
