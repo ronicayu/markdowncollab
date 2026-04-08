@@ -23,6 +23,7 @@ import { getFontFamily, type FontOption } from "@/components/FontSelector";
 import CommentSidebar from "@/components/CommentSidebar";
 import VersionHistoryPanel from "@/components/VersionHistoryPanel";
 import OutlineSidebar from "@/components/OutlineSidebar";
+import RelatedDocs from "@/components/RelatedDocs";
 import FloatingCommentButton from "@/components/FloatingCommentButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import TypingIndicator from "@/components/TypingIndicator";
@@ -953,6 +954,7 @@ export default function DocumentPage({
           <div className="hidden lg:block">
             <ErrorBoundary>
               <OutlineSidebar editor={editor} documentId={id} />
+              <RelatedDocs documentId={id} />
             </ErrorBoundary>
           </div>
         )}
