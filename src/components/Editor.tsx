@@ -54,6 +54,8 @@ import { SectionLockExtension } from "@/extensions/section-lock";
 import { BreadcrumbBlock } from "@/extensions/breadcrumb-block";
 import { IssueLinker } from "@/extensions/issue-linker";
 import WordFrequencyTable from "./WordFrequencyTable";
+import { Extension } from "@tiptap/core";
+import { createHeatmapPlugin, heatmapPluginKey } from "@/extensions/heatmap-plugin";
 
 
 interface EditorProps {
@@ -120,6 +122,7 @@ export default function Editor({
       return stored === null ? true : stored === "true";
     } catch { return true; }
   });
+  const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [issueSettingsOpen, setIssueSettingsOpen] = useState(false);
   const [issuePatterns, setIssuePatterns] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -328,6 +331,12 @@ export default function Editor({
         currentUser: userName,
       }),
       IssueLinker,
+      Extension.create({
+        name: "heatmap",
+        addProseMirrorPlugins() {
+          return [createHeatmapPlugin()];
+        },
+      }),
     ],
     editorProps: {
       attributes: {
@@ -598,6 +607,14 @@ export default function Editor({
     };
   }, [editor, typewriterMode]);
 
+  // Toggle heatmap
+  useEffect(() => {
+    if (!editor) return;
+    editor.view.dispatch(
+      editor.view.state.tr.setMeta(heatmapPluginKey, { enabled: heatmapEnabled })
+    );
+  }, [editor, heatmapEnabled]);
+
   // Toggle grammar check
   useEffect(() => {
     if (!editor) return;
@@ -808,6 +825,21 @@ export default function Editor({
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           Spellcheck
+        </button>
+        {/* Heatmap Toggle */}
+        <button
+          onClick={() => setHeatmapEnabled((v) => !v)}
+          className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
+            heatmapEnabled
+              ? "text-orange-600 bg-orange-50 hover:bg-orange-100"
+              : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+          }`}
+          title={heatmapEnabled ? "Hide edit heatmap" : "Show edit heatmap"}
+        >
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+          </svg>
+          Heatmap
         </button>
         {/* Typewriter Mode Toggle */}
         <button
