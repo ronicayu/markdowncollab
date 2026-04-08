@@ -17,6 +17,7 @@ function generateId(): string {
 import Editor from "@/components/Editor";
 import { trackDocumentOpen } from "@/components/RecentDocs";
 import Toolbar from "@/components/Toolbar";
+import MobileToolbar from "@/components/MobileToolbar";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import TopBar from "@/components/TopBar";
 import type { Collaborator, BreadcrumbSegment } from "@/components/TopBar";
@@ -997,6 +998,7 @@ export default function DocumentPage({
       )}
       {!focusMode && !zenMode && <TabBar />}
       {userRole !== "viewer" && !focusMode && !zenMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      {userRole !== "viewer" && !focusMode && !zenMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <MobileToolbar editor={editor} />}
       {/* Cover Image Banner */}
       {!focusMode && !zenMode && (
         <div className="relative group shrink-0">

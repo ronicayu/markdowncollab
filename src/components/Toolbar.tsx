@@ -622,7 +622,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
   });
 
   return (
-    <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative" role="toolbar" aria-label="Text formatting">
+    <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative hidden md:block" role="toolbar" aria-label="Text formatting">
     <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1.5 scrollbar-none">
       {visibleButtons.map((btn, i) => (
         <div key={btn.label} className="flex items-center" ref={btn.label === "Text color" ? colorBtnRef : undefined}>
