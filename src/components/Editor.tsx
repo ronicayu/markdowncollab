@@ -273,6 +273,18 @@ export default function Editor({
       // each line in <p> tags like: <p>- item1</p><p>- item2</p>
       // We intercept and rebuild as a proper <ul>.
       handlePaste(view, event) {
+        // Paste as plain text when Shift is held (Cmd+Shift+V)
+        if (event.shiftKey) {
+          const plainText = event.clipboardData?.getData("text/plain");
+          if (plainText) {
+            event.preventDefault();
+            const { schema, tr } = view.state;
+            const textNode = schema.text(plainText);
+            view.dispatch(tr.replaceSelectionWith(textNode, true));
+            return true;
+          }
+        }
+
         // Handle image paste
         const pasteItems = event.clipboardData?.items;
         if (pasteItems) {
