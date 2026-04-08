@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
 import NotificationBell from "@/components/NotificationBell";
+import ActivityDots from "@/components/ActivityDots";
 import WelcomeModal from "@/components/WelcomeModal";
 import DuplicateDialog from "@/components/DuplicateDialog";
 import TemplateVariableDialog from "@/components/TemplateVariableDialog";
@@ -1721,7 +1722,8 @@ export default function Home() {
                         {docRatings[doc.id]}
                       </span>
                     )}
-                    <span className="text-xs text-gray-400 shrink-0 ml-4 mr-16">
+                    <span className="flex items-center gap-2 text-xs text-gray-400 shrink-0 ml-4 mr-16">
+                      <ActivityDots updatedAt={doc.updatedAt} />
                       {formatDate(doc.updatedAt)}
                     </span>
                   </Link>
