@@ -98,6 +98,7 @@ export default function Home() {
   const [searchDateFrom, setSearchDateFrom] = useState("");
   const [searchDateTo, setSearchDateTo] = useState("");
   const [showSearchFilters, setShowSearchFilters] = useState(false);
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   const [dueReminders, setDueReminders] = useState<{ id: string; documentId: string; remindAt: string; message: string; docTitle: string }[]>([]);
   const [docRatings, setDocRatings] = useState<Record<string, number>>({});
   const [showBulkTagPopover, setShowBulkTagPopover] = useState(false);
@@ -720,11 +721,27 @@ export default function Home() {
                   <div key={folder.id}>
                     <div
                       className={`group/folder flex items-center gap-1 w-full text-left rounded-md text-sm transition-colors ${
-                        currentFolderId === folder.id
+                        dragOverFolderId === folder.id
+                          ? "bg-amber-500/20 text-white ring-1 ring-amber-400/50"
+                          : currentFolderId === folder.id
                           ? "bg-white/10 text-white font-medium"
                           : "text-white/50 hover:text-white hover:bg-white/5"
                       }`}
                       style={{ paddingLeft: `${0.75 + depth * 0.75}rem` }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        setDragOverFolderId(folder.id);
+                      }}
+                      onDragLeave={() => setDragOverFolderId(null)}
+                      onDrop={async (e) => {
+                        e.preventDefault();
+                        setDragOverFolderId(null);
+                        const docId = e.dataTransfer.getData("text/plain");
+                        if (docId) {
+                          await moveDocToFolder(docId, folder.id);
+                        }
+                      }}
                     >
                       {folder.children.length > 0 ? (
                         <button
@@ -1371,7 +1388,14 @@ export default function Home() {
                 </div>
               )}
               {filteredDocs.map((doc, index) => (
-                <div key={doc.id} className={`relative group flex items-center gap-2 ${focusedIndex === index ? "ring-2 ring-[#B8692A] rounded-xl" : ""}`}
+                <div
+                  key={doc.id}
+                  draggable="true"
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("text/plain", doc.id);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  className={`relative group flex items-center gap-2 ${focusedIndex === index ? "ring-2 ring-[#B8692A] rounded-xl" : ""}`}
                   <input
                     type="checkbox"
                     checked={selected.has(doc.id)}
