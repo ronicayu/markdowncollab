@@ -118,8 +118,12 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/api/documents")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) return [];
+        return r.json();
+      })
       .then((fetchedDocs: Doc[]) => {
+        if (!fetchedDocs || !Array.isArray(fetchedDocs)) return;
         setDocs(fetchedDocs);
         // Fetch ratings for all documents
         fetchedDocs.forEach((doc) => {
@@ -146,7 +150,7 @@ export default function Home() {
         // Fetch tags for all documents
         fetchedDocs.forEach((doc) => {
           fetch(`/api/documents/${doc.id}/tags`)
-            .then((r) => r.json())
+            .then((r) => r.ok ? r.json() : null)
             .then((tags: Tag[]) => {
               setDocTags((prev) => ({ ...prev, [doc.id]: tags }));
             })
@@ -159,7 +163,7 @@ export default function Home() {
   // Fetch all tags for the filter sidebar
   useEffect(() => {
     fetch("/api/tags")
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : null)
       .then(setAllTags)
       .catch(() => {});
   }, []);
@@ -185,7 +189,7 @@ export default function Home() {
   useEffect(() => {
     if (!session) return;
     fetch("/api/folders")
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : null)
       .then((data: Folder[]) => { if (Array.isArray(data)) setFolders(data); })
       .catch(() => {});
   }, [session]);
@@ -202,7 +206,7 @@ export default function Home() {
       setNewFolderName("");
       setShowNewFolder(false);
       // Refresh folders
-      const data = await fetch("/api/folders").then((r) => r.json());
+      const data = await fetch("/api/folders").then((r) => r.ok ? r.json() : null);
       if (Array.isArray(data)) setFolders(data);
     }
   }
@@ -217,7 +221,7 @@ export default function Home() {
     });
     if (res.ok) {
       setRenamingFolderId(null);
-      const data = await fetch("/api/folders").then((r) => r.json());
+      const data = await fetch("/api/folders").then((r) => r.ok ? r.json() : null);
       if (Array.isArray(data)) setFolders(data);
     }
   }
@@ -226,10 +230,10 @@ export default function Home() {
     const res = await fetch(`/api/folders/${folderId}`, { method: "DELETE" });
     if (res.ok) {
       if (currentFolderId === folderId) setCurrentFolderId(null);
-      const data = await fetch("/api/folders").then((r) => r.json());
+      const data = await fetch("/api/folders").then((r) => r.ok ? r.json() : null);
       if (Array.isArray(data)) setFolders(data);
       // Refresh docs since some may have moved to root
-      fetch("/api/documents").then((r) => r.json()).then(setDocs);
+      fetch("/api/documents").then((r) => r.ok ? r.json() : null).then(setDocs);
     }
   }
 
@@ -277,7 +281,7 @@ export default function Home() {
     if (activeTab !== "trash") return;
     setTrashLoading(true);
     fetch("/api/documents?trash=true")
-      .then((r) => r.json())
+      .then((r) => r.ok ? r.json() : null)
       .then(setTrashDocs)
       .finally(() => setTrashLoading(false));
   }, [activeTab]);
@@ -286,7 +290,7 @@ export default function Home() {
     await fetch(`/api/documents/${doc.id}/restore`, { method: "POST" });
     setTrashDocs((prev) => prev.filter((d) => d.id !== doc.id));
     // Refresh main docs list
-    fetch("/api/documents").then((r) => r.json()).then(setDocs);
+    fetch("/api/documents").then((r) => r.ok ? r.json() : null).then(setDocs);
   }
 
   async function permanentDeleteDoc(doc: Doc) {
@@ -357,7 +361,7 @@ export default function Home() {
       if (searchDateFrom) params.set("dateFrom", searchDateFrom);
       if (searchDateTo) params.set("dateTo", searchDateTo);
       fetch(`/api/documents/search?${params.toString()}`)
-        .then((r) => r.json())
+        .then((r) => r.ok ? r.json() : null)
         .then((data) => {
           if (Array.isArray(data)) setSearchResults(data);
           else setSearchResults([]);
@@ -574,7 +578,7 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tagId }),
         })
-          .then((r) => r.json())
+          .then((r) => r.ok ? r.json() : null)
           .then((tag) => {
             if (tag && tag.id) {
               setDocTags((prev) => {
