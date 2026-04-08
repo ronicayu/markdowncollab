@@ -862,6 +862,62 @@ export default function DocumentPage({
     return () => window.removeEventListener("bubble-menu-comment", handler);
   }, []);
 
+  // Sidebar resize state
+  const [leftSidebarWidth, setLeftSidebarWidth] = useState(() => {
+    if (typeof window === "undefined") return 240;
+    const stored = localStorage.getItem("sidebar:left:width");
+    return stored ? Math.max(150, Math.min(400, Number(stored))) : 240;
+  });
+  const [rightSidebarWidth, setRightSidebarWidth] = useState(() => {
+    if (typeof window === "undefined") return 300;
+    const stored = localStorage.getItem("sidebar:right:width");
+    return stored ? Math.max(150, Math.min(400, Number(stored))) : 300;
+  });
+  const resizingRef = useRef<"left" | "right" | null>(null);
+  const resizeStartXRef = useRef(0);
+  const resizeStartWidthRef = useRef(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!resizingRef.current) return;
+      e.preventDefault();
+      const delta = e.clientX - resizeStartXRef.current;
+      const newWidth = resizingRef.current === "left"
+        ? resizeStartWidthRef.current + delta
+        : resizeStartWidthRef.current - delta;
+      const clamped = Math.max(150, Math.min(400, newWidth));
+      if (resizingRef.current === "left") {
+        setLeftSidebarWidth(clamped);
+      } else {
+        setRightSidebarWidth(clamped);
+      }
+    };
+    const handleMouseUp = () => {
+      if (resizingRef.current === "left") {
+        localStorage.setItem("sidebar:left:width", String(leftSidebarWidth));
+      } else if (resizingRef.current === "right") {
+        localStorage.setItem("sidebar:right:width", String(rightSidebarWidth));
+      }
+      resizingRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [leftSidebarWidth, rightSidebarWidth]);
+
+  const startResize = useCallback((side: "left" | "right", e: React.MouseEvent) => {
+    resizingRef.current = side;
+    resizeStartXRef.current = e.clientX;
+    resizeStartWidthRef.current = side === "left" ? leftSidebarWidth : rightSidebarWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, [leftSidebarWidth, rightSidebarWidth]);
+
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [presentationMode, setPresentationMode] = useState(false);
@@ -1104,11 +1160,19 @@ export default function DocumentPage({
       {!focusMode && !zenMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
       <div className="flex flex-1 overflow-hidden">
         {!focusMode && !zenMode && (
-          <div className="hidden lg:block">
-            <ErrorBoundary>
-              <OutlineSidebar editor={editor} documentId={id} ydoc={ydoc} currentUser={userName ?? undefined} />
-              <RelatedDocs documentId={id} />
-            </ErrorBoundary>
+          <div className="hidden lg:flex shrink-0" style={{ width: leftSidebarWidth }}>
+            <div className="flex-1 overflow-hidden">
+              <ErrorBoundary>
+                <OutlineSidebar editor={editor} documentId={id} ydoc={ydoc} currentUser={userName ?? undefined} />
+                <RelatedDocs documentId={id} />
+              </ErrorBoundary>
+            </div>
+            <div
+              onMouseDown={(e) => startResize("left", e)}
+              className="w-1 hover:w-1.5 bg-transparent hover:bg-[#B8692A]/30 transition-colors shrink-0"
+              style={{ cursor: "col-resize" }}
+              title="Drag to resize sidebar"
+            />
           </div>
         )}
         {ydoc && provider && (
@@ -1139,7 +1203,14 @@ export default function DocumentPage({
             commentFormOpen={commentFormOpen}
           />
         )}
-        {!focusMode && !zenMode && <div className="hidden md:block">
+        {!focusMode && !zenMode && <div className="hidden md:flex shrink-0" style={{ width: rightSidebarWidth }}>
+          <div
+            onMouseDown={(e) => startResize("right", e)}
+            className="w-1 hover:w-1.5 bg-transparent hover:bg-[#B8692A]/30 transition-colors shrink-0"
+            style={{ cursor: "col-resize" }}
+            title="Drag to resize sidebar"
+          />
+          <div className="flex-1 overflow-hidden">
           <ErrorBoundary>
           <CommentSidebar
             suggestions={suggestions}
@@ -1164,6 +1235,7 @@ export default function DocumentPage({
             onResolveRevisionRequest={handleResolveRevisionRequest}
           />
           </ErrorBoundary>
+          </div>
         </div>}
         {versionHistoryOpen && !focusMode && !zenMode && (
           <VersionHistoryPanel
