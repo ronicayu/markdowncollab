@@ -6,6 +6,7 @@ import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
 
 const markdownDir = process.env.MARKDOWN_DIR || "./documents";
+const USE_SEARCH_INDEX = true;
 
 /**
  * Escape HTML special chars to prevent XSS in snippets.
@@ -147,21 +148,40 @@ export async function GET(req: Request) {
   // Build a map of accessible docs for quick lookup
   const docMap = new Map(accessibleDocs.map((d) => [d.id, d]));
 
-  // Collect markdown file contents for accessible docs
-  const mdFiles = new Set<string>();
-  if (existsSync(markdownDir)) {
+  // Query search index for content matches
+  const accessibleDocIds = accessibleDocs.map(d => d.id);
+  let indexMap = new Map<string, string>();
+
+  if (USE_SEARCH_INDEX) {
     try {
-      const files = readdirSync(markdownDir);
-      for (const f of files) {
-        if (f.endsWith(".md")) {
-          const docId = f.replace(/\.md$/, "");
-          if (docMap.has(docId)) {
-            mdFiles.add(docId);
-          }
-        }
-      }
+      const indexResults = await prisma.documentSearchIndex.findMany({
+        where: {
+          documentId: { in: accessibleDocIds },
+          plainText: { contains: lowerQuery },
+        },
+        select: { documentId: true, plainText: true },
+      });
+      indexMap = new Map(indexResults.map(r => [r.documentId, r.plainText]));
     } catch {
-      // Directory read failed, skip content search
+      // Search index query failed, fall back to filesystem
+      if (existsSync(markdownDir)) {
+        try {
+          const files = readdirSync(markdownDir);
+          for (const f of files) {
+            if (f.endsWith(".md")) {
+              const docId = f.replace(/\.md$/, "");
+              if (docMap.has(docId)) {
+                try {
+                  const content = readFileSync(join(markdownDir, `${docId}.md`), "utf-8");
+                  if (content.toLowerCase().includes(lowerQuery)) {
+                    indexMap.set(docId, content);
+                  }
+                } catch { /* skip */ }
+              }
+            }
+          }
+        } catch { /* skip */ }
+      }
     }
   }
 
@@ -180,13 +200,9 @@ export async function GET(req: Request) {
     const titleContains = !titleExact && lowerTitle.includes(lowerQuery);
 
     let contentSnippet: string | null = null;
-    if (mdFiles.has(doc.id)) {
-      try {
-        const content = readFileSync(join(markdownDir, `${doc.id}.md`), "utf-8");
-        contentSnippet = extractSnippet(content, query);
-      } catch {
-        // File read failed, skip
-      }
+    const plainText = indexMap.get(doc.id);
+    if (plainText) {
+      contentSnippet = extractSnippet(plainText, query);
     }
 
     if (titleExact || titleContains || contentSnippet) {

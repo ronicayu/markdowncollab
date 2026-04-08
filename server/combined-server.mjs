@@ -29,9 +29,22 @@ const wsDbClient = new PrismaClient();
  * and cannot import TypeScript modules directly. If you change access control
  * rules, update BOTH files.
  */
-async function checkWsAccess(documentId, userId, userEmail, shareToken) {
+async function checkWsAccess(documentId, userId, userEmail, shareToken, password) {
   const doc = await wsDbClient.document.findUnique({ where: { id: documentId } });
   if (!doc) return { hasAccess: false, role: null };
+
+  // Block expired documents
+  if (doc.expiresAt && new Date(doc.expiresAt) < new Date()) {
+    return { hasAccess: false, role: null };
+  }
+
+  // Require password if document is password-protected
+  if (doc.password) {
+    if (!password || password !== doc.password) {
+      return { hasAccess: false, role: null };
+    }
+  }
+
   if (!doc.ownerId) return { hasAccess: true, role: "editor" };
   if (userId && doc.ownerId === userId) return { hasAccess: true, role: "owner" };
 
@@ -423,7 +436,7 @@ function getDoc(docName) {
   let saveTimeout = null;
   doc.on("update", () => {
     if (saveTimeout) clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(() => {
+    saveTimeout = setTimeout(async () => {
       // Save Yjs binary state
       const state = Y.encodeStateAsUpdate(doc);
       writeFileSync(filePath, Buffer.from(state));
@@ -435,6 +448,18 @@ function getDoc(docName) {
           const markdown = xmlFragmentToMarkdown(yxml);
           const mdPath = join(markdownDir, docName + ".md");
           writeFileSync(mdPath, markdown, "utf-8");
+
+          // Update search index
+          try {
+            const plainText = markdown.replace(/[#*`~\[\]()>|_-]/g, '').replace(/\n{2,}/g, '\n').trim();
+            await wsDbClient.documentSearchIndex.upsert({
+              where: { documentId: docName },
+              create: { documentId: docName, plainText },
+              update: { plainText },
+            });
+          } catch (err) {
+            console.error(`Search index update failed for ${docName}:`, err.message);
+          }
 
           // Git export (opt-in via GIT_EXPORT_PATH env var)
           if (gitExportPath) {
@@ -732,8 +757,9 @@ app.prepare().then(() => {
         }
       }
 
-      // Check access
-      const access = await checkWsAccess(docName, userId, userEmail, shareToken);
+      // Check access (including password if document is protected)
+      const providedPassword = urlObj.searchParams.get("password");
+      const access = await checkWsAccess(docName, userId, userEmail, shareToken, providedPassword);
       if (!access.hasAccess) {
         socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
         socket.destroy();
@@ -763,6 +789,27 @@ app.prepare().then(() => {
     console.log(`MarkdownCollab running on http://${hostname}:${port}`);
     console.log(`WebSocket server at ws://${hostname}:${port}/ws/`);
   });
+
+  // Backfill search index on startup
+  setTimeout(async () => {
+    try {
+      const { readdirSync: readdir, readFileSync: readFile } = await import("fs");
+      const files = readdir(markdownDir).filter(f => f.endsWith('.md'));
+      for (const f of files) {
+        const docId = f.replace(/\.md$/, '');
+        const content = readFile(join(markdownDir, f), 'utf-8');
+        const plainText = content.replace(/[#*`~\[\]()>|_-]/g, '').replace(/\n{2,}/g, '\n').trim();
+        await wsDbClient.documentSearchIndex.upsert({
+          where: { documentId: docId },
+          create: { documentId: docId, plainText },
+          update: { plainText },
+        }).catch(() => {});
+      }
+      console.log(`Search index backfilled: ${files.length} documents`);
+    } catch (err) {
+      console.error('Search index backfill failed:', err.message);
+    }
+  }, 5000);
 });
 
 // Catch unhandled connection resets globally so they don't crash the process

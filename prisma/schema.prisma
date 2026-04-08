@@ -241,3 +241,12 @@ model DocumentPin {
   @@unique([documentId, userId])
   @@index([userId, pinnedAt])
 }
+
+model DocumentSearchIndex {
+  id         String   @id @default(uuid())
+  documentId String   @unique
+  plainText  String
+  updatedAt  DateTime @updatedAt
+
+  @@index([documentId])
+}
