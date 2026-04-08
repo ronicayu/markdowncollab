@@ -1308,7 +1308,7 @@ export default function SlashCommandMenu({
                 <div className="flex items-center gap-1.5">
                   <p className="text-sm font-medium text-gray-900">{highlightMatch(cmd.label, query)}</p>
                   {isCustom && (
-                    <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-600 leading-none">Custom</span>
+                    <span className="ml-auto text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">custom</span>
                   )}
                 </div>
                 {SHORTCUT_HINTS[cmd.id] && (
