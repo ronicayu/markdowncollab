@@ -434,6 +434,7 @@ function getDoc(docName) {
   });
 
   const entry = { doc, awareness, conns: new Set() };
+  entry.lastActivity = Date.now();
 
   // --- Auto-snapshot tracking ---
   const SNAPSHOT_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
@@ -443,6 +444,7 @@ function getDoc(docName) {
   // Track edits for snapshot timing
   doc.on("update", () => {
     entry.hasEdits = true;
+    entry.lastActivity = Date.now();
   });
 
   // Observe comments Y.Map for new comments/replies
@@ -543,6 +545,29 @@ function getDoc(docName) {
   docs.set(docName, entry);
   return entry;
 }
+
+// --- Room cleanup: destroy idle rooms after 30 minutes ---
+const ROOM_IDLE_MS = 30 * 60 * 1000;
+const ROOM_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [docName, entry] of docs.entries()) {
+    if (entry.conns.size === 0 && (now - (entry.lastActivity || 0)) >= ROOM_IDLE_MS) {
+      try {
+        const state = Y.encodeStateAsUpdate(entry.doc);
+        const filePath = join(persistDir, docName + ".bin");
+        writeFileSync(filePath, Buffer.from(state));
+        console.log(`Room cleanup: persisted and destroyed idle room ${docName}`);
+      } catch (err) {
+        console.error(`Room cleanup error for ${docName}:`, err.message);
+      }
+      entry.awareness.destroy();
+      entry.doc.destroy();
+      docs.delete(docName);
+    }
+  }
+}, ROOM_CLEANUP_INTERVAL_MS);
 
 const wss = new WebSocketServer({ noServer: true });
 
