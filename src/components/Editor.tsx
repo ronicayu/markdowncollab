@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Collaboration from "@tiptap/extension-collaboration";
@@ -42,6 +42,7 @@ import LinkDialog from "./LinkDialog";
 import TableSortMenu from "./TableSortMenu";
 import { PersonalHighlight } from "@/extensions/personal-highlight";
 import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib/health-score";
+import FocusTimer from "./FocusTimer";
 
 
 interface EditorProps {
@@ -596,6 +597,77 @@ export default function Editor({
           editor={editor}
           onClose={() => setLinkDialogOpen(false)}
         />
+      )}
+      {editor && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 150, placement: "top" }}
+          className="flex items-center gap-0.5 bg-[#111110] rounded-lg shadow-xl border border-white/10 px-1 py-1"
+        >
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors ${editor.isActive("bold") ? "text-white bg-white/15" : ""}`}
+            title="Bold"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+            </svg>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors ${editor.isActive("italic") ? "text-white bg-white/15" : ""}`}
+            title="Italic"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <line x1="19" y1="4" x2="10" y2="4" />
+              <line x1="14" y1="20" x2="5" y2="20" />
+              <line x1="15" y1="4" x2="9" y2="20" />
+            </svg>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={`p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors ${editor.isActive("underline") ? "text-white bg-white/15" : ""}`}
+            title="Underline"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path d="M6 3v7a6 6 0 006 6 6 6 0 006-6V3" />
+              <line x1="4" y1="21" x2="20" y2="21" />
+            </svg>
+          </button>
+          <div className="w-px h-5 bg-white/20 mx-0.5" />
+          <button
+            onClick={() => setLinkDialogOpen(true)}
+            className={`p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors ${editor.isActive("link") ? "text-white bg-white/15" : ""}`}
+            title="Link"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+            className={`p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors ${editor.isActive("highlight") ? "text-white bg-white/15" : ""}`}
+            title="Highlight"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+          <div className="w-px h-5 bg-white/20 mx-0.5" />
+          <button
+            onClick={() => {
+              // Trigger the comment form opening in parent via a custom event
+              window.dispatchEvent(new CustomEvent("bubble-menu-comment"));
+            }}
+            className="p-1.5 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            title="Add Comment"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+          </button>
+        </BubbleMenu>
       )}
       <EditorContent editor={editor} />
       <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">

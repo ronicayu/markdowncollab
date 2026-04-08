@@ -30,6 +30,7 @@ import PresentationMode from "@/components/PresentationMode";
 import PinnedNotes from "@/components/PinnedNotes";
 import AIChatSidebar from "@/components/AIChatSidebar";
 import ReminderDialog from "@/components/ReminderDialog";
+import ExpirationDialog from "@/components/ExpirationDialog";
 import {
   getSuggestions,
   getComments,
@@ -729,6 +730,13 @@ export default function DocumentPage({
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Listen for bubble-menu-comment custom event to trigger comment form
+  useEffect(() => {
+    const handler = () => setOpenFormTrigger((n) => n + 1);
+    window.addEventListener("bubble-menu-comment", handler);
+    return () => window.removeEventListener("bubble-menu-comment", handler);
   }, []);
 
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
