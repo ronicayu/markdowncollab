@@ -989,6 +989,7 @@ export default function Editor({
         </div>
       )}
       <EditorContent editor={editor} />
+      {editor && <TableAddButtons editor={editor} />}
       {editor && <AIAutoComplete editor={editor} enabled={autoCompleteEnabled} />}
       <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
         <span>
@@ -1499,6 +1500,89 @@ export default function Editor({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Floating + buttons on table edges for adding rows/columns.
+ * Visible when cursor is in a table.
+ */
+function TableAddButtons({ editor }: { editor: TiptapEditor }) {
+  const [tableRect, setTableRect] = useState<DOMRect | null>(null);
+  const [isInTable, setIsInTable] = useState(false);
+
+  useEffect(() => {
+    const update = () => {
+      const { $from } = editor.state.selection;
+      // Walk up to find if we're inside a table
+      let inTable = false;
+      for (let d = $from.depth; d >= 0; d--) {
+        if ($from.node(d).type.name === "table") {
+          inTable = true;
+          break;
+        }
+      }
+      setIsInTable(inTable);
+
+      if (inTable) {
+        // Find the table DOM element
+        const tableEl = editor.view.dom.querySelector("table.editor-table");
+        if (tableEl) {
+          const container = tableEl.closest(".flex-1.overflow-auto");
+          if (container) {
+            const containerRect = container.getBoundingClientRect();
+            const tRect = tableEl.getBoundingClientRect();
+            setTableRect(new DOMRect(
+              tRect.left - containerRect.left + container.scrollLeft,
+              tRect.top - containerRect.top + container.scrollTop,
+              tRect.width,
+              tRect.height
+            ));
+          } else {
+            setTableRect(tableEl.getBoundingClientRect());
+          }
+        }
+      }
+    };
+    editor.on("selectionUpdate", update);
+    editor.on("update", update);
+    return () => {
+      editor.off("selectionUpdate", update);
+      editor.off("update", update);
+    };
+  }, [editor]);
+
+  if (!isInTable || !tableRect) return null;
+
+  return (
+    <div className="table-add-buttons" style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}>
+      {/* Add column button — right edge */}
+      <button
+        className="table-add-btn visible"
+        style={{
+          top: tableRect.top + tableRect.height / 2 - 10,
+          left: tableRect.left + tableRect.width + 6,
+          pointerEvents: "auto",
+        }}
+        title="Add column"
+        onClick={() => editor.chain().focus().addColumnAfter().run()}
+      >
+        +
+      </button>
+      {/* Add row button — bottom edge */}
+      <button
+        className="table-add-btn visible"
+        style={{
+          top: tableRect.top + tableRect.height + 6,
+          left: tableRect.left + tableRect.width / 2 - 10,
+          pointerEvents: "auto",
+        }}
+        title="Add row"
+        onClick={() => editor.chain().focus().addRowAfter().run()}
+      >
+        +
+      </button>
     </div>
   );
 }

@@ -226,6 +226,36 @@ body {
   margin-bottom: 0;
 }
 
+/* Table add row/column buttons */
+.table-add-btn {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 10;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.table-add-btn:hover {
+  transform: scale(1.15);
+  opacity: 1 !important;
+}
+.ProseMirror .editor-table:hover ~ .table-add-buttons .table-add-btn,
+.table-add-buttons:hover .table-add-btn,
+.table-add-btn.visible {
+  opacity: 0.7;
+}
+
 /* Task list styles */
 .ProseMirror ul[data-type="taskList"] {
   list-style: none;
