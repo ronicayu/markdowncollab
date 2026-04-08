@@ -433,6 +433,13 @@ export default function TopBar({
               >
                 <span>PDF (.pdf)</span>
               </a>
+              <a
+                href={`/api/documents/${documentId}/export/docx`}
+                onClick={() => setExportOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+              >
+                <span>Word (.docx)</span>
+              </a>
               {onSaveAsTemplate && (
                 <>
                   <div className="border-t border-white/10 my-1" />
