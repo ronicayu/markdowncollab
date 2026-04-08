@@ -61,15 +61,16 @@ export function splitSentences(text: string): string[] {
 export function extractWords(text: string): string[] {
   // Strip markdown syntax
   const cleaned = text
+    .replace(/```[a-z]*\n[\s\S]*?\n```/g, "") // fenced code blocks (must be first)
+    .replace(/```[\s\S]*?```/g, "") // inline triple-backtick
+    .replace(/`[^`]+`/g, "") // inline code
     .replace(/^#{1,6}\s+/gm, "") // headings
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // links
     .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1") // images
-    .replace(/[*_~`]/g, "") // emphasis
+    .replace(/[*_~]/g, "") // emphasis (no backtick — already handled above)
     .replace(/^\s*[-*+]\s+/gm, "") // list markers
     .replace(/^\s*\d+\.\s+/gm, "") // numbered list markers
-    .replace(/^\s*>\s+/gm, "") // blockquotes
-    .replace(/```[\s\S]*?```/g, "") // code blocks
-    .replace(/`[^`]+`/g, ""); // inline code
+    .replace(/^\s*>\s+/gm, ""); // blockquotes
 
   return cleaned
     .split(/\s+/)
