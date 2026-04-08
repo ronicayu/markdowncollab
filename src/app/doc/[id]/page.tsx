@@ -37,6 +37,7 @@ import AIChatSidebar from "@/components/AIChatSidebar";
 import ReminderDialog from "@/components/ReminderDialog";
 import ExpirationDialog from "@/components/ExpirationDialog";
 import EditorMinimap from "@/components/EditorMinimap";
+import DocumentMetadata from "@/components/DocumentMetadata";
 import TabBar, { trackTab } from "@/components/TabBar";
 import {
   getSuggestions,
@@ -846,6 +847,7 @@ export default function DocumentPage({
     });
   }, []);
 
+  const [metadataOpen, setMetadataOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
 
@@ -1133,6 +1135,7 @@ export default function DocumentPage({
         onAgentToneChange={setAgentTone}
         publishAt={publishAt}
         onSchedulePublish={userRole !== "viewer" ? handleSchedulePublish : undefined}
+        onShowMetadata={() => setMetadataOpen(true)}
       />}
       {zenMode && (
         <div className="flex items-center justify-between bg-[#111110] px-4 py-2 shrink-0">
@@ -1397,6 +1400,11 @@ export default function DocumentPage({
           onExit={() => setPresentationMode(false)}
         />
       )}
+      <DocumentMetadata
+        documentId={id}
+        isOpen={metadataOpen}
+        onClose={() => setMetadataOpen(false)}
+      />
     </div>
   );
 }
