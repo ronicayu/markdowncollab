@@ -122,6 +122,7 @@ export default function Editor({
   const [rewritePreview, setRewritePreview] = useState<{ text: string; from: number; to: number } | null>(null);
   const [summarizeLoading, setSummarizeLoading] = useState(false);
   const [summaryPopover, setSummaryPopover] = useState<{ text: string; from: number; to: number } | null>(null);
+  const [docSize, setDocSize] = useState("");
   const [spellcheckEnabled, setSpellcheckEnabled] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -561,6 +562,12 @@ export default function Editor({
       const text = ed.state.doc.textContent;
       const words = text.trim() ? text.trim().split(/\s+/).length : 0;
       setWordCount({ words, chars: text.length });
+
+      // Document size
+      const bytes = new Blob([ed.getHTML()]).size;
+      if (bytes < 1024) setDocSize(`${bytes} B`);
+      else if (bytes < 1024 * 1024) setDocSize(`${(bytes / 1024).toFixed(1)} KB`);
+      else setDocSize(`${(bytes / (1024 * 1024)).toFixed(1)} MB`);
 
       // Health score (use markdown storage for accurate markdown syntax detection)
       try {
@@ -1312,7 +1319,7 @@ export default function Editor({
               </span>
             </span>
           ) : (
-            <span>{wordCount.words} words · {wordCount.chars} characters · {wordCount.words < 200 ? "< 1" : Math.ceil(wordCount.words / 200)} min read</span>
+            <span>{wordCount.words} words · {wordCount.chars} characters · {wordCount.words < 200 ? "< 1" : Math.ceil(wordCount.words / 200)} min read{docSize ? ` · ${docSize}` : ""}</span>
           )}
         </span>
         {showGoalInput && (
