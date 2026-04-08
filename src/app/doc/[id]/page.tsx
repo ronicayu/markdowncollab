@@ -919,6 +919,92 @@ export default function DocumentPage({
     });
   }, []);
 
+  // Document Diff Notification — detect remote changes since last visit
+  const [diffBannerVisible, setDiffBannerVisible] = useState(false);
+  const [lastVisitContent, setLastVisitContent] = useState<string | null>(null);
+  const diffBannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!editor) return;
+    // Wait for Yjs to sync before checking
+    const timer = setTimeout(() => {
+      const currentText = editor.state.doc.textContent;
+      // Simple hash function
+      const hash = (s: string) => {
+        let h = 0;
+        for (let i = 0; i < s.length; i++) {
+          h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+        }
+        return String(h);
+      };
+      const currentHash = hash(currentText);
+      const storedHash = localStorage.getItem(`lastVisitHash:${id}`);
+
+      if (storedHash && storedHash !== currentHash) {
+        // Content has changed since last visit — show banner
+        // Retrieve old text for diff (we store a snippet)
+        const storedText = localStorage.getItem(`lastVisitText:${id}`) || "";
+        setLastVisitContent(storedText);
+        setDiffBannerVisible(true);
+        // Auto-dismiss after 10s
+        diffBannerTimerRef.current = setTimeout(() => {
+          setDiffBannerVisible(false);
+          localStorage.setItem(`lastVisitHash:${id}`, currentHash);
+          localStorage.setItem(`lastVisitText:${id}`, currentText);
+        }, 10000);
+      } else {
+        // Store current state for future comparison
+        localStorage.setItem(`lastVisitHash:${id}`, currentHash);
+        localStorage.setItem(`lastVisitText:${id}`, currentText);
+      }
+    }, 2000); // Wait for sync
+    return () => {
+      clearTimeout(timer);
+      if (diffBannerTimerRef.current) clearTimeout(diffBannerTimerRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, id]);
+
+  const handleShowDiffChanges = useCallback(() => {
+    if (!editor || !lastVisitContent) return;
+    const currentText = editor.state.doc.textContent;
+    setDiffOverlay({
+      oldText: lastVisitContent,
+      newText: currentText,
+      oldLabel: "Last visit",
+      newLabel: "Current",
+    });
+    setDiffBannerVisible(false);
+    // Update stored hash
+    const hash = (s: string) => {
+      let h = 0;
+      for (let i = 0; i < s.length; i++) {
+        h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+      }
+      return String(h);
+    };
+    localStorage.setItem(`lastVisitHash:${id}`, hash(currentText));
+    localStorage.setItem(`lastVisitText:${id}`, currentText);
+    if (diffBannerTimerRef.current) clearTimeout(diffBannerTimerRef.current);
+  }, [editor, lastVisitContent, id]);
+
+  const dismissDiffBanner = useCallback(() => {
+    setDiffBannerVisible(false);
+    if (diffBannerTimerRef.current) clearTimeout(diffBannerTimerRef.current);
+    if (editor) {
+      const currentText = editor.state.doc.textContent;
+      const hash = (s: string) => {
+        let h = 0;
+        for (let i = 0; i < s.length; i++) {
+          h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+        }
+        return String(h);
+      };
+      localStorage.setItem(`lastVisitHash:${id}`, hash(currentText));
+      localStorage.setItem(`lastVisitText:${id}`, currentText);
+    }
+  }, [editor, id]);
+
   const [metadataOpen, setMetadataOpen] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
@@ -1325,6 +1411,27 @@ export default function DocumentPage({
         {ydoc && provider && (
           <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode || zenMode ? "max-w-[700px] mx-auto" : ""}`} style={{ fontFamily: getFontFamily(fontFamily) }}>
             {!focusMode && !zenMode && <PinnedNotes ydoc={ydoc} userName={userName} />}
+            {/* Document diff notification banner */}
+            {diffBannerVisible && (
+              <div className="mx-4 mt-2 mb-1 flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2.5 z-10">
+                <svg className="h-4 w-4 text-yellow-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <span className="text-xs text-yellow-800 flex-1">This document was updated since your last visit</span>
+                <button
+                  onClick={handleShowDiffChanges}
+                  className="px-2.5 py-1 rounded text-xs font-medium text-white bg-yellow-600 hover:bg-yellow-700 transition-colors"
+                >
+                  Show changes
+                </button>
+                <button
+                  onClick={dismissDiffBanner}
+                  className="px-2.5 py-1 rounded text-xs font-medium text-yellow-700 hover:text-yellow-900 hover:bg-yellow-100 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
             <ErrorBoundary>
               <div className="relative flex-1 flex flex-col overflow-hidden">
                 <div className={diffOverlay ? "invisible h-0 overflow-hidden" : "flex-1 flex flex-col"}>
