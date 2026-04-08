@@ -51,6 +51,7 @@
     "better-sqlite3": "^12.8.0",
     "diff": "^8.0.4",
     "docx": "^9.6.1",
+    "html-to-image": "^1.11.13",
     "jsonwebtoken": "^9.0.3",
     "katex": "^0.16.45",
     "lib0": "^0.2.117",
