@@ -115,6 +115,9 @@ export default function Editor({
   const [showWordFrequency, setShowWordFrequency] = useState(false);
   const [hasTextSelection, setHasTextSelection] = useState(false);
   const [expandLoading, setExpandLoading] = useState(false);
+  const [rewriteLoading, setRewriteLoading] = useState(false);
+  const [rewriteMenuOpen, setRewriteMenuOpen] = useState(false);
+  const [rewritePreview, setRewritePreview] = useState<{ text: string; from: number; to: number } | null>(null);
   const [spellcheckEnabled, setSpellcheckEnabled] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -802,6 +805,90 @@ export default function Editor({
             </svg>
             {expandLoading ? "Expanding..." : "Expand with AI"}
           </button>
+        )}
+        {/* Rewrite with AI — shown when text is selected */}
+        {hasTextSelection && editor && (
+          <div className="relative">
+            <button
+              onClick={() => setRewriteMenuOpen((v) => !v)}
+              disabled={rewriteLoading}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 transition-colors"
+              title="Rewrite selected text with AI"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+              </svg>
+              {rewriteLoading ? "Rewriting..." : "Rewrite"}
+              <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+            {rewriteMenuOpen && (
+              <div className="absolute bottom-7 left-0 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 w-36">
+                {[
+                  { style: "shorter", label: "Make shorter" },
+                  { style: "longer", label: "Make longer" },
+                  { style: "simpler", label: "Simplify" },
+                  { style: "formal", label: "Make formal" },
+                ].map(({ style, label }) => (
+                  <button
+                    key={style}
+                    onClick={async () => {
+                      setRewriteMenuOpen(false);
+                      if (!editor || rewriteLoading) return;
+                      const { from, to } = editor.state.selection;
+                      const selectedText = editor.state.doc.textBetween(from, to, " ");
+                      if (!selectedText.trim()) return;
+                      setRewriteLoading(true);
+                      try {
+                        const res = await fetch("/api/agent/rewrite", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ text: selectedText, style }),
+                        });
+                        if (res.ok) {
+                          const { rewritten } = await res.json();
+                          if (rewritten) {
+                            setRewritePreview({ text: rewritten, from, to });
+                          }
+                        }
+                      } catch (err) {
+                        console.error("Rewrite failed:", err);
+                      } finally {
+                        setRewriteLoading(false);
+                      }
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {/* Rewrite preview accept/reject */}
+        {rewritePreview && editor && (
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-indigo-600 max-w-[200px] truncate" title={rewritePreview.text}>
+              Preview: {rewritePreview.text.slice(0, 40)}...
+            </span>
+            <button
+              onClick={() => {
+                editor.chain().focus().deleteRange({ from: rewritePreview.from, to: rewritePreview.to }).insertContentAt(rewritePreview.from, rewritePreview.text).run();
+                setRewritePreview(null);
+              }}
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium text-green-700 bg-green-50 hover:bg-green-100"
+            >
+              Accept
+            </button>
+            <button
+              onClick={() => setRewritePreview(null)}
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium text-red-700 bg-red-50 hover:bg-red-100"
+            >
+              Reject
+            </button>
+          </div>
         )}
         {/* Cursor Chat */}
         <CursorChat provider={provider} userName={userName} />
