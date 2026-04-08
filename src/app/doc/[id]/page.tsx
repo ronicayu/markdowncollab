@@ -786,6 +786,20 @@ export default function DocumentPage({
     });
   }, []);
 
+  // Grammar check toggle (persisted to localStorage)
+  const [grammarCheckEnabled, setGrammarCheckEnabled] = useState(false);
+  useEffect(() => {
+    const stored = localStorage.getItem("grammarCheck:enabled");
+    if (stored === "true") setGrammarCheckEnabled(true);
+  }, []);
+  const toggleGrammarCheck = useCallback(() => {
+    setGrammarCheckEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("grammarCheck:enabled", String(next));
+      return next;
+    });
+  }, []);
+
   const [focusMode, setFocusMode] = useState(false);
   const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
 
@@ -909,6 +923,8 @@ export default function DocumentPage({
         onFontChange={userRole !== "viewer" ? handleFontChange : undefined}
         autoCompleteEnabled={autoCompleteEnabled}
         onToggleAutoComplete={toggleAutoComplete}
+        grammarCheckEnabled={grammarCheckEnabled}
+        onToggleGrammarCheck={toggleGrammarCheck}
         forkedFrom={forkedFrom}
       />
       {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
@@ -973,6 +989,7 @@ export default function DocumentPage({
                 initialContent={templateContent}
                 onToggleShortcutsHelp={toggleShortcutsHelp}
                 autoCompleteEnabled={autoCompleteEnabled}
+                grammarCheckEnabled={grammarCheckEnabled}
               />
             </ErrorBoundary>
           </div>

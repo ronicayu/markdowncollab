@@ -1043,3 +1043,45 @@ body {
   transition: width 0.1s linear;
   border-radius: 0 1px 1px 0;
 }
+
+/* Grammar check squiggly underline */
+.grammar-error {
+  text-decoration: underline wavy #dc2626;
+  text-decoration-skip-ink: none;
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
+/* Progress bar block */
+.progress-block-wrapper {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+.progress-block-wrapper .progress-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+.progress-block-wrapper .progress-track {
+  width: 100%;
+  height: 12px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-block-wrapper .progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+.progress-block-wrapper .progress-value {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+  text-align: right;
+}

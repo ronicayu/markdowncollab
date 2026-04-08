@@ -46,6 +46,7 @@ import { PersonalHighlight } from "@/extensions/personal-highlight";
 import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib/health-score";
 import AIAutoComplete from "./AIAutoComplete";
 import FocusTimer from "./FocusTimer";
+import { GrammarCheck, grammarCheckPluginKey } from "@/extensions/grammar-check";
 
 
 interface EditorProps {
@@ -60,6 +61,7 @@ interface EditorProps {
   onToggleShortcutsHelp?: () => void;
   templateId?: string;
   autoCompleteEnabled?: boolean;
+  grammarCheckEnabled?: boolean;
 }
 
 export default function Editor({
@@ -74,6 +76,7 @@ export default function Editor({
   onToggleShortcutsHelp,
   templateId,
   autoCompleteEnabled = false,
+  grammarCheckEnabled = false,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getUserColor(userName), [userName]);
@@ -283,6 +286,7 @@ export default function Editor({
       PersonalHighlight.configure({
         documentId,
       }),
+      GrammarCheck,
     ],
     editorProps: {
       attributes: {
@@ -515,6 +519,18 @@ export default function Editor({
       // ensuring the hook is aware we depend on transaction updates.
     },
   });
+
+  // Toggle grammar check
+  useEffect(() => {
+    if (!editor) return;
+    editor.storage.grammarCheck.enabled = grammarCheckEnabled;
+    if (!grammarCheckEnabled) {
+      // Clear decorations when disabled
+      editor.view.dispatch(
+        editor.view.state.tr.setMeta(grammarCheckPluginKey, { clear: true })
+      );
+    }
+  }, [editor, grammarCheckEnabled]);
 
   useEffect(() => {
     if (editor) {
