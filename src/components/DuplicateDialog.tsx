@@ -1,6 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+interface FolderOption {
+  id: string;
+  name: string;
+  parentId: string | null;
+  children?: FolderOption[];
+}
+
+function flattenFolders(folders: FolderOption[], depth = 0): { id: string; name: string; depth: number }[] {
+  const result: { id: string; name: string; depth: number }[] = [];
+  for (const f of folders) {
+    result.push({ id: f.id, name: f.name, depth });
+    if (f.children && f.children.length > 0) {
+      result.push(...flattenFolders(f.children, depth + 1));
+    }
+  }
+  return result;
+}
 
 interface DuplicateDialogProps {
   documentId: string;
@@ -21,7 +39,21 @@ export default function DuplicateDialog({
   const [includeComments, setIncludeComments] = useState(true);
   const [includeVersions, setIncludeVersions] = useState(false);
   const [includeTags, setIncludeTags] = useState(true);
+  const [folderId, setFolderId] = useState("");
+  const [folders, setFolders] = useState<{ id: string; name: string; depth: number }[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/folders")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: FolderOption[]) => {
+        if (Array.isArray(data)) {
+          setFolders(flattenFolders(data));
+        }
+      })
+      .catch(() => {});
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -36,6 +68,7 @@ export default function DuplicateDialog({
           includeComments,
           includeVersions,
           includeTags,
+          folderId: folderId || undefined,
         }),
       });
       if (res.ok) {
@@ -75,6 +108,27 @@ export default function DuplicateDialog({
               autoFocus
             />
           </div>
+
+          {/* Folder selector */}
+          {folders.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Destination folder
+              </label>
+              <select
+                value={folderId}
+                onChange={(e) => setFolderId(e.target.value)}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              >
+                <option value="">No folder (root)</option>
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {"\u00A0\u00A0".repeat(f.depth)}{f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Options */}
           <div className="space-y-3">

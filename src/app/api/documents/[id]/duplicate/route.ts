@@ -25,6 +25,7 @@ export async function POST(
     includeComments = false,
     includeVersions = false,
     includeTags = false,
+    folderId,
   } = body;
 
   // Fetch original document
@@ -51,7 +52,7 @@ export async function POST(
       title: newTitle,
       ownerId: userId ?? null,
       templateId: original.templateId,
-      folderId: original.folderId,
+      folderId: folderId || original.folderId,
       coverImage: original.coverImage,
       fontFamily: original.fontFamily,
     },
