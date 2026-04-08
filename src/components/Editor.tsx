@@ -133,6 +133,7 @@ export default function Editor({
   const [showDraftBanner, setShowDraftBanner] = useState(false);
   const draftKey = `draft:${documentId}`;
   const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [issueSettingsOpen, setIssueSettingsOpen] = useState(false);
   const [issuePatterns, setIssuePatterns] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -238,6 +239,7 @@ export default function Editor({
     } else {
       setScrollProgress(0);
     }
+    setShowScrollTop(scrollTop > 500);
   }, []);
 
   // Reading position memory: save scroll position (debounced 1s)
@@ -1373,6 +1375,21 @@ export default function Editor({
           </div>
         )}
       </div>
+      {/* Scroll to top button */}
+      {showScrollTop && (
+        <button
+          onClick={() => {
+            scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="fixed bottom-20 right-6 z-40 flex items-center justify-center w-9 h-9 rounded-full bg-[#111110] text-white shadow-lg hover:bg-[#333] transition-all opacity-80 hover:opacity-100"
+          title="Scroll to top"
+          aria-label="Scroll to top"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+          </svg>
+        </button>
+      )}
       {slashMenu && editor && (
         <SlashCommandMenu
           editor={editor}
