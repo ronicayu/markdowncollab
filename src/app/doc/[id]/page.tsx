@@ -2,6 +2,7 @@
 
 import { use, useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 
@@ -105,6 +106,7 @@ export default function DocumentPage({
 }) {
   const { id } = use(params);
   const { data: session } = useSession();
+  const router = useRouter();
   const [userName, setUserName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -855,6 +857,31 @@ export default function DocumentPage({
     toast("Template saved");
   }, [editor]);
 
+  // AI Translate
+  const [translateLoading, setTranslateLoading] = useState(false);
+
+  const handleTranslate = useCallback(async (language: string) => {
+    setTranslateLoading(true);
+    try {
+      const res = await fetch("/api/agent/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId: id, targetLanguage: language }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast(`Translated to ${language}. Opening new document...`);
+        router.push(`/doc/${data.documentId}`);
+      } else {
+        toast(data.error || "Translation failed", "error");
+      }
+    } catch {
+      toast("Failed to translate", "error");
+    } finally {
+      setTranslateLoading(false);
+    }
+  }, [id, router]);
+
   const [agentLoading, setAgentLoading] = useState(false);
 
   const handleInviteAgent = useCallback(async () => {
@@ -929,6 +956,8 @@ export default function DocumentPage({
         grammarCheckEnabled={grammarCheckEnabled}
         onToggleGrammarCheck={toggleGrammarCheck}
         forkedFrom={forkedFrom}
+        onTranslate={handleTranslate}
+        translateLoading={translateLoading}
       />
       {!focusMode && <TabBar />}
       {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}

@@ -51,6 +51,8 @@ interface TopBarProps {
   grammarCheckEnabled?: boolean;
   onToggleGrammarCheck?: () => void;
   forkedFrom?: { id: string; title: string } | null;
+  onTranslate?: (language: string) => void;
+  translateLoading?: boolean;
 }
 
 export default function TopBar({
@@ -86,6 +88,8 @@ export default function TopBar({
   grammarCheckEnabled,
   onToggleGrammarCheck,
   forkedFrom,
+  onTranslate,
+  translateLoading,
 }: TopBarProps) {
   const { data: session } = useSession();
   const { t, locale, setLocale } = useTranslation();
@@ -98,6 +102,7 @@ export default function TopBar({
   const [editableTitle, setEditableTitle] = useState(title);
   const [showShareModal, setShowShareModal] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
+  const [translateOpen, setTranslateOpen] = useState(false);
   const [avgRating, setAvgRating] = useState(0);
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -136,13 +141,14 @@ export default function TopBar({
   }, [title]);
 
   useEffect(() => {
-    if (!exportOpen) return;
+    if (!exportOpen && !translateOpen) return;
     function handleClick() {
       setExportOpen(false);
+      setTranslateOpen(false);
     }
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
-  }, [exportOpen]);
+  }, [exportOpen, translateOpen]);
 
   function commitTitle() {
     const trimmed = editableTitle.trim();
@@ -310,6 +316,44 @@ export default function TopBar({
             </div>
           )}
         </div>
+        {/* Translate dropdown */}
+        {onTranslate && (
+          <div className="relative">
+            <button
+              onClick={() => setTranslateOpen((v) => !v)}
+              disabled={translateLoading}
+              className="flex items-center gap-1 h-8 px-2 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8 disabled:opacity-40"
+              title="Translate document"
+              aria-label="Translate document"
+            >
+              {translateLoading ? (
+                <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+              )}
+              <span className="hidden sm:inline">{translateLoading ? "Translating..." : "Translate"}</span>
+            </button>
+            {translateOpen && (
+              <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 py-1">
+                {["Spanish", "French", "Japanese", "Chinese", "German", "Portuguese"].map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => { setTranslateOpen(false); onTranslate(lang); }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Theme selector */}
         <ThemeEditor />
         {/* Collaborator avatars */}
