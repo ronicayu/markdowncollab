@@ -9,6 +9,7 @@ import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import RecentDocs from "@/components/RecentDocs";
 import Scratchpad from "@/components/Scratchpad";
+import KeyboardDocCreate from "@/components/KeyboardDocCreate";
 import { I18nProvider } from "@/lib/i18n";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </a>
             {children}
             <GlobalCommandPalette />
+            <KeyboardDocCreate />
             <OfflineIndicator />
             <RecentDocs />
             <Scratchpad />
