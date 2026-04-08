@@ -890,6 +890,55 @@ export default function TopBar({
               >
                 <span>HTML (.html)</span>
               </a>
+              <button
+                onClick={async () => {
+                  setExportOpen(false);
+                  try {
+                    const res = await fetch(`/api/documents/${documentId}/export`);
+                    if (!res.ok) throw new Error("Export failed");
+                    const md = await res.text();
+                    await navigator.clipboard.writeText(md);
+                    // Show a brief toast-like notification
+                    const toast = document.createElement("div");
+                    toast.textContent = "Copied to clipboard";
+                    toast.style.cssText = "position:fixed;bottom:24px;right:24px;background:#111;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;z-index:99999;opacity:0;transition:opacity 0.2s";
+                    document.body.appendChild(toast);
+                    requestAnimationFrame(() => { toast.style.opacity = "1"; });
+                    setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 200); }, 2000);
+                  } catch (err) {
+                    console.error("Copy as markdown failed:", err);
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors w-full text-left"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                </svg>
+                <span>Copy as Markdown</span>
+              </button>
+              <button
+                onClick={async () => {
+                  setExportOpen(false);
+                  try {
+                    const { toPng } = await import("html-to-image");
+                    const el = document.querySelector(".ProseMirror") as HTMLElement;
+                    if (!el) return;
+                    const dataUrl = await toPng(el, { backgroundColor: "#FFFEF9", pixelRatio: 2 });
+                    const link = document.createElement("a");
+                    link.download = `${title || "document"}.png`;
+                    link.href = dataUrl;
+                    link.click();
+                  } catch (err) {
+                    console.error("Copy as image failed:", err);
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors w-full text-left"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H3.75A2.25 2.25 0 001.5 6.75v12a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span>Copy as image (.png)</span>
+              </button>
               <div className="border-t border-white/10 my-1" />
               <button
                 onClick={() => {
