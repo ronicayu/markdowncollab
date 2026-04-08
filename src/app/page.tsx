@@ -459,6 +459,13 @@ export default function Home() {
     setDocs((prev) => [newDoc, ...prev]);
   }
 
+  async function forkDoc(doc: Doc) {
+    const res = await fetch(`/api/documents/${doc.id}/fork`, { method: "POST" });
+    if (!res.ok) return;
+    const forked = await res.json();
+    router.push(`/doc/${forked.id}`);
+  }
+
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -1522,6 +1529,15 @@ export default function Home() {
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={(e) => { e.preventDefault(); forkDoc(doc); }}
+                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+                      title="Fork document"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                       </svg>
                     </button>
                     <button

@@ -165,6 +165,7 @@ export default function DocumentPage({
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [fontFamily, setFontFamily] = useState<string | null>(null);
+  const [forkedFrom, setForkedFrom] = useState<{ id: string; title: string } | null>(null);
   // Fetch document title, role, status, and breadcrumbs on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
@@ -178,6 +179,15 @@ export default function DocumentPage({
         // Track recent document open for the RecentDocs widget
         trackDocumentOpen(id, doc?.title || id);
         if (typeof window !== "undefined") window.dispatchEvent(new Event("recentDocsUpdated"));
+        // Fetch forked-from document info if applicable
+        if (doc?.forkedFrom) {
+          fetch(`/api/documents/${doc.forkedFrom}`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((origDoc) => {
+              if (origDoc) setForkedFrom({ id: origDoc.id, title: origDoc.title || "Untitled" });
+            })
+            .catch(() => {});
+        }
         // Fetch folder breadcrumb path if document is in a folder
         if (doc?.folderId) {
           fetch(`/api/folders/${doc.folderId}`)
@@ -898,6 +908,7 @@ export default function DocumentPage({
         onFontChange={userRole !== "viewer" ? handleFontChange : undefined}
         autoCompleteEnabled={autoCompleteEnabled}
         onToggleAutoComplete={toggleAutoComplete}
+        forkedFrom={forkedFrom}
       />
       {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {/* Cover Image Banner */}
