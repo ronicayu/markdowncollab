@@ -120,6 +120,8 @@ export default function Editor({
   const [rewriteLoading, setRewriteLoading] = useState(false);
   const [rewriteMenuOpen, setRewriteMenuOpen] = useState(false);
   const [rewritePreview, setRewritePreview] = useState<{ text: string; from: number; to: number } | null>(null);
+  const [summarizeLoading, setSummarizeLoading] = useState(false);
+  const [summaryPopover, setSummaryPopover] = useState<{ text: string; from: number; to: number } | null>(null);
   const [spellcheckEnabled, setSpellcheckEnabled] = useState(() => {
     if (typeof window === "undefined") return true;
     try {
@@ -974,6 +976,76 @@ export default function Editor({
             </svg>
             {expandLoading ? "Expanding..." : "Expand with AI"}
           </button>
+        )}
+        {/* Summarize with AI — shown when text is selected */}
+        {hasTextSelection && editor && (
+          <div className="relative">
+            <button
+              onClick={async () => {
+                if (!editor || summarizeLoading) return;
+                const { from, to } = editor.state.selection;
+                const selectedText = editor.state.doc.textBetween(from, to, " ");
+                if (!selectedText.trim()) return;
+                setSummarizeLoading(true);
+                try {
+                  const res = await fetch("/api/agent/summarize-selection", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: selectedText }),
+                  });
+                  if (res.ok) {
+                    const { summary } = await res.json();
+                    if (summary) {
+                      setSummaryPopover({ text: summary, from, to });
+                    }
+                  }
+                } catch (err) {
+                  console.error("Summarize failed:", err);
+                } finally {
+                  setSummarizeLoading(false);
+                }
+              }}
+              disabled={summarizeLoading}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium text-teal-600 bg-teal-50 hover:bg-teal-100 disabled:opacity-50 transition-colors"
+              title="Summarize selected text with AI"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />
+              </svg>
+              {summarizeLoading ? "Summarizing..." : "Summarize"}
+            </button>
+            {summaryPopover && (
+              <div className="absolute bottom-7 left-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 w-72">
+                <p className="text-xs text-gray-700 mb-2">{summaryPopover.text}</p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().deleteRange({ from: summaryPopover.from, to: summaryPopover.to }).insertContentAt(summaryPopover.from, summaryPopover.text).run();
+                      setSummaryPopover(null);
+                    }}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium text-green-700 bg-green-50 hover:bg-green-100"
+                  >
+                    Replace
+                  </button>
+                  <button
+                    onClick={() => {
+                      editor.chain().focus().insertContentAt(summaryPopover.to, "\n\n" + summaryPopover.text).run();
+                      setSummaryPopover(null);
+                    }}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
+                  >
+                    Insert below
+                  </button>
+                  <button
+                    onClick={() => setSummaryPopover(null)}
+                    className="px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-500 bg-gray-50 hover:bg-gray-100"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
         {/* Rewrite with AI — shown when text is selected */}
         {hasTextSelection && editor && (
