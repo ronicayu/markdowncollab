@@ -52,6 +52,7 @@ import { GrammarCheck, grammarCheckPluginKey } from "@/extensions/grammar-check"
 import { ProgressBlock } from "@/extensions/progress-block";
 import { SectionLockExtension } from "@/extensions/section-lock";
 import { BreadcrumbBlock } from "@/extensions/breadcrumb-block";
+import { IssueLinker } from "@/extensions/issue-linker";
 
 
 interface EditorProps {
@@ -108,6 +109,14 @@ export default function Editor({
   const [showHealthDetails, setShowHealthDetails] = useState(false);
   const [lastSavedByName, setLastSavedByName] = useState<string | null>(null);
   const [typewriterMode, setTypewriterMode] = useState(false);
+  const [issueSettingsOpen, setIssueSettingsOpen] = useState(false);
+  const [issuePatterns, setIssuePatterns] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const stored = localStorage.getItem("issueLinker:patterns");
+      return stored || '{\n  "JIRA": "https://jira.example.com/browse/{ref}",\n  "GH": "https://github.com/org/repo/issues/{num}",\n  "#": "https://github.com/org/repo/issues/{num}"\n}';
+    } catch { return ""; }
+  });
 
   // Load typewriter mode from localStorage
   useEffect(() => {
@@ -307,6 +316,7 @@ export default function Editor({
         ydoc,
         currentUser: userName,
       }),
+      IssueLinker,
     ],
     editorProps: {
       attributes: {
@@ -746,6 +756,17 @@ export default function Editor({
           </svg>
           Typewriter
         </button>
+        {/* Issue Tracker Settings */}
+        <button
+          onClick={() => setIssueSettingsOpen(true)}
+          className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          title="Issue tracker link settings"
+        >
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
+          </svg>
+          Issues
+        </button>
         {/* Focus Timer */}
         <FocusTimer documentId={documentId} />
         {/* Health Score Badge */}
@@ -918,6 +939,43 @@ export default function Editor({
         />
       )}
       {editor && <TableSortMenu editor={editor} />}
+      {/* Issue Tracker Settings Dialog */}
+      {issueSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setIssueSettingsOpen(false)}>
+          <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Issue Tracker Settings</h3>
+            <p className="text-xs text-gray-500 mb-3">
+              Configure URL patterns for auto-linking. Use {"{ref}"} for the full reference (e.g. JIRA-123) and {"{num}"} for just the number.
+            </p>
+            <textarea
+              value={issuePatterns}
+              onChange={(e) => setIssuePatterns(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 font-mono resize-none focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              rows={6}
+              placeholder='{"JIRA": "https://jira.example.com/browse/{ref}"}'
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={() => {
+                  try {
+                    JSON.parse(issuePatterns);
+                    localStorage.setItem("issueLinker:patterns", issuePatterns);
+                    setIssueSettingsOpen(false);
+                  } catch {
+                    alert("Invalid JSON. Please check the format.");
+                  }
+                }}
+                className="text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+              >
+                Save
+              </button>
+              <button onClick={() => setIssueSettingsOpen(false)} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
