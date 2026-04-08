@@ -55,6 +55,8 @@ interface TopBarProps {
   translateLoading?: boolean;
   agentTone?: string;
   onAgentToneChange?: (tone: string) => void;
+  publishAt?: string | null;
+  onSchedulePublish?: (dateTime: string | null) => void;
 }
 
 export default function TopBar({
@@ -94,6 +96,8 @@ export default function TopBar({
   translateLoading,
   agentTone,
   onAgentToneChange,
+  publishAt,
+  onSchedulePublish,
 }: TopBarProps) {
   const { data: session } = useSession();
   const { t, locale, setLocale } = useTranslation();
@@ -112,6 +116,8 @@ export default function TopBar({
   const [hoverRating, setHoverRating] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [embedCodeOpen, setEmbedCodeOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleValue, setScheduleValue] = useState("");
 
   // Fetch rating on mount
   useEffect(() => {
@@ -681,6 +687,73 @@ export default function TopBar({
             </svg>
             <span className="hidden sm:inline">{lockInfo?.locked ? "Unlock" : "Lock"}</span>
           </button>
+        )}
+
+        {/* Schedule Publish */}
+        {onSchedulePublish && (
+          <div className="relative">
+            <button
+              onClick={() => {
+                setScheduleOpen((v) => !v);
+                if (publishAt) {
+                  setScheduleValue(publishAt.slice(0, 16));
+                } else {
+                  // Default to tomorrow at noon
+                  const d = new Date();
+                  d.setDate(d.getDate() + 1);
+                  d.setHours(12, 0, 0, 0);
+                  setScheduleValue(d.toISOString().slice(0, 16));
+                }
+              }}
+              className={`flex items-center gap-1.5 h-8 px-2 sm:px-3 text-sm font-medium transition-colors rounded-md ${
+                publishAt
+                  ? "text-green-400 bg-green-400/10 hover:bg-green-400/20"
+                  : "text-white/60 hover:text-white hover:bg-white/8"
+              }`}
+              title={publishAt ? `Scheduled: ${new Date(publishAt).toLocaleString()}` : "Schedule publish"}
+              aria-label="Schedule publish"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+              <span className="hidden sm:inline">{publishAt ? "Scheduled" : "Schedule"}</span>
+            </button>
+            {scheduleOpen && (
+              <div className="absolute right-0 top-full mt-1 w-64 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 p-3">
+                <p className="text-xs font-medium text-white/70 mb-2">Schedule publish date/time</p>
+                <input
+                  type="datetime-local"
+                  value={scheduleValue}
+                  onChange={(e) => setScheduleValue(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1.5 text-sm text-white outline-none focus:border-[#B8692A]"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={() => {
+                      if (scheduleValue) {
+                        onSchedulePublish(new Date(scheduleValue).toISOString());
+                      }
+                      setScheduleOpen(false);
+                    }}
+                    className="flex-1 text-xs font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-1.5 rounded transition-colors"
+                  >
+                    Set schedule
+                  </button>
+                  {publishAt && (
+                    <button
+                      onClick={() => {
+                        onSchedulePublish(null);
+                        setScheduleOpen(false);
+                      }}
+                      className="text-xs font-medium text-red-400 hover:text-red-300 px-2 py-1.5"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Font selector */}

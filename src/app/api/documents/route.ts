@@ -4,6 +4,20 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
+  // Auto-publish: promote documents whose publishAt has passed
+  try {
+    await prisma.document.updateMany({
+      where: {
+        publishAt: { lte: new Date() },
+        status: { not: "approved" },
+        deletedAt: null,
+      },
+      data: { status: "approved" },
+    });
+  } catch {
+    // Non-critical — silently ignore
+  }
+
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
   const userEmail = session?.user?.email ?? undefined;

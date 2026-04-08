@@ -173,6 +173,7 @@ export default function DocumentPage({
   const [passwordError, setPasswordError] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [expirationDialogOpen, setExpirationDialogOpen] = useState(false);
+  const [publishAt, setPublishAt] = useState<string | null>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [fontFamily, setFontFamily] = useState<string | null>(null);
@@ -219,6 +220,31 @@ export default function DocumentPage({
         }
       })
       .catch(() => {});
+
+    // Fetch schedule info
+    fetch(`/api/documents/${id}/schedule`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.publishAt) setPublishAt(data.publishAt);
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const handleSchedulePublish = useCallback(async (dateTime: string | null) => {
+    try {
+      const res = await fetch(`/api/documents/${id}/schedule`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ publishAt: dateTime }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPublishAt(data.publishAt);
+        toast(dateTime ? `Publish scheduled for ${new Date(dateTime).toLocaleString()}` : "Schedule cleared");
+      }
+    } catch {
+      toast("Failed to update schedule");
+    }
   }, [id]);
 
   const handleStatusChange = useCallback(
@@ -1105,6 +1131,8 @@ export default function DocumentPage({
         translateLoading={translateLoading}
         agentTone={agentTone}
         onAgentToneChange={setAgentTone}
+        publishAt={publishAt}
+        onSchedulePublish={userRole !== "viewer" ? handleSchedulePublish : undefined}
       />}
       {zenMode && (
         <div className="flex items-center justify-between bg-[#111110] px-4 py-2 shrink-0">

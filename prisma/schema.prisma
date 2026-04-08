@@ -24,6 +24,7 @@ model Document {
   password    String?
   coverImage  String?
   fontFamily  String?
+  publishAt   DateTime?
   expiresAt   DateTime?
   deletedAt  DateTime?
   createdAt  DateTime           @default(now())
