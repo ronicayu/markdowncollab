@@ -73,17 +73,11 @@ export default function Home() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
   const [search, setSearch] = useState("");
-  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
-    if (typeof window === "undefined") return [];
-    try { return JSON.parse(localStorage.getItem("recentSearches") || "[]"); } catch { return []; }
-  });
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showRecentSearches, setShowRecentSearches] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
-  const [relativeDates, setRelativeDates] = useState(() => {
-    if (typeof window === "undefined") return true;
-    try { return localStorage.getItem("relativeDates") !== "false"; } catch { return true; }
-  });
+  const [relativeDates, setRelativeDates] = useState(true);
   const formatDate = useCallback(
     (dateStr: string) => relativeDates ? formatDateRelative(dateStr) : formatDateAbsolute(dateStr),
     [relativeDates]
@@ -151,11 +145,17 @@ export default function Home() {
   const [merging, setMerging] = useState(false);
   const router = useRouter();
 
+  // Hydrate localStorage-backed state on the client to avoid SSR mismatch
+  useEffect(() => {
+    try { const saved = JSON.parse(localStorage.getItem("recentSearches") || "[]"); if (Array.isArray(saved)) setRecentSearches(saved); } catch {}
+    try { if (localStorage.getItem("relativeDates") === "false") setRelativeDates(false); } catch {}
+  }, []);
+
   useEffect(() => {
     fetch("/api/documents")
       .then((r) => {
         if (!r.ok) return [];
-        return r.json();
+        return r.json().catch(() => []);
       })
       .then((fetchedDocs: Doc[]) => {
         if (!fetchedDocs || !Array.isArray(fetchedDocs)) return;
@@ -405,7 +405,8 @@ export default function Home() {
       fetch(`/api/documents/search?${params.toString()}`)
         .then((r) => r.ok ? r.json() : null)
         .then((data) => {
-          if (Array.isArray(data)) setSearchResults(data);
+          if (data && data.items) setSearchResults(data.items);
+          else if (Array.isArray(data)) setSearchResults(data);
           else setSearchResults([]);
         })
         .catch(() => setSearchResults([]))

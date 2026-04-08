@@ -165,11 +165,19 @@ export async function GET(req: Request) {
     }
   }
 
-  const results: { id: string; title: string; snippet: string; updatedAt: string }[] = [];
+  // Pagination params
+  const pageParam = parseInt(url.searchParams.get("page") || "1", 10);
+  const limitParam = parseInt(url.searchParams.get("limit") || "20", 10);
+  const page = Math.max(1, isNaN(pageParam) ? 1 : pageParam);
+  const pageSize = Math.max(1, Math.min(100, isNaN(limitParam) ? 20 : limitParam));
+
+  const results: { id: string; title: string; snippet: string; updatedAt: string; score: number }[] = [];
   const addedIds = new Set<string>();
 
   for (const doc of accessibleDocs) {
-    const titleMatch = doc.title.toLowerCase().includes(lowerQuery);
+    const lowerTitle = doc.title.toLowerCase();
+    const titleExact = lowerTitle === lowerQuery;
+    const titleContains = !titleExact && lowerTitle.includes(lowerQuery);
 
     let contentSnippet: string | null = null;
     if (mdFiles.has(doc.id)) {
@@ -181,21 +189,35 @@ export async function GET(req: Request) {
       }
     }
 
-    if (titleMatch || contentSnippet) {
+    if (titleExact || titleContains || contentSnippet) {
       if (!addedIds.has(doc.id)) {
         addedIds.add(doc.id);
+        let score = 0;
+        if (titleExact) score += 100;
+        else if (titleContains) score += 50;
+        if (contentSnippet) score += 10;
+
         results.push({
           id: doc.id,
           title: doc.title,
           snippet: contentSnippet || "",
           updatedAt: doc.updatedAt.toISOString(),
+          score,
         });
       }
     }
   }
 
-  // Sort by updatedAt descending
-  results.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  // Sort by score descending, then updatedAt descending
+  results.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
 
-  return NextResponse.json(results);
+  // Paginate
+  const total = results.length;
+  const start = (page - 1) * pageSize;
+  const pagedResults = results.slice(start, start + pageSize);
+
+  return NextResponse.json({ items: pagedResults, total, page, pageSize });
 }
