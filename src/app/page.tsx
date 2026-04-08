@@ -7,6 +7,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
 import NotificationBell from "@/components/NotificationBell";
 import WelcomeModal from "@/components/WelcomeModal";
+import DuplicateDialog from "@/components/DuplicateDialog";
 import { useTranslation } from "@/lib/i18n";
 
 interface Tag {
@@ -65,6 +66,7 @@ export default function Home() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [duplicateDialogDoc, setDuplicateDialogDoc] = useState<Doc | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
   const [searchResults, setSearchResults] = useState<{ id: string; title: string; snippet: string; updatedAt: string }[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -465,14 +467,8 @@ export default function Home() {
     setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, title: trimmed } : d));
   }
 
-  async function duplicateDoc(doc: Doc) {
-    const res = await fetch("/api/documents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: `${doc.title || "Untitled"} (copy)` }),
-    });
-    const newDoc = await res.json();
-    setDocs((prev) => [newDoc, ...prev]);
+  function duplicateDoc(doc: Doc) {
+    setDuplicateDialogDoc(doc);
   }
 
   async function forkDoc(doc: Doc) {
@@ -1717,6 +1713,17 @@ export default function Home() {
             </div>
           </div>
         </div>
+      )}
+      {duplicateDialogDoc && (
+        <DuplicateDialog
+          documentId={duplicateDialogDoc.id}
+          documentTitle={duplicateDialogDoc.title}
+          isOpen={!!duplicateDialogDoc}
+          onClose={() => setDuplicateDialogDoc(null)}
+          onDuplicated={(newDocId) => {
+            router.push(`/doc/${newDocId}`);
+          }}
+        />
       )}
     </div>
   );
