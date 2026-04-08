@@ -1149,9 +1149,35 @@ export default function SlashCommandMenu({
     );
   }
 
-  if (allItems.length === 0) {
-    onClose();
-    return null;
+  // Keyboard shortcut hints for common commands
+  const SHORTCUT_HINTS: Record<string, string> = {
+    h1: "# ",
+    h2: "## ",
+    h3: "### ",
+    bullet: "- ",
+    ordered: "1. ",
+    todo: "[] ",
+    quote: "> ",
+    code: "``` ",
+    divider: "---",
+    bold: "Cmd+B",
+    italic: "Cmd+I",
+  };
+
+  // Highlight matching characters in label
+  function highlightMatch(label: string, q: string): React.ReactNode {
+    if (!q) return label;
+    const lowerLabel = label.toLowerCase();
+    const lowerQ = q.toLowerCase();
+    const idx = lowerLabel.indexOf(lowerQ);
+    if (idx === -1) return label;
+    return (
+      <>
+        {label.slice(0, idx)}
+        <span className="text-[#B8692A] font-semibold">{label.slice(idx, idx + q.length)}</span>
+        {label.slice(idx + q.length)}
+      </>
+    );
   }
 
   // Adjust position to stay in viewport
@@ -1162,6 +1188,15 @@ export default function SlashCommandMenu({
     zIndex: 1000,
   };
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus search input when menu appears
+  useEffect(() => {
+    // Small delay to let the DOM render
+    const timer = setTimeout(() => searchInputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div
       ref={menuRef}
@@ -1169,9 +1204,27 @@ export default function SlashCommandMenu({
       role="listbox"
       aria-label="Slash commands"
       aria-activedescendant={allItems[selectedIndex] ? `slash-cmd-${allItems[selectedIndex].id}` : undefined}
-      className="w-64 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-y-auto max-h-72"
+      className="w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden flex flex-col max-h-80"
       onMouseDown={(e) => e.preventDefault()} // prevent editor blur
     >
+      {/* Search input */}
+      <div className="px-3 pt-2 pb-1.5 border-b border-gray-100 shrink-0">
+        <input
+          ref={searchInputRef}
+          type="text"
+          placeholder="Search commands..."
+          value={query}
+          readOnly
+          className="w-full text-sm bg-gray-50 rounded-md px-2.5 py-1.5 outline-none placeholder:text-gray-400 text-gray-700 border border-gray-200 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]/20"
+        />
+      </div>
+      <div className="overflow-y-auto flex-1">
+      {allItems.length === 0 && (
+        <div className="px-3 py-6 text-center">
+          <p className="text-xs text-gray-400">No commands found</p>
+          <p className="text-[10px] text-gray-300 mt-1">Try a different search term</p>
+        </div>
+      )}
       {displayItems.favorites.length > 0 && (
         <>
           <div className="px-3 pt-1.5 pb-0.5">
@@ -1197,8 +1250,13 @@ export default function SlashCommandMenu({
                 <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
                   {cmd.icon}
                 </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{cmd.label}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-900">{highlightMatch(cmd.label, query)}</p>
+                    {SHORTCUT_HINTS[cmd.id] && (
+                      <span className="text-[9px] font-mono text-gray-300 bg-gray-50 px-1 py-0.5 rounded shrink-0 ml-1">{SHORTCUT_HINTS[cmd.id]}</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
                 </div>
               </button>
@@ -1232,10 +1290,15 @@ export default function SlashCommandMenu({
               {cmd.icon}
             </span>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-gray-900">{cmd.label}</p>
-                {isCustom && (
-                  <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-600 leading-none">Custom</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-gray-900">{highlightMatch(cmd.label, query)}</p>
+                  {isCustom && (
+                    <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-purple-100 text-purple-600 leading-none">Custom</span>
+                  )}
+                </div>
+                {SHORTCUT_HINTS[cmd.id] && (
+                  <span className="text-[9px] font-mono text-gray-300 bg-gray-50 px-1 py-0.5 rounded shrink-0 ml-1">{SHORTCUT_HINTS[cmd.id]}</span>
                 )}
               </div>
               <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
@@ -1243,8 +1306,9 @@ export default function SlashCommandMenu({
           </button>
         );
       })}
+      </div>
       {/* Manage custom commands link */}
-      <div className="border-t border-gray-100 mt-1">
+      <div className="border-t border-gray-100 shrink-0">
         <button
           onClick={() => setShowCommandManager(true)}
           className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-400 hover:text-[#B8692A] hover:bg-gray-50 transition-colors"
