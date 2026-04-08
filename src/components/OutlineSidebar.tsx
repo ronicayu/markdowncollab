@@ -42,6 +42,29 @@ interface OutlineSidebarProps {
   documentId?: string;
 }
 
+function computeHeadingNumbers(headings: Heading[]): string[] {
+  const numbers: string[] = [];
+  const counters: number[] = [0, 0, 0, 0, 0, 0]; // h1-h6
+
+  for (const h of headings) {
+    const level = h.level; // 1-based
+    const idx = level - 1;
+    counters[idx]++;
+    // Reset all deeper levels
+    for (let j = idx + 1; j < counters.length; j++) {
+      counters[j] = 0;
+    }
+    // Build number string from the first non-zero level to current level
+    const parts: number[] = [];
+    for (let j = 0; j <= idx; j++) {
+      parts.push(counters[j] || 0);
+    }
+    numbers.push(parts.join(".") + ".");
+  }
+
+  return numbers;
+}
+
 export default function OutlineSidebar({ editor, documentId }: OutlineSidebarProps) {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [collapsed, setCollapsed] = useState(false);
@@ -50,6 +73,17 @@ export default function OutlineSidebar({ editor, documentId }: OutlineSidebarPro
   const [showAddBookmark, setShowAddBookmark] = useState(false);
   const [bookmarkName, setBookmarkName] = useState("");
   const bookmarkInputRef = useRef<HTMLInputElement>(null);
+  const [showNumbering, setShowNumbering] = useState(false);
+
+  // Load numbering preference from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("outline-numbering");
+      if (stored === "true") setShowNumbering(true);
+    } catch {}
+  }, []);
+
+  const headingNumbers = showNumbering ? computeHeadingNumbers(headings) : [];
 
   // Load bookmarks from localStorage
   useEffect(() => {
@@ -139,15 +173,34 @@ export default function OutlineSidebar({ editor, documentId }: OutlineSidebarPro
     <div className="w-52 border-r border-[#E8D8C0] bg-[#F5EBD8] p-4 overflow-y-auto">
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs font-semibold text-gray-400 tracking-widest">OUTLINE</p>
-        <button
-          onClick={() => setCollapsed(true)}
-          className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
-          title="Hide outline"
-        >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => {
+              const next = !showNumbering;
+              setShowNumbering(next);
+              try { localStorage.setItem("outline-numbering", String(next)); } catch {}
+            }}
+            className={`p-1 rounded-md transition-colors ${
+              showNumbering
+                ? "text-amber-600 bg-amber-100 hover:bg-amber-200"
+                : "text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0]"
+            }`}
+            title={showNumbering ? "Hide numbering" : "Show numbering"}
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+            </svg>
+          </button>
+          <button
+            onClick={() => setCollapsed(true)}
+            className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+            title="Hide outline"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
       </div>
       {headings.length === 0 ? (
         <p className="text-xs text-gray-400">No headings yet</p>
@@ -177,6 +230,9 @@ export default function OutlineSidebar({ editor, documentId }: OutlineSidebarPro
               className="block w-full text-left text-sm text-gray-600 hover:text-gray-900 truncate py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors"
               style={{ paddingLeft: `${(h.level - 1) * 12 + 8}px` }}
             >
+              {showNumbering && headingNumbers[i] ? (
+                <span className="text-gray-400 mr-1 text-xs font-mono">{headingNumbers[i]}</span>
+              ) : null}
               {h.text}
             </button>
           ))}
