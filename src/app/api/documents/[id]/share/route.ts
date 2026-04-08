@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { checkDocumentAccess } from "@/lib/access-control";
 import { logActivity } from "@/lib/activity-log";
 import { fireWebhook } from "@/lib/webhook";
+import { checkRateLimit } from "@/lib/rate-limiter";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function getSessionInfo() {
   const session = await getServerSession(authOptions);
@@ -51,6 +54,20 @@ export async function POST(
 
   if (!email || typeof email !== "string") {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+  }
+
+  // Rate limit: 30 share operations per minute per user
+  const rateLimitKey = `share:${userId || userEmail || "anonymous"}`;
+  const rateResult = checkRateLimit(rateLimitKey, 30, 2_000);
+  if (!rateResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests", retryAfter: rateResult.retryAfter },
+      { status: 429 }
+    );
   }
 
   if (!["viewer", "editor"].includes(role)) {

@@ -1374,8 +1374,9 @@ export default function Home() {
                   Searching...
                 </div>
               ) : searchResults.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center">
-                  <p className="text-gray-400 text-sm">No results for &ldquo;{search}&rdquo; in titles or content.</p>
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <span className="text-4xl mb-3">&#128269;</span>
+                  <p className="text-sm">No results for &ldquo;{search}&rdquo;. Try a different search term.</p>
                 </div>
               ) : (
                 <>
@@ -1410,8 +1411,9 @@ export default function Home() {
                   Loading...
                 </div>
               ) : trashDocs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center">
-                  <p className="text-gray-400 text-sm">Trash is empty.</p>
+                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                  <span className="text-4xl mb-3">&#128465;</span>
+                  <p className="text-sm">Trash is empty.</p>
                 </div>
               ) : (
                 trashDocs.map((doc) => {
@@ -1446,23 +1448,43 @@ export default function Home() {
               )}
             </div>
           ) : loading ? (
-            <div className="space-y-2 max-w-3xl">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-[#FFFEF9] rounded-xl px-5 py-4 animate-pulse">
-                  <div className="h-4 bg-amber-100 rounded w-1/3 mb-2" />
-                  <div className="h-3 bg-amber-50 rounded w-1/2" />
+            <div className="space-y-3 p-4 max-w-3xl">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="animate-pulse flex items-center gap-3 p-3 rounded-lg bg-gray-100">
+                  <div className="w-4 h-4 bg-gray-200 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4" />
+                    <div className="h-3 bg-gray-200 rounded w-1/4" />
+                  </div>
                 </div>
               ))}
             </div>
           ) : filteredDocs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
+            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
               {search.trim() ? (
-                <p className="text-gray-400 text-sm">No documents matching &ldquo;{search}&rdquo;</p>
+                <>
+                  <span className="text-4xl mb-3">&#128269;</span>
+                  <p className="text-sm">No results for &ldquo;{search}&rdquo;. Try a different search term.</p>
+                </>
+              ) : activeTab === "starred" ? (
+                <>
+                  <span className="text-4xl mb-3">&#11088;</span>
+                  <p className="text-sm">No starred documents yet. Star a document to find it quickly here.</p>
+                </>
+              ) : activeTab === "shared" ? (
+                <>
+                  <span className="text-4xl mb-3">&#128101;</span>
+                  <p className="text-sm">No documents shared with you yet.</p>
+                </>
               ) : activeTab === "recent" ? (
-                <p className="text-gray-400 text-sm">No documents updated in the last 7 days.</p>
+                <>
+                  <span className="text-4xl mb-3">&#128337;</span>
+                  <p className="text-sm">No documents updated in the last 7 days.</p>
+                </>
               ) : (
                 <>
-                  <p className="text-gray-400 text-sm mb-4">No documents yet.</p>
+                  <span className="text-4xl mb-3">&#128196;</span>
+                  <p className="text-sm mb-4">No documents yet.</p>
                   <button
                     onClick={() => setShowTemplatePicker(true)}
                     className="bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"

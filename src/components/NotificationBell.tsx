@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface Notification {
@@ -36,19 +36,23 @@ export default function NotificationBell() {
   const router = useRouter();
 
   // Poll unread count every 30 seconds
-  const fetchCount = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notifications/count");
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadCount(data.unread);
-      }
-    } catch {
-      // Silently ignore network errors
-    }
-  }, []);
-
   useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchCount() {
+      try {
+        const res = await fetch("/api/notifications/count", { signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadCount(data.unread);
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name !== "AbortError") {
+          // Silently ignore network errors during polling
+        }
+      }
+    }
+
     fetchCount();
     const interval = setInterval(fetchCount, 30_000);
 
@@ -58,10 +62,11 @@ export default function NotificationBell() {
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
+      controller.abort();
       clearInterval(interval);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [fetchCount]);
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -176,8 +181,9 @@ export default function NotificationBell() {
                 Loading...
               </div>
             ) : notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400">
-                No notifications yet
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <span className="text-4xl mb-3">&#128276;</span>
+                <p className="text-sm">No notifications yet.</p>
               </div>
             ) : (
               notifications.map((notif) => (

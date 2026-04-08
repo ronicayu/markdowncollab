@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limiter";
 
 export async function GET(req: NextRequest) {
   // Auto-publish: promote documents whose publishAt has passed
@@ -97,10 +98,21 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id as string | undefined;
 
+  // Rate limit: 30 document creates per minute per user
+  const rateLimitKey = `doc-create:${userId || "anonymous"}`;
+  const rateResult = checkRateLimit(rateLimitKey, 30, 2_000);
+  if (!rateResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests", retryAfter: rateResult.retryAfter },
+      { status: 429 }
+    );
+  }
+
   const { title, templateId, templateVariables } = await req.json();
+  const sanitizedTitle = (title || "Untitled").trim().substring(0, 500);
   const doc = await prisma.document.create({
     data: {
-      title: title || "Untitled",
+      title: sanitizedTitle,
       ownerId: userId ?? null,
       templateId: templateId ?? null,
     },
