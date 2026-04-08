@@ -96,6 +96,7 @@ export default function Editor({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [healthScore, setHealthScore] = useState<HealthScoreType | null>(null);
   const [showHealthDetails, setShowHealthDetails] = useState(false);
+  const [lastSavedByName, setLastSavedByName] = useState<string | null>(null);
 
   async function uploadImage(file: File): Promise<string | null> {
     const formData = new FormData();
@@ -131,12 +132,30 @@ export default function Editor({
     if (stored) setWordGoal(parseInt(stored, 10));
   }, [documentId]);
 
-  // Track save status from Yjs sync events
+  // Track save status from Yjs sync events + last editor name from awareness
   useEffect(() => {
     let saveTimer: ReturnType<typeof setTimeout>;
-    const onUpdate = () => {
+    const onUpdate = (_update: Uint8Array, origin: unknown) => {
       setSaveStatus("saving");
       clearTimeout(saveTimer);
+
+      // Determine who made this edit from awareness states
+      // Local updates have origin === null or the provider itself
+      if (!origin || origin === provider) {
+        // This is a local edit — the current user is the editor
+        setLastSavedByName(userName);
+      } else {
+        // Remote edit — find the most recently active remote user from awareness
+        const states = provider.awareness.getStates();
+        let remoteName: string | null = null;
+        states.forEach((state, clientId) => {
+          if (clientId !== provider.awareness.clientID && state.user?.name) {
+            remoteName = state.user.name;
+          }
+        });
+        if (remoteName) setLastSavedByName(remoteName);
+      }
+
       // The WS provider sends updates immediately; the server persists after a debounce.
       // Mark as "saved" after 1.5s (matches the server's save debounce).
       saveTimer = setTimeout(() => {
@@ -146,7 +165,7 @@ export default function Editor({
     };
     ydoc.on("update", onUpdate);
     return () => { ydoc.off("update", onUpdate); clearTimeout(saveTimer); };
-  }, [ydoc]);
+  }, [ydoc, provider, userName]);
 
   // Tick the clock every 30s so "Saved Xm ago" updates
   useEffect(() => {
@@ -624,10 +643,11 @@ export default function Editor({
           ) : lastSyncTime ? (
             (() => {
               const ago = Math.floor((now - lastSyncTime) / 1000);
-              if (ago < 10) return "Saved just now";
-              if (ago < 60) return `Saved ${ago}s ago`;
-              if (ago < 3600) return `Saved ${Math.floor(ago / 60)}m ago`;
-              return `Saved ${new Date(lastSyncTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+              const byLine = lastSavedByName ? ` by ${lastSavedByName}` : "";
+              if (ago < 10) return `Saved${byLine} just now`;
+              if (ago < 60) return `Saved${byLine} ${ago}s ago`;
+              if (ago < 3600) return `Saved${byLine} ${Math.floor(ago / 60)}m ago`;
+              return `Saved${byLine} ${new Date(lastSyncTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
             })()
           ) : ""}
         </span>
