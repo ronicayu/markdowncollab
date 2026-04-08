@@ -79,6 +79,56 @@ export const CommentMark = Mark.create({
         },
       }),
 
+      // Tooltip plugin: show comment text on hover over comment marks
+      new Plugin({
+        key: new PluginKey("commentMarkTooltip"),
+        props: {
+          handleDOMEvents: {
+            mouseover(view, event) {
+              const target = event.target as HTMLElement;
+              const mark = target.closest?.("mark.comment-highlight, mark.comment-highlight-active");
+              if (!mark) {
+                const existing = document.getElementById("comment-hover-tooltip");
+                if (existing) existing.remove();
+                return false;
+              }
+              const commentId = mark.getAttribute("data-comment-id");
+              if (!commentId) return false;
+
+              // Don't recreate if already showing for same comment
+              const existing = document.getElementById("comment-hover-tooltip");
+              if (existing && existing.dataset.commentId === commentId) return false;
+              if (existing) existing.remove();
+
+              // Find comment text from sidebar comment cards
+              const commentCard = document.querySelector(`[data-comment-id="${commentId}"]`);
+              const commentText = commentCard?.querySelector("p.text-sm")?.textContent?.trim();
+              if (!commentText) return false;
+
+              const tooltip = document.createElement("div");
+              tooltip.id = "comment-hover-tooltip";
+              tooltip.dataset.commentId = commentId;
+              tooltip.className = "fixed z-[100] max-w-xs px-3 py-2 text-xs text-gray-700 bg-white border border-amber-200 rounded-lg shadow-lg pointer-events-none";
+              tooltip.textContent = commentText.length > 120 ? commentText.slice(0, 120) + "..." : commentText;
+
+              const rect = mark.getBoundingClientRect();
+              tooltip.style.top = `${rect.top - 36}px`;
+              tooltip.style.left = `${rect.left + rect.width / 2}px`;
+              tooltip.style.transform = "translateX(-50%)";
+              document.body.appendChild(tooltip);
+              return false;
+            },
+            mouseout(_view, event) {
+              const related = (event as MouseEvent).relatedTarget as HTMLElement | null;
+              if (related?.closest?.("mark.comment-highlight, mark.comment-highlight-active")) return false;
+              const existing = document.getElementById("comment-hover-tooltip");
+              if (existing) existing.remove();
+              return false;
+            },
+          },
+        },
+      }),
+
       // Paste plugin: strip comment marks from pasted content
       new Plugin({
         key: new PluginKey("commentMarkPaste"),
