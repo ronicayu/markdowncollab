@@ -166,6 +166,10 @@ export default function DocumentPage({
   const [docStatus, setDocStatus] = useState<string>("draft");
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbSegment[]>([]);
   const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockedBy: string | null } | null>(null);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [passwordVerified, setPasswordVerified] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [expirationDialogOpen, setExpirationDialogOpen] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
@@ -182,6 +186,14 @@ export default function DocumentPage({
         if (doc?.coverImage) setCoverImage(doc.coverImage);
         if (doc?.fontFamily) setFontFamily(doc.fontFamily);
         if (doc?.status) setDocStatus(doc.status);
+        if (doc?.hasPassword) {
+          setHasPassword(true);
+          // Check sessionStorage for previously verified password
+          const verified = sessionStorage.getItem(`doc-pw-verified:${id}`);
+          if (verified === "true") setPasswordVerified(true);
+        } else {
+          setPasswordVerified(true);
+        }
         // Track recent document open for the RecentDocs widget
         trackDocumentOpen(id, doc?.title || id);
         trackTab(id, doc?.title || "Untitled");
@@ -923,10 +935,61 @@ export default function DocumentPage({
     }
   }, [id]);
 
+  const handlePasswordSubmit = useCallback(async () => {
+    setPasswordError("");
+    try {
+      const res = await fetch(`/api/documents/${id}/password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: passwordInput }),
+      });
+      const data = await res.json();
+      if (data.verified) {
+        setPasswordVerified(true);
+        sessionStorage.setItem(`doc-pw-verified:${id}`, "true");
+      } else {
+        setPasswordError(data.error || "Incorrect password");
+      }
+    } catch {
+      setPasswordError("Failed to verify password");
+    }
+  }, [id, passwordInput]);
+
   if (!userName) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (hasPassword && !passwordVerified) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#F2E8D5]">
+        <div className="bg-white rounded-xl shadow-xl p-8 mx-4 max-w-sm w-full text-center">
+          <svg className="h-10 w-10 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Password Protected</h2>
+          <p className="text-sm text-gray-500 mb-5">This document requires a password to access.</p>
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handlePasswordSubmit(); }}
+            placeholder="Enter password"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A] mb-3"
+            autoFocus
+          />
+          {passwordError && <p className="text-xs text-red-500 mb-3">{passwordError}</p>}
+          <button
+            onClick={handlePasswordSubmit}
+            disabled={!passwordInput}
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-[#B8692A] hover:bg-[#96541F] rounded-lg transition-colors disabled:opacity-40"
+          >
+            Unlock
+          </button>
+        </div>
       </div>
     );
   }

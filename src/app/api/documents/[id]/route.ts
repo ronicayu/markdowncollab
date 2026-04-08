@@ -25,11 +25,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const doc = await prisma.document.findUnique({
     where: { id },
-    select: { id: true, title: true, ownerId: true, visibility: true, status: true, approvedBy: true, approvedAt: true, folderId: true, forkedFrom: true, coverImage: true, fontFamily: true, createdAt: true, updatedAt: true },
+    select: { id: true, title: true, ownerId: true, visibility: true, status: true, approvedBy: true, approvedAt: true, folderId: true, forkedFrom: true, coverImage: true, fontFamily: true, password: true, createdAt: true, updatedAt: true },
   });
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json({ ...doc, role: access.role });
+  // Expose hasPassword flag but never the hash itself
+  const { password: _pw, ...rest } = doc;
+  return NextResponse.json({ ...rest, hasPassword: !!_pw, role: access.role });
 }
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {

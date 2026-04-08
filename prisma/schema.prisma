@@ -21,6 +21,7 @@ model Document {
   lockedBy   String?
   lockedAt   DateTime?
   forkedFrom  String?
+  password    String?
   coverImage  String?
   fontFamily  String?
   expiresAt   DateTime?
