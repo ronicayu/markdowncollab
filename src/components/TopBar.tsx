@@ -111,6 +111,7 @@ export default function TopBar({
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [embedCodeOpen, setEmbedCodeOpen] = useState(false);
 
   // Fetch rating on mount
   useEffect(() => {
@@ -765,6 +766,19 @@ export default function TopBar({
               >
                 <span>Word (.docx)</span>
               </a>
+              <div className="border-t border-white/10 my-1" />
+              <button
+                onClick={() => {
+                  setExportOpen(false);
+                  setEmbedCodeOpen(true);
+                }}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors w-full text-left"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                </svg>
+                <span>Get embed code</span>
+              </button>
               {onSaveAsTemplate && (
                 <>
                   <div className="border-t border-white/10 my-1" />
@@ -1103,6 +1117,38 @@ export default function TopBar({
             </div>
             <div className="flex justify-end mt-3">
               <button onClick={() => setShowShareModal(false)} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Embed code dialog */}
+      {embedCodeOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEmbedCodeOpen(false)}>
+          <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Embed this document</h3>
+            <p className="text-xs text-gray-500 mb-3">Copy the code below and paste it into your website:</p>
+            <textarea
+              readOnly
+              value={`<iframe src="${shareUrl.replace('/doc/', '/embed/')}" width="100%" height="600" frameborder="0" style="border: 1px solid #e5e7eb; border-radius: 8px;"></iframe>`}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 bg-gray-50 font-mono resize-none"
+              rows={4}
+              onFocus={(e) => e.target.select()}
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button
+                onClick={async () => {
+                  const code = `<iframe src="${shareUrl.replace('/doc/', '/embed/')}" width="100%" height="600" frameborder="0" style="border: 1px solid #e5e7eb; border-radius: 8px;"></iframe>`;
+                  try { await navigator.clipboard.writeText(code); } catch {}
+                  setEmbedCodeOpen(false);
+                }}
+                className="text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+              >
+                Copy & Close
+              </button>
+              <button onClick={() => setEmbedCodeOpen(false)} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
                 Close
               </button>
             </div>
