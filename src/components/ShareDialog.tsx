@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import QRCode from "qrcode";
 
 interface Share {
   id: string;
@@ -25,6 +26,44 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
   const [linkRole, setLinkRole] = useState<"viewer" | "editor">("viewer");
   const [linkUrl, setLinkUrl] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  const generateQR = useCallback(async () => {
+    if (!qrCanvasRef.current) return;
+    const url = `${window.location.origin}/doc/${documentId}`;
+    try {
+      await QRCode.toCanvas(qrCanvasRef.current, url, {
+        width: 200,
+        margin: 2,
+        color: { dark: "#111110", light: "#ffffff" },
+      });
+    } catch (err) {
+      console.error("QR generation failed:", err);
+    }
+  }, [documentId]);
+
+  useEffect(() => {
+    if (showQr) generateQR();
+  }, [showQr, generateQR]);
+
+  async function downloadQR() {
+    if (!qrCanvasRef.current) return;
+    const url = `${window.location.origin}/doc/${documentId}`;
+    try {
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 400,
+        margin: 2,
+        color: { dark: "#111110", light: "#ffffff" },
+      });
+      const link = document.createElement("a");
+      link.download = `qr-${documentId.slice(0, 8)}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("QR download failed:", err);
+    }
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -228,6 +267,31 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
                 </button>
               </div>
             </>
+          )}
+        </div>
+
+        {/* QR Code section */}
+        <div className="border-t border-gray-100 pt-4 mt-2">
+          <button
+            onClick={() => setShowQr((v) => !v)}
+            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" />
+            </svg>
+            {showQr ? "Hide QR Code" : "Show QR Code"}
+          </button>
+          {showQr && (
+            <div className="mt-3 flex flex-col items-center gap-3">
+              <canvas ref={qrCanvasRef} className="rounded-lg border border-gray-200" />
+              <button
+                onClick={downloadQR}
+                className="text-xs font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Download QR as PNG
+              </button>
+            </div>
           )}
         </div>
 
