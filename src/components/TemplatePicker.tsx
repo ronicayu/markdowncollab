@@ -15,6 +15,16 @@ interface CustomTemplateItem {
   name: string;
   description: string;
   content?: string;
+  published?: boolean;
+  createdAt: string;
+}
+
+interface MarketplaceTemplateItem {
+  id: string;
+  name: string;
+  description: string;
+  content?: string;
+  ownerId: string;
   createdAt: string;
 }
 
@@ -61,23 +71,45 @@ function SimpleMarkdownPreview({ content }: { content: string }) {
 export default function TemplatePicker({ open, onClose, onSelect }: TemplatePickerProps) {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [customTemplates, setCustomTemplates] = useState<CustomTemplateItem[]>([]);
+  const [marketplaceTemplates, setMarketplaceTemplates] = useState<MarketplaceTemplateItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState<{ id: string; name: string; content: string; isCustom: boolean } | null>(null);
+  const [activeSection, setActiveSection] = useState<"mine" | "community">("mine");
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
     setSelectedTemplate(null);
+    setActiveSection("mine");
     Promise.all([
       fetch("/api/templates").then((r) => r.json()),
       fetch("/api/templates/custom").then((r) => (r.ok ? r.json() : [])).catch(() => []),
+      fetch("/api/templates/marketplace").then((r) => (r.ok ? r.json() : [])).catch(() => []),
     ])
-      .then(([builtIn, custom]) => {
+      .then(([builtIn, custom, marketplace]) => {
         setTemplates(builtIn);
         setCustomTemplates(custom);
+        setMarketplaceTemplates(marketplace);
       })
       .finally(() => setLoading(false));
   }, [open]);
+
+  async function togglePublish(templateId: string, published: boolean) {
+    try {
+      const res = await fetch("/api/templates/custom", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: templateId, published }),
+      });
+      if (res.ok) {
+        setCustomTemplates((prev) =>
+          prev.map((t) => (t.id === templateId ? { ...t, published } : t))
+        );
+      }
+    } catch {
+      // silently fail
+    }
+  }
 
   if (!open) return null;
 
@@ -119,61 +151,146 @@ export default function TemplatePicker({ open, onClose, onSelect }: TemplatePick
         ) : (
           <div className="flex gap-5 flex-1 min-h-0">
             {/* Template list (left) */}
-            <div className="w-1/2 overflow-y-auto pr-2 space-y-4">
-              {customTemplates.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Your Templates</p>
-                  <div className="grid grid-cols-1 gap-2">
-                    {customTemplates.map((t) => (
-                      <button
-                        key={t.id}
-                        onClick={() => handleCardClick(t.id, t.name, t.content || "", true)}
-                        onDoubleClick={() => onSelect(`custom:${t.id}`)}
-                        className={`flex items-start gap-3 text-left bg-amber-50/60 rounded-lg px-4 py-3 border transition-all group ${
-                          selectedTemplate?.id === t.id && selectedTemplate?.isCustom
-                            ? "border-[#B8692A] shadow-sm ring-1 ring-[#B8692A]/30"
-                            : "border-transparent hover:border-[#B8692A] hover:shadow-sm"
-                        }`}
-                      >
-                        <span className="text-xl shrink-0 mt-0.5">{"\uD83D\uDCC4"}</span>
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
-                            {t.name}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">{t.description || "Custom template"}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div className="w-1/2 flex flex-col min-h-0">
+              {/* Section tabs */}
+              <div className="flex border-b border-gray-200 mb-3">
+                <button
+                  onClick={() => setActiveSection("mine")}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                    activeSection === "mine"
+                      ? "text-[#B8692A] border-b-2 border-[#B8692A]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  My Templates
+                </button>
+                <button
+                  onClick={() => setActiveSection("community")}
+                  className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
+                    activeSection === "community"
+                      ? "text-[#B8692A] border-b-2 border-[#B8692A]"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Community
+                  {marketplaceTemplates.length > 0 && (
+                    <span className="ml-1 text-[10px] bg-gray-100 text-gray-500 rounded-full px-1.5 py-0.5">
+                      {marketplaceTemplates.length}
+                    </span>
+                  )}
+                </button>
+              </div>
 
-              <div>
-                {customTemplates.length > 0 && (
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Built-in Templates</p>
-                )}
-                <div className="grid grid-cols-1 gap-2">
-                  {templates.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => handleCardClick(t.id, t.name, t.content || "", false)}
-                      onDoubleClick={() => onSelect(t.id)}
-                      className={`flex items-start gap-3 text-left bg-[#FFFEF9] rounded-lg px-4 py-3 border transition-all group ${
-                        selectedTemplate?.id === t.id && !selectedTemplate?.isCustom
-                          ? "border-[#B8692A] shadow-sm ring-1 ring-[#B8692A]/30"
-                          : "border-transparent hover:border-[#B8692A] hover:shadow-sm"
-                      }`}
-                    >
-                      <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
-                      <div className="min-w-0">
-                        <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
-                          {t.name}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>
+              <div className="overflow-y-auto pr-2 space-y-4 flex-1">
+                {activeSection === "mine" && (
+                  <>
+                    {customTemplates.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Your Templates</p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {customTemplates.map((t) => (
+                            <button
+                              key={t.id}
+                              onClick={() => handleCardClick(t.id, t.name, t.content || "", true)}
+                              onDoubleClick={() => onSelect(`custom:${t.id}`)}
+                              className={`flex items-start gap-3 text-left bg-amber-50/60 rounded-lg px-4 py-3 border transition-all group relative ${
+                                selectedTemplate?.id === t.id && selectedTemplate?.isCustom
+                                  ? "border-[#B8692A] shadow-sm ring-1 ring-[#B8692A]/30"
+                                  : "border-transparent hover:border-[#B8692A] hover:shadow-sm"
+                              }`}
+                            >
+                              <span className="text-xl shrink-0 mt-0.5">{"\uD83D\uDCC4"}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
+                                    {t.name}
+                                  </p>
+                                  {t.published && (
+                                    <span className="text-[10px] bg-green-100 text-green-700 rounded-full px-1.5 py-0.5">Published</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5">{t.description || "Custom template"}</p>
+                              </div>
+                              {/* Publish toggle */}
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                title={t.published ? "Unpublish from marketplace" : "Publish to marketplace"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePublish(t.id, !t.published);
+                                }}
+                                onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); togglePublish(t.id, !t.published); } }}
+                                className="absolute top-2 right-2 text-[10px] font-medium text-gray-400 hover:text-[#B8692A] transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                              >
+                                {t.published ? "Unpublish" : "Publish"}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </button>
-                  ))}
-                </div>
+                    )}
+
+                    <div>
+                      {customTemplates.length > 0 && (
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Built-in Templates</p>
+                      )}
+                      <div className="grid grid-cols-1 gap-2">
+                        {templates.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => handleCardClick(t.id, t.name, t.content || "", false)}
+                            onDoubleClick={() => onSelect(t.id)}
+                            className={`flex items-start gap-3 text-left bg-[#FFFEF9] rounded-lg px-4 py-3 border transition-all group ${
+                              selectedTemplate?.id === t.id && !selectedTemplate?.isCustom
+                                ? "border-[#B8692A] shadow-sm ring-1 ring-[#B8692A]/30"
+                                : "border-transparent hover:border-[#B8692A] hover:shadow-sm"
+                            }`}
+                          >
+                            <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
+                            <div className="min-w-0">
+                              <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
+                                {t.name}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeSection === "community" && (
+                  <div>
+                    {marketplaceTemplates.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-8">No community templates published yet.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-2">
+                        {marketplaceTemplates.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => handleCardClick(t.id, t.name, t.content || "", true)}
+                            onDoubleClick={() => onSelect(`custom:${t.id}`)}
+                            className={`flex items-start gap-3 text-left bg-blue-50/40 rounded-lg px-4 py-3 border transition-all group ${
+                              selectedTemplate?.id === t.id && selectedTemplate?.isCustom
+                                ? "border-[#B8692A] shadow-sm ring-1 ring-[#B8692A]/30"
+                                : "border-transparent hover:border-[#B8692A] hover:shadow-sm"
+                            }`}
+                          >
+                            <span className="text-xl shrink-0 mt-0.5">{"\uD83C\uDF10"}</span>
+                            <div className="min-w-0">
+                              <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
+                                {t.name}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-0.5">{t.description || "Community template"}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

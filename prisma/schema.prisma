@@ -108,6 +108,7 @@ model CustomTemplate {
   description String   @default("")
   content     String
   ownerId     String
+  published   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   @@index([ownerId])
