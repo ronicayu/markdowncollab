@@ -16,6 +16,13 @@ interface ActivityEntry {
   createdAt: string;
 }
 
+export interface DiffOverlayData {
+  oldText: string;
+  newText: string;
+  oldLabel: string;
+  newLabel: string;
+}
+
 interface VersionHistoryPanelProps {
   documentId: string;
   isOpen: boolean;
@@ -23,6 +30,7 @@ interface VersionHistoryPanelProps {
   userName: string;
   onRestoreComplete?: () => void;
   getCurrentMarkdown?: () => string;
+  onDiffOverlay?: (data: DiffOverlayData | null) => void;
 }
 
 export default function VersionHistoryPanel({
@@ -32,6 +40,7 @@ export default function VersionHistoryPanel({
   userName,
   onRestoreComplete,
   getCurrentMarkdown,
+  onDiffOverlay,
 }: VersionHistoryPanelProps) {
   const [versions, setVersions] = useState<DocumentVersion[]>([]);
   const [total, setTotal] = useState(0);
@@ -178,11 +187,17 @@ export default function VersionHistoryPanel({
       if (res.ok) {
         const data: VersionPreview = await res.json();
         const currentMd = getCurrentMarkdown();
-        setDiffData({
+        const diffPayload = {
           oldText: data.markdown,
           newText: currentMd,
           oldLabel: `${formatTime(version.createdAt)} - ${formatDate(version.createdAt)}`,
-        });
+          newLabel: "Current document",
+        };
+        if (onDiffOverlay) {
+          onDiffOverlay(diffPayload);
+        } else {
+          setDiffData(diffPayload);
+        }
       }
     } catch (err) {
       console.error("Failed to load version for comparison:", err);

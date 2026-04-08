@@ -23,7 +23,8 @@ import TopBar from "@/components/TopBar";
 import type { Collaborator, BreadcrumbSegment } from "@/components/TopBar";
 import { getFontFamily, type FontOption } from "@/components/FontSelector";
 import CommentSidebar from "@/components/CommentSidebar";
-import VersionHistoryPanel from "@/components/VersionHistoryPanel";
+import VersionHistoryPanel, { type DiffOverlayData } from "@/components/VersionHistoryPanel";
+import DiffViewer from "@/components/DiffViewer";
 import OutlineSidebar from "@/components/OutlineSidebar";
 import RelatedDocs from "@/components/RelatedDocs";
 import FloatingCommentButton from "@/components/FloatingCommentButton";
@@ -827,6 +828,7 @@ export default function DocumentPage({
   const toggleZenMode = useCallback(() => setZenMode((prev) => !prev), []);
 
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [diffOverlay, setDiffOverlay] = useState<DiffOverlayData | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const toggleChat = useCallback(() => setChatOpen((prev) => !prev), []);
 
@@ -1179,19 +1181,47 @@ export default function DocumentPage({
           <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode || zenMode ? "max-w-[700px] mx-auto" : ""}`} style={{ fontFamily: getFontFamily(fontFamily) }}>
             {!focusMode && !zenMode && <PinnedNotes ydoc={ydoc} userName={userName} />}
             <ErrorBoundary>
-              <Editor
-                documentId={id}
-                userName={userName}
-                ydoc={ydoc}
-                provider={provider}
-                onEditorReady={handleEditorReady}
-                activeCommentId={activeCommentId}
-                editable={userRole !== "viewer" && !(lockInfo?.locked && lockInfo.lockedBy !== userName)}
-                initialContent={templateContent}
-                onToggleShortcutsHelp={toggleShortcutsHelp}
-                autoCompleteEnabled={autoCompleteEnabled}
-                grammarCheckEnabled={grammarCheckEnabled}
-              />
+              <div className="relative flex-1 flex flex-col overflow-hidden">
+                <div className={diffOverlay ? "invisible h-0 overflow-hidden" : "flex-1 flex flex-col"}>
+                  <Editor
+                    documentId={id}
+                    userName={userName}
+                    ydoc={ydoc}
+                    provider={provider}
+                    onEditorReady={handleEditorReady}
+                    activeCommentId={activeCommentId}
+                    editable={userRole !== "viewer" && !(lockInfo?.locked && lockInfo.lockedBy !== userName)}
+                    initialContent={templateContent}
+                    onToggleShortcutsHelp={toggleShortcutsHelp}
+                    autoCompleteEnabled={autoCompleteEnabled}
+                    grammarCheckEnabled={grammarCheckEnabled}
+                  />
+                </div>
+                {diffOverlay && (
+                  <div className="flex-1 flex flex-col bg-[#FFFEF9] overflow-auto">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
+                      <h3 className="text-sm font-semibold text-gray-700">Version Comparison</h3>
+                      <button
+                        onClick={() => setDiffOverlay(null)}
+                        className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Back to editor
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-auto px-4 py-3">
+                      <DiffViewer
+                        oldText={diffOverlay.oldText}
+                        newText={diffOverlay.newText}
+                        oldLabel={diffOverlay.oldLabel}
+                        newLabel={diffOverlay.newLabel}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </ErrorBoundary>
           </div>
         )}
@@ -1243,6 +1273,12 @@ export default function DocumentPage({
             isOpen={versionHistoryOpen}
             onClose={() => setVersionHistoryOpen(false)}
             userName={userName}
+            getCurrentMarkdown={editor ? () => {
+              try {
+                return (editor.storage as any).markdown?.getMarkdown?.() ?? editor.state.doc.textContent;
+              } catch { return editor.state.doc.textContent; }
+            } : undefined}
+            onDiffOverlay={setDiffOverlay}
           />
         )}
         {chatOpen && !focusMode && !zenMode && (
