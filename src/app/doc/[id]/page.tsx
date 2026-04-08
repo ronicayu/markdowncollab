@@ -33,6 +33,7 @@ import PinnedNotes from "@/components/PinnedNotes";
 import AIChatSidebar from "@/components/AIChatSidebar";
 import ReminderDialog from "@/components/ReminderDialog";
 import ExpirationDialog from "@/components/ExpirationDialog";
+import TabBar, { trackTab } from "@/components/TabBar";
 import {
   getSuggestions,
   getComments,
@@ -179,6 +180,7 @@ export default function DocumentPage({
         if (doc?.status) setDocStatus(doc.status);
         // Track recent document open for the RecentDocs widget
         trackDocumentOpen(id, doc?.title || id);
+        trackTab(id, doc?.title || "Untitled");
         if (typeof window !== "undefined") window.dispatchEvent(new Event("recentDocsUpdated"));
         // Fetch forked-from document info if applicable
         if (doc?.forkedFrom) {
@@ -321,6 +323,7 @@ export default function DocumentPage({
   const handleTitleChange = useCallback(
     async (newTitle: string) => {
       setDocTitle(newTitle);
+      trackTab(id, newTitle);
       try {
         await fetch(`/api/documents/${id}`, {
           method: "PUT",
@@ -927,6 +930,7 @@ export default function DocumentPage({
         onToggleGrammarCheck={toggleGrammarCheck}
         forkedFrom={forkedFrom}
       />
+      {!focusMode && <TabBar />}
       {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {/* Cover Image Banner */}
       {!focusMode && (
