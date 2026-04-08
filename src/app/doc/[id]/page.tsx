@@ -946,7 +946,7 @@ export default function DocumentPage({
           </div>
         )}
         {ydoc && provider && (
-          <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode ? "max-w-[700px] mx-auto" : ""}`}>
+          <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode ? "max-w-[700px] mx-auto" : ""}`} style={{ fontFamily: getFontFamily(fontFamily) }}>
             {!focusMode && <PinnedNotes ydoc={ydoc} userName={userName} />}
             <ErrorBoundary>
               <Editor
