@@ -6,6 +6,8 @@ import {
   getCustomizedActions,
   setKeybinding,
   resetKeybindings,
+  findConflict,
+  syncOverridesToServer,
   DEFAULT_KEYBINDINGS,
 } from "@/lib/keybindings";
 
@@ -122,6 +124,11 @@ export default function KeyboardShortcutsDialog({
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [bindings, setBindings] = useState(getKeybindings);
   const [customized, setCustomized] = useState(getCustomizedActions);
+  const [conflictWarning, setConflictWarning] = useState<{
+    combo: string;
+    conflictAction: string;
+    pendingAction: string;
+  } | null>(null);
   const listeningRef = useRef(false);
 
   useEffect(() => {
@@ -136,6 +143,7 @@ export default function KeyboardShortcutsDialog({
     } else {
       setCustomizeMode(false);
       setEditingActionId(null);
+      setConflictWarning(null);
     }
   }, [open]);
 
@@ -178,21 +186,52 @@ export default function KeyboardShortcutsDialog({
       const combo = keyComboFromEvent(e, isMac);
       if (!combo) return;
 
+      // Check for conflicts before saving
+      const conflict = findConflict(combo, editingActionId);
+      if (conflict) {
+        setConflictWarning({
+          combo,
+          conflictAction: conflict,
+          pendingAction: editingActionId,
+        });
+        return; // Don't save yet — user must confirm
+      }
+
       setKeybinding(editingActionId, combo);
+      syncOverridesToServer();
       setBindings(getKeybindings());
       setCustomized(getCustomizedActions());
       setEditingActionId(null);
+      setConflictWarning(null);
     };
 
     document.addEventListener("keydown", handleKeyDown, true);
     return () => document.removeEventListener("keydown", handleKeyDown, true);
   }, [editingActionId, isMac]);
 
-  const handleReset = useCallback(() => {
-    resetKeybindings();
+  // Accept a conflicting binding — override anyway
+  const acceptConflict = useCallback(() => {
+    if (!conflictWarning) return;
+    setKeybinding(conflictWarning.pendingAction, conflictWarning.combo);
+    syncOverridesToServer();
     setBindings(getKeybindings());
     setCustomized(getCustomizedActions());
     setEditingActionId(null);
+    setConflictWarning(null);
+  }, [conflictWarning]);
+
+  // Cancel a conflicting binding — go back to editing
+  const cancelConflict = useCallback(() => {
+    setConflictWarning(null);
+  }, []);
+
+  const handleReset = useCallback(() => {
+    resetKeybindings();
+    syncOverridesToServer();
+    setBindings(getKeybindings());
+    setCustomized(getCustomizedActions());
+    setEditingActionId(null);
+    setConflictWarning(null);
   }, []);
 
   if (!open) return null;
@@ -315,6 +354,34 @@ export default function KeyboardShortcutsDialog({
             </button>
           </div>
         </div>
+        {conflictWarning && (
+          <div className="mx-5 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-sm text-amber-800 font-medium">
+              Conflict detected
+            </p>
+            <p className="text-xs text-amber-700 mt-1">
+              <kbd className="px-1 py-0.5 bg-amber-100 border border-amber-300 rounded text-xs font-mono">
+                {formatKey(conflictWarning.combo, isMac)}
+              </kbd>{" "}
+              is already bound to{" "}
+              <strong>{conflictWarning.conflictAction.replace(/-/g, " ")}</strong>.
+            </p>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={acceptConflict}
+                className="text-xs px-2 py-1 bg-[#B8692A] text-white rounded hover:bg-[#9a5722] transition-colors"
+              >
+                Override anyway
+              </button>
+              <button
+                onClick={cancelConflict}
+                className="text-xs px-2 py-1 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
         <div className="px-5 py-4 space-y-5">
           {SHORTCUT_DATA.map((category) => (
             <div key={category.title}>

@@ -58,6 +58,7 @@ import { Extension } from "@tiptap/core";
 import { createHeatmapPlugin, heatmapPluginKey } from "@/extensions/heatmap-plugin";
 import { HeadingAnchor, initAnchorScrolling } from "@/extensions/heading-anchor";
 import { InlineDate } from "@/extensions/inline-date";
+import { getKeybindings, toProseMirrorKey } from "@/lib/keybindings";
 
 
 interface EditorProps {
@@ -385,6 +386,63 @@ export default function Editor({
         name: "heatmap",
         addProseMirrorPlugins() {
           return [createHeatmapPlugin()];
+        },
+      }),
+      // Custom keybindings extension — applies user overrides via a high-priority
+      // ProseMirror keymap plugin. Actions that need React state (find, link, etc.)
+      // are dispatched as custom DOM events and handled in useEffect listeners.
+      Extension.create({
+        name: "customKeybindings",
+        addKeyboardShortcuts() {
+          const bindings = getKeybindings();
+          const tiptapShortcuts: Record<string, () => boolean> = {};
+          const editorRef = this.editor;
+
+          const editorActionMap: Record<string, (editor: TiptapEditor) => boolean> = {
+            bold: (e) => e.chain().focus().toggleBold().run(),
+            italic: (e) => e.chain().focus().toggleItalic().run(),
+            underline: (e) => e.chain().focus().toggleUnderline().run(),
+            "inline-code": (e) => e.chain().focus().toggleCode().run(),
+            strikethrough: (e) => e.chain().focus().toggleStrike().run(),
+            highlight: (e) => e.chain().focus().toggleHighlight().run(),
+            "heading-1": (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
+            "heading-2": (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
+            "heading-3": (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
+            "heading-4": (e) => e.chain().focus().toggleHeading({ level: 4 }).run(),
+            "heading-5": (e) => e.chain().focus().toggleHeading({ level: 5 }).run(),
+            "heading-6": (e) => e.chain().focus().toggleHeading({ level: 6 }).run(),
+            "ordered-list": (e) => e.chain().focus().toggleOrderedList().run(),
+            "bullet-list": (e) => e.chain().focus().toggleBulletList().run(),
+            blockquote: (e) => e.chain().focus().toggleBlockquote().run(),
+            "code-block": (e) => e.chain().focus().toggleCodeBlock().run(),
+            "align-left": (e) => e.chain().focus().setTextAlign("left").run(),
+            "align-center": (e) => e.chain().focus().setTextAlign("center").run(),
+            "align-right": (e) => e.chain().focus().setTextAlign("right").run(),
+            undo: (e) => e.chain().focus().undo().run(),
+            redo: (e) => e.chain().focus().redo().run(),
+          };
+
+          // Actions that fire DOM events (handled by React useEffect listeners)
+          const domEventActions = new Set([
+            "find", "find-replace", "link", "command-palette", "shortcuts-help",
+          ]);
+
+          for (const [action, combo] of Object.entries(bindings)) {
+            const pmKey = toProseMirrorKey(combo);
+            if (editorActionMap[action]) {
+              const handler = editorActionMap[action];
+              tiptapShortcuts[pmKey] = () => handler(editorRef);
+            } else if (domEventActions.has(action)) {
+              tiptapShortcuts[pmKey] = () => {
+                window.dispatchEvent(
+                  new CustomEvent("keybinding-action", { detail: { action } })
+                );
+                return true;
+              };
+            }
+          }
+
+          return tiptapShortcuts;
         },
       }),
     ],
@@ -904,6 +962,37 @@ export default function Editor({
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onToggleShortcutsHelp]);
+
+  // Handle custom keybinding actions dispatched from the ProseMirror keymap plugin.
+  // This bridges remapped shortcuts (e.g. find, link, shortcuts-help) into React state.
+  useEffect(() => {
+    const handleAction = (e: Event) => {
+      const action = (e as CustomEvent).detail?.action;
+      if (!action) return;
+      switch (action) {
+        case "find":
+          setSearchOpen(true);
+          setShowReplace(false);
+          break;
+        case "find-replace":
+          setSearchOpen(true);
+          setShowReplace(true);
+          break;
+        case "link":
+          setLinkDialogOpen(true);
+          break;
+        case "shortcuts-help":
+          onToggleShortcutsHelp?.();
+          break;
+        case "command-palette":
+          // Dispatched to any command palette listener in the app
+          window.dispatchEvent(new CustomEvent("open-command-palette"));
+          break;
+      }
+    };
+    window.addEventListener("keybinding-action", handleAction);
+    return () => window.removeEventListener("keybinding-action", handleAction);
   }, [onToggleShortcutsHelp]);
 
   // Drive the decoration plugin from React state — survives Tiptap view updates
