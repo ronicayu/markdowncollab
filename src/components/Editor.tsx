@@ -51,6 +51,7 @@ import SessionHistory from "./SessionHistory";
 import { GrammarCheck, grammarCheckPluginKey } from "@/extensions/grammar-check";
 import { ProgressBlock } from "@/extensions/progress-block";
 import { SectionLockExtension } from "@/extensions/section-lock";
+import { BreadcrumbBlock } from "@/extensions/breadcrumb-block";
 
 
 interface EditorProps {
@@ -301,6 +302,7 @@ export default function Editor({
       }),
       GrammarCheck,
       ProgressBlock,
+      BreadcrumbBlock,
       SectionLockExtension.configure({
         ydoc,
         currentUser: userName,

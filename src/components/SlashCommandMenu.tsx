@@ -718,6 +718,15 @@ const COMMANDS: Command[] = [
     },
   },
   {
+    id: "breadcrumb",
+    label: "Breadcrumb",
+    description: "Document folder path navigation",
+    icon: "\u{1F4CD}",
+    keywords: ["breadcrumb", "path", "navigation", "folder"],
+    action: (editor) =>
+      editor.chain().focus().insertContent({ type: "breadcrumbBlock" }).run(),
+  },
+  {
     id: "event",
     label: "Calendar Event",
     description: "Insert a calendar event card",
