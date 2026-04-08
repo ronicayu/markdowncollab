@@ -72,6 +72,12 @@ export default function Home() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
   const [search, setSearch] = useState("");
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+    try { return JSON.parse(localStorage.getItem("recentSearches") || "[]"); } catch { return []; }
+  });
+  const [showRecentSearches, setShowRecentSearches] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
   const [relativeDates, setRelativeDates] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -373,6 +379,12 @@ export default function Home() {
       return;
     }
     setSearchLoading(true);
+    // Save to recent searches
+    setRecentSearches((prev) => {
+      const updated = [q, ...prev.filter((s) => s !== q)].slice(0, 5);
+      try { localStorage.setItem("recentSearches", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     searchTimerRef.current = setTimeout(() => {
       const params = new URLSearchParams({ q });
       if (searchTagFilter) params.set("tag", searchTagFilter);
@@ -1075,13 +1087,53 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-2 flex-1 max-w-sm">
-            <input
-              type="text"
-              placeholder="Search titles and content..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-0 rounded-lg border border-black/10 bg-white/60 px-3 py-1.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
-            />
+            <div className="relative flex-1 min-w-0">
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search titles and content..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setShowRecentSearches(false); }}
+                onFocus={() => { if (!search.trim() && recentSearches.length > 0) setShowRecentSearches(true); }}
+                onBlur={() => { setTimeout(() => setShowRecentSearches(false), 150); }}
+                className="w-full rounded-lg border border-black/10 bg-white/60 px-3 py-1.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              />
+              {showRecentSearches && recentSearches.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
+                  <p className="px-3 py-1 text-[10px] text-gray-400 font-medium uppercase tracking-wide">Recent searches</p>
+                  {recentSearches.map((q) => (
+                    <button
+                      key={q}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setSearch(q);
+                        setShowRecentSearches(false);
+                        searchInputRef.current?.focus();
+                      }}
+                      className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-[#B8692A] transition-colors flex items-center gap-2"
+                    >
+                      <svg className="h-3 w-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {q}
+                    </button>
+                  ))}
+                  <div className="border-t border-gray-100 mt-1 pt-1">
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setRecentSearches([]);
+                        try { localStorage.removeItem("recentSearches"); } catch {}
+                        setShowRecentSearches(false);
+                      }}
+                      className="w-full text-left px-3 py-1 text-xs text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      Clear history
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setSortBy(sortBy === "date" ? "name" : "date")}
               className="shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg border border-black/10 bg-white/60 text-xs text-gray-500 hover:text-gray-700 hover:border-black/20 transition-colors"
