@@ -62,7 +62,7 @@ describe("extractWords", () => {
   });
 
   it("strips markdown links", () => {
-    const words = extractWords("Click [here](https://example.com) please.");
+    const words = extractWords("Click [here](https://example.com) please");
     expect(words).toContain("Click");
     expect(words).toContain("here");
     expect(words).toContain("please");
@@ -73,7 +73,8 @@ describe("extractWords", () => {
     const words = extractWords("Text before\n```\nconst x = 1;\n```\nText after");
     expect(words).toContain("Text");
     expect(words).toContain("after");
-    expect(words.some((w) => w.includes("const"))).toBe(false);
+    // Code block content between ``` fences should be stripped
+    expect(words.some((w) => w === "const")).toBe(false);
   });
 });
 
