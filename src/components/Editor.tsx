@@ -111,6 +111,13 @@ export default function Editor({
   const [lastSavedByName, setLastSavedByName] = useState<string | null>(null);
   const [typewriterMode, setTypewriterMode] = useState(false);
   const [showWordFrequency, setShowWordFrequency] = useState(false);
+  const [spellcheckEnabled, setSpellcheckEnabled] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const stored = localStorage.getItem("spellcheckEnabled");
+      return stored === null ? true : stored === "true";
+    } catch { return true; }
+  });
   const [issueSettingsOpen, setIssueSettingsOpen] = useState(false);
   const [issuePatterns, setIssuePatterns] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -324,6 +331,7 @@ export default function Editor({
       attributes: {
         class:
           "prose prose-base max-w-none focus:outline-none min-h-[500px] p-6",
+        spellcheck: spellcheckEnabled ? "true" : "false",
       },
       // Convert plain-text markdown-style lists when pasted so that
       // "- item1\n- item2\n- item3" becomes a proper <ul> list.
@@ -739,6 +747,25 @@ export default function Editor({
         <CursorChat provider={provider} userName={userName} />
         {/* Session History */}
         <SessionHistory editor={editor} />
+        {/* Spellcheck Toggle */}
+        <button
+          onClick={() => {
+            const next = !spellcheckEnabled;
+            setSpellcheckEnabled(next);
+            try { localStorage.setItem("spellcheckEnabled", String(next)); } catch {}
+          }}
+          className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
+            spellcheckEnabled
+              ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
+              : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+          }`}
+          title={spellcheckEnabled ? "Disable spellcheck" : "Enable spellcheck"}
+        >
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Spellcheck
+        </button>
         {/* Typewriter Mode Toggle */}
         <button
           onClick={() => {
