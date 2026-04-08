@@ -1085,3 +1085,8 @@ body {
   margin-top: 2px;
   text-align: right;
 }
+
+/* Typewriter mode: extra bottom padding so the cursor can center even at end of doc */
+.typewriter-mode .ProseMirror {
+  padding-bottom: 60vh;
+}

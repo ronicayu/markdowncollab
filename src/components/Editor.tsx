@@ -105,6 +105,15 @@ export default function Editor({
   const [healthScore, setHealthScore] = useState<HealthScoreType | null>(null);
   const [showHealthDetails, setShowHealthDetails] = useState(false);
   const [lastSavedByName, setLastSavedByName] = useState<string | null>(null);
+  const [typewriterMode, setTypewriterMode] = useState(false);
+
+  // Load typewriter mode from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`typewriterMode:${documentId}`);
+      if (stored === "true") setTypewriterMode(true);
+    } catch {}
+  }, [documentId]);
 
   async function uploadImage(file: File): Promise<string | null> {
     const formData = new FormData();
@@ -524,6 +533,38 @@ export default function Editor({
     },
   });
 
+  // Typewriter mode: keep cursor at 40% viewport height
+  useEffect(() => {
+    if (!editor || !typewriterMode) return;
+
+    const handleSelectionUpdate = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      try {
+        const { view } = editor;
+        const { head } = view.state.selection;
+        const coords = view.coordsAtPos(head);
+        const containerRect = container.getBoundingClientRect();
+        const cursorTop = coords.top - containerRect.top + container.scrollTop;
+        const targetOffset = container.clientHeight * 0.4;
+        const scrollTarget = cursorTop - targetOffset;
+
+        container.scrollTo({
+          top: Math.max(0, scrollTarget),
+          behavior: "smooth",
+        });
+      } catch {
+        // Ignore errors from invalid positions
+      }
+    };
+
+    editor.on("selectionUpdate", handleSelectionUpdate);
+    return () => {
+      editor.off("selectionUpdate", handleSelectionUpdate);
+    };
+  }, [editor, typewriterMode]);
+
   // Toggle grammar check
   useEffect(() => {
     if (!editor) return;
@@ -621,7 +662,7 @@ export default function Editor({
   };
 
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-[#FFFEF9] relative">
+    <div ref={scrollContainerRef} className={`flex-1 overflow-auto bg-[#FFFEF9] relative ${typewriterMode ? "typewriter-mode" : ""}`}>
       {isScrollable && (
         <div
           className="reading-progress-bar"
@@ -679,6 +720,25 @@ export default function Editor({
         <CursorChat provider={provider} userName={userName} />
         {/* Session History */}
         <SessionHistory editor={editor} />
+        {/* Typewriter Mode Toggle */}
+        <button
+          onClick={() => {
+            const next = !typewriterMode;
+            setTypewriterMode(next);
+            try { localStorage.setItem(`typewriterMode:${documentId}`, String(next)); } catch {}
+          }}
+          className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
+            typewriterMode
+              ? "text-amber-600 bg-amber-50 hover:bg-amber-100"
+              : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+          }`}
+          title={typewriterMode ? "Disable typewriter mode" : "Enable typewriter mode"}
+        >
+          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          Typewriter
+        </button>
         {/* Focus Timer */}
         <FocusTimer documentId={documentId} />
         {/* Health Score Badge */}
