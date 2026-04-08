@@ -47,6 +47,7 @@ import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib
 import AIAutoComplete from "./AIAutoComplete";
 import FocusTimer from "./FocusTimer";
 import CursorChat from "./CursorChat";
+import SessionHistory from "./SessionHistory";
 import { GrammarCheck, grammarCheckPluginKey } from "@/extensions/grammar-check";
 import { ProgressBlock } from "@/extensions/progress-block";
 
@@ -676,6 +677,8 @@ export default function Editor({
         </span>
         {/* Cursor Chat */}
         <CursorChat provider={provider} userName={userName} />
+        {/* Session History */}
+        <SessionHistory editor={editor} />
         {/* Focus Timer */}
         <FocusTimer documentId={documentId} />
         {/* Health Score Badge */}
