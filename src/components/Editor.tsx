@@ -53,6 +53,7 @@ import { ProgressBlock } from "@/extensions/progress-block";
 import { SectionLockExtension } from "@/extensions/section-lock";
 import { BreadcrumbBlock } from "@/extensions/breadcrumb-block";
 import { IssueLinker } from "@/extensions/issue-linker";
+import WordFrequencyTable from "./WordFrequencyTable";
 
 
 interface EditorProps {
@@ -109,6 +110,7 @@ export default function Editor({
   const [showHealthDetails, setShowHealthDetails] = useState(false);
   const [lastSavedByName, setLastSavedByName] = useState<string | null>(null);
   const [typewriterMode, setTypewriterMode] = useState(false);
+  const [showWordFrequency, setShowWordFrequency] = useState(false);
   const [issueSettingsOpen, setIssueSettingsOpen] = useState(false);
   const [issuePatterns, setIssuePatterns] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -789,7 +791,7 @@ export default function Editor({
               </svg>
             </button>
             {showHealthDetails && (
-              <div className="absolute bottom-7 left-1/2 -translate-x-1/2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 text-xs text-gray-700">
+              <div className="absolute bottom-7 left-1/2 -translate-x-1/2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 text-xs text-gray-700">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-gray-900">Health Score: {healthScore.score}/100</span>
                   <button
@@ -829,6 +831,17 @@ export default function Editor({
                     </div>
                   )}
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowWordFrequency((v) => !v); }}
+                  className="mt-2 w-full text-left text-[10px] font-medium text-[#B8692A] hover:text-[#96541F] transition-colors"
+                >
+                  {showWordFrequency ? "Hide word frequency" : "Show word frequency"}
+                </button>
+                {showWordFrequency && editor && (
+                  <div className="mt-2 max-h-60 overflow-y-auto border-t border-gray-100 pt-2">
+                    <WordFrequencyTable text={editor.state.doc.textContent} />
+                  </div>
+                )}
               </div>
             )}
           </div>
