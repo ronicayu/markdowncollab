@@ -237,16 +237,51 @@ export default function Editor({
     }
   }, []);
 
+  // Reading position memory: save scroll position (debounced 1s)
+  const scrollSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleScrollPositionSave = useCallback(() => {
+    if (scrollSaveTimerRef.current) clearTimeout(scrollSaveTimerRef.current);
+    scrollSaveTimerRef.current = setTimeout(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      try {
+        localStorage.setItem(`scrollPos:${documentId}`, String(el.scrollTop));
+      } catch {
+        // storage full
+      }
+    }, 1000);
+  }, [documentId]);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      try {
+        const saved = localStorage.getItem(`scrollPos:${documentId}`);
+        if (saved) {
+          el.scrollTop = Number(saved);
+        }
+      } catch {
+        // ignore
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [documentId]);
+
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
     el.addEventListener("scroll", handleScroll, { passive: true });
+    el.addEventListener("scroll", handleScrollPositionSave, { passive: true });
     // Check on mount and after content changes
     handleScroll();
     const observer = new ResizeObserver(handleScroll);
     observer.observe(el);
     return () => {
       el.removeEventListener("scroll", handleScroll);
+      el.removeEventListener("scroll", handleScrollPositionSave);
+      if (scrollSaveTimerRef.current) clearTimeout(scrollSaveTimerRef.current);
       observer.disconnect();
     };
   }, [handleScroll]);
