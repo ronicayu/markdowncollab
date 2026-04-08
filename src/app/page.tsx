@@ -1536,7 +1536,7 @@ export default function Home() {
                       </form>
                     </div>
                   )}
-                  <
+                  <a
                     href={`/api/documents/export?ids=${[...selected].join(",")}`}
                     className="text-sm font-medium text-amber-400 hover:text-amber-300"
                   >
