@@ -98,6 +98,7 @@ export default function Home() {
   const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [dueReminders, setDueReminders] = useState<{ id: string; documentId: string; remindAt: string; message: string; docTitle: string }[]>([]);
   const [showBulkTagPopover, setShowBulkTagPopover] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const [bulkTagging, setBulkTagging] = useState(false);
   const [merging, setMerging] = useState(false);
   const router = useRouter();
@@ -1196,7 +1197,24 @@ export default function Home() {
               )}
             </div>
           ) : (
-            <div className="space-y-2 max-w-3xl">
+            <div
+              className="space-y-2 max-w-3xl"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setFocusedIndex((prev) => Math.min(prev + 1, filteredDocs.length - 1));
+                } else if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setFocusedIndex((prev) => Math.max(prev - 1, 0));
+                } else if (e.key === "Enter" && focusedIndex >= 0 && focusedIndex < filteredDocs.length) {
+                  e.preventDefault();
+                  router.push(`/doc/${filteredDocs[focusedIndex].id}`);
+                } else if (e.key === "Escape") {
+                  setFocusedIndex(-1);
+                }
+              }}
+            >
               {selected.size > 0 && (
                 <div className="relative flex items-center gap-3 bg-[#111110] text-white rounded-xl px-4 py-3 mb-2">
                   <span className="text-sm">{selected.size} selected</span>
@@ -1329,8 +1347,8 @@ export default function Home() {
                   </button>
                 </div>
               )}
-              {filteredDocs.map((doc) => (
-                <div key={doc.id} className="relative group flex items-center gap-2">
+              {filteredDocs.map((doc, index) => (
+                <div key={doc.id} className={`relative group flex items-center gap-2 ${focusedIndex === index ? "ring-2 ring-[#B8692A] rounded-xl" : ""}`}
                   <input
                     type="checkbox"
                     checked={selected.has(doc.id)}
