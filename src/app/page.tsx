@@ -99,6 +99,7 @@ export default function Home() {
   const [dueReminders, setDueReminders] = useState<{ id: string; documentId: string; remindAt: string; message: string; docTitle: string }[]>([]);
   const [showBulkTagPopover, setShowBulkTagPopover] = useState(false);
   const [bulkTagging, setBulkTagging] = useState(false);
+  const [merging, setMerging] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -521,6 +522,40 @@ export default function Home() {
       )
     );
     setBulkTagging(false);
+  }
+
+  async function mergeDocuments() {
+    if (selected.size !== 2) return;
+    const ids = [...selected];
+    const targetId = ids[0];
+    const sourceId = ids[1];
+    const targetDoc = docs.find((d) => d.id === targetId);
+    const sourceDoc = docs.find((d) => d.id === sourceId);
+    if (!confirm(`Merge "${sourceDoc?.title || "Untitled"}" into "${targetDoc?.title || "Untitled"}"? A new combined document will be created.`)) return;
+    setMerging(true);
+    try {
+      const res = await fetch("/api/documents/merge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourceId, targetId, mode: "append" }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "Merge failed");
+        return;
+      }
+      const data = await res.json();
+      // Store merged content so the editor can initialize the Yjs doc with it
+      if (data.mergedContent) {
+        sessionStorage.setItem(`template:${data.id}`, data.mergedContent);
+      }
+      setSelected(new Set());
+      router.push(`/doc/${data.id}`);
+    } catch {
+      alert("Merge failed");
+    } finally {
+      setMerging(false);
+    }
   }
 
   async function deleteDoc(doc: Doc) {
@@ -1263,6 +1298,15 @@ export default function Home() {
                     >
                       Compare
                     </a>
+                  )}
+                  {selected.size === 2 && (
+                    <button
+                      onClick={mergeDocuments}
+                      disabled={merging}
+                      className="text-sm font-medium text-purple-400 hover:text-purple-300 disabled:opacity-50"
+                    >
+                      {merging ? "Merging..." : "Merge"}
+                    </button>
                   )}
                   <button
                     onClick={() => { setSelected(new Set()); setShowBulkTagPopover(false); }}
