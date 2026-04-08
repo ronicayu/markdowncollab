@@ -77,10 +77,14 @@ export default function CommentSidebar({
   // Fetch collaborators for mention autocomplete
   useEffect(() => {
     if (!documentId) return;
-    fetch(`/api/documents/${documentId}/collaborators`)
+    const controller = new AbortController();
+    fetch(`/api/documents/${documentId}/collaborators`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : []))
       .then((users: MentionUser[]) => setMentionUsers(users))
-      .catch(() => {});
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch collaborators:", err);
+      });
+    return () => controller.abort();
   }, [documentId]);
 
   // Open the comment form whenever the trigger counter increments
@@ -167,6 +171,7 @@ export default function CommentSidebar({
           onClick={() => setCollapsed(false)}
           className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
           title="Show comments"
+          aria-label="Show comments"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -186,6 +191,7 @@ export default function CommentSidebar({
               onClick={() => setCollapsed(true)}
               className="p-0.5 rounded text-gray-400 hover:text-gray-600"
               title="Hide comments"
+              aria-label="Hide comments"
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -195,6 +201,7 @@ export default function CommentSidebar({
         </div>
         <select
           value={filter}
+          aria-label="Filter comments"
           onChange={(e) => {
             const next = e.target.value as Filter;
             setFilter(next);
@@ -233,6 +240,7 @@ export default function CommentSidebar({
             <textarea
               ref={textareaRef}
               autoFocus
+              aria-label="Comment text"
               value={commentText}
               onChange={(e) => {
                 const value = e.target.value;
@@ -361,6 +369,7 @@ export default function CommentSidebar({
               <p className="text-xs text-gray-500 mb-2">Request a change on selected text:</p>
               <textarea
                 autoFocus
+                aria-label="Revision request description"
                 value={revisionText}
                 onChange={(e) => setRevisionText(e.target.value)}
                 onKeyDown={(e) => {

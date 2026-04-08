@@ -111,14 +111,18 @@ export default function VersionHistoryPanel({
 
   useEffect(() => {
     if (isOpen && activeTab === "changelog") {
+      const controller = new AbortController();
       setChangelogLoading(true);
-      fetch(`/api/documents/${documentId}/changelog`)
+      fetch(`/api/documents/${documentId}/changelog`, { signal: controller.signal })
         .then((r) => (r.ok ? r.json() : null))
         .then((data) => {
           if (data?.markdown) setChangelogMarkdown(data.markdown);
         })
-        .catch(() => {})
+        .catch((err) => {
+          if (err.name !== "AbortError") console.error("Failed to fetch changelog:", err);
+        })
         .finally(() => setChangelogLoading(false));
+      return () => controller.abort();
     }
   }, [isOpen, activeTab, documentId]);
 
@@ -292,6 +296,7 @@ export default function VersionHistoryPanel({
             onClick={onClose}
             className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
             title="Close version history"
+            aria-label="Close version history"
           >
             <svg
               className="h-4 w-4"
@@ -310,8 +315,10 @@ export default function VersionHistoryPanel({
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-[#E8D8C0]">
+        <div className="flex border-b border-[#E8D8C0]" role="tablist" aria-label="Version history tabs">
           <button
+            role="tab"
+            aria-selected={activeTab === "versions"}
             onClick={() => setActiveTab("versions")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "versions"
@@ -322,6 +329,8 @@ export default function VersionHistoryPanel({
             Versions
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === "activity"}
             onClick={() => setActiveTab("activity")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "activity"
@@ -332,6 +341,8 @@ export default function VersionHistoryPanel({
             Activity
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === "timeline"}
             onClick={() => setActiveTab("timeline")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "timeline"
@@ -342,6 +353,8 @@ export default function VersionHistoryPanel({
             Timeline
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === "wordcloud"}
             onClick={() => setActiveTab("wordcloud")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "wordcloud"
@@ -352,6 +365,8 @@ export default function VersionHistoryPanel({
             Words
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === "changelog"}
             onClick={() => setActiveTab("changelog")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "changelog"
@@ -663,6 +678,9 @@ export default function VersionHistoryPanel({
           }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Version preview"
             className="bg-[#FFFEF9] rounded-xl shadow-xl mx-4 max-w-2xl w-full max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
@@ -707,6 +725,7 @@ export default function VersionHistoryPanel({
                     {typeBadge(preview.type)}
                     <button
                       onClick={() => setPreview(null)}
+                      aria-label="Close preview"
                       className="p-1 rounded text-gray-400 hover:text-gray-600"
                     >
                       <svg
@@ -764,6 +783,9 @@ export default function VersionHistoryPanel({
           onClick={() => setRestoreTarget(null)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Restore version confirmation"
             className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full"
             onClick={(e) => e.stopPropagation()}
           >
@@ -828,6 +850,9 @@ export default function VersionHistoryPanel({
           }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Version comparison"
             className="bg-[#FFFEF9] rounded-xl shadow-xl mx-4 max-w-4xl w-full max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
@@ -861,6 +886,7 @@ export default function VersionHistoryPanel({
                   </h3>
                   <button
                     onClick={() => setDiffData(null)}
+                    aria-label="Close comparison"
                     className="p-1 rounded text-gray-400 hover:text-gray-600"
                   >
                     <svg

@@ -648,12 +648,13 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
           </button>
           {/* Color picker dropdown */}
           {btn.label === "Text color" && showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-48">
+            <div role="group" aria-label="Text color picker" className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-48">
               <div className="grid grid-cols-6 gap-1.5 mb-2">
                 {COLOR_SWATCHES.map((swatch) => (
                   <button
                     key={swatch.hex}
                     title={swatch.name}
+                    aria-label={`Set text color to ${swatch.name}`}
                     onClick={() => {
                       editor.chain().focus().setColor(swatch.hex).run();
                       setShowColorPicker(false);
@@ -756,13 +757,14 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
           </svg>
         </button>
         {showHighlightPicker && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-40">
+          <div role="group" aria-label="Personal highlight color picker" className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-40">
             <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide px-1 mb-1.5">Personal Highlight</p>
             <div className="flex gap-1.5 mb-2 px-1">
               {HIGHLIGHT_COLORS.map((c) => (
                 <button
                   key={c.color}
                   title={c.name}
+                  aria-label={`Highlight with ${c.name}`}
                   onClick={() => {
                     if (!editor) return;
                     const { from, to } = editor.state.selection;
@@ -823,6 +825,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
             disabled={macroPlaying}
             title="Play macro"
             aria-label="Play macro"
+            aria-expanded={showMacroMenu}
             className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
@@ -845,6 +848,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
                   onClick={() => handleDeleteMacro(m.name)}
                   className="text-gray-400 hover:text-red-500 p-0.5"
                   title="Delete macro"
+                  aria-label={`Delete macro ${m.name}`}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

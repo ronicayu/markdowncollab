@@ -215,6 +215,8 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
             </div>
             <button
               onClick={toggleLinkSharing}
+              aria-label={linkEnabled ? "Disable link sharing" : "Enable link sharing"}
+              aria-pressed={linkEnabled}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 linkEnabled ? "bg-[#B8692A]" : "bg-gray-200"
               }`}
@@ -274,6 +276,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
         <div className="border-t border-gray-100 pt-4 mt-2">
           <button
             onClick={() => setShowQr((v) => !v)}
+            aria-expanded={showQr}
             className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -298,6 +301,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
         <div className="flex justify-end mt-4">
           <button
             onClick={onClose}
+            aria-label="Close share dialog"
             className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5"
           >
             Done
