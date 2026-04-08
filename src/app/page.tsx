@@ -105,6 +105,8 @@ export default function Home() {
   const [docRatings, setDocRatings] = useState<Record<string, number>>({});
   const [showBulkTagPopover, setShowBulkTagPopover] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const [docReactions, setDocReactions] = useState<Record<string, Array<{ emoji: string; count: number; userIds: string[] }>>>({});
+  const [reactionPickerDocId, setReactionPickerDocId] = useState<string | null>(null);
   const [bulkTagging, setBulkTagging] = useState(false);
   const [merging, setMerging] = useState(false);
   const router = useRouter();
@@ -121,6 +123,17 @@ export default function Home() {
             .then((data) => {
               if (data?.average) {
                 setDocRatings((prev) => ({ ...prev, [doc.id]: data.average }));
+              }
+            })
+            .catch(() => {});
+        });
+        // Fetch reactions for all documents
+        fetchedDocs.forEach((doc) => {
+          fetch(`/api/documents/${doc.id}/reactions`)
+            .then((r) => (r.ok ? r.json() : []))
+            .then((reactions: Array<{ emoji: string; count: number; userIds: string[] }>) => {
+              if (reactions.length > 0) {
+                setDocReactions((prev) => ({ ...prev, [doc.id]: reactions }));
               }
             })
             .catch(() => {});
@@ -465,6 +478,24 @@ export default function Home() {
       body: JSON.stringify({ title: trimmed }),
     });
     setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, title: trimmed } : d));
+  }
+
+  async function toggleReaction(docId: string, emoji: string) {
+    try {
+      const res = await fetch(`/api/documents/${docId}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji }),
+      });
+      if (res.ok) {
+        // Refetch reactions for this doc
+        const reactionsRes = await fetch(`/api/documents/${docId}/reactions`);
+        if (reactionsRes.ok) {
+          const reactions = await reactionsRes.json();
+          setDocReactions((prev) => ({ ...prev, [docId]: reactions }));
+        }
+      }
+    } catch {}
   }
 
   function duplicateDoc(doc: Doc) {
@@ -1480,6 +1511,45 @@ export default function Home() {
                               ))}
                             </div>
                           )}
+                          {/* Quick Reactions */}
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            {(docReactions[doc.id] || []).map((r) => (
+                              <button
+                                key={r.emoji}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleReaction(doc.id, r.emoji); }}
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs bg-gray-100 hover:bg-gray-200 transition-colors"
+                                title={`${r.count} reaction${r.count > 1 ? "s" : ""}`}
+                              >
+                                <span>{r.emoji}</span>
+                                <span className="text-gray-500 text-[10px]">{r.count}</span>
+                              </button>
+                            ))}
+                            <div className="relative">
+                              <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReactionPickerDocId(reactionPickerDocId === doc.id ? null : doc.id); }}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+                                title="Add reaction"
+                              >
+                                +
+                              </button>
+                              {reactionPickerDocId === doc.id && (
+                                <div
+                                  className="absolute left-0 bottom-full mb-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-1.5 flex gap-1"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {["\u{1F44D}", "\u{2764}\u{FE0F}", "\u{1F680}", "\u{1F389}", "\u{1F440}", "\u{1F4AF}"].map((emoji) => (
+                                    <button
+                                      key={emoji}
+                                      onClick={(e) => { e.preventDefault(); toggleReaction(doc.id, emoji); setReactionPickerDocId(null); }}
+                                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-base transition-colors"
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                           </>
                         )}
                       </div>

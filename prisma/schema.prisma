@@ -197,3 +197,14 @@ model Rating {
   @@unique([documentId, userId])
   @@index([documentId])
 }
+
+model DocumentReaction {
+  id         String   @id @default(uuid())
+  documentId String
+  userId     String
+  emoji      String
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, userId, emoji])
+  @@index([documentId])
+}
