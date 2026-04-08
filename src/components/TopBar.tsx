@@ -58,6 +58,9 @@ interface TopBarProps {
   publishAt?: string | null;
   onSchedulePublish?: (dateTime: string | null) => void;
   onShowMetadata?: () => void;
+  onGenerateTitle?: () => void;
+  generateTitleLoading?: boolean;
+  showGenerateTitle?: boolean;
 }
 
 export default function TopBar({
@@ -100,6 +103,9 @@ export default function TopBar({
   publishAt,
   onSchedulePublish,
   onShowMetadata,
+  onGenerateTitle,
+  generateTitleLoading,
+  showGenerateTitle,
 }: TopBarProps) {
   const { data: session } = useSession();
   const { t, locale, setLocale } = useTranslation();
@@ -251,6 +257,26 @@ export default function TopBar({
           }}
           className="h-9 text-sm font-semibold text-white/80 truncate max-w-[100px] sm:max-w-[150px] md:max-w-none bg-transparent border-none outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/5 rounded px-1 -ml-1 transition-colors placeholder:text-white/30 min-w-0"
         />
+        {showGenerateTitle && onGenerateTitle && (
+          <button
+            onClick={onGenerateTitle}
+            disabled={generateTitleLoading}
+            className="hidden sm:flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors px-1.5 py-0.5 rounded hover:bg-white/8 disabled:opacity-40 shrink-0"
+            title="Generate title with AI"
+          >
+            {generateTitleLoading ? (
+              <svg className="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+            )}
+            <span>Title</span>
+          </button>
+        )}
         {/* Connected status */}
         <div className="flex items-center gap-1.5 shrink-0">
           <span

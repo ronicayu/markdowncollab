@@ -1054,6 +1054,45 @@ export default function DocumentPage({
     }
   }, [id, router]);
 
+  const [generateTitleLoading, setGenerateTitleLoading] = useState(false);
+
+  const handleGenerateTitle = useCallback(async () => {
+    setGenerateTitleLoading(true);
+    try {
+      const res = await fetch("/api/agent/title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId: id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.title) {
+        setDocTitle(data.title);
+        trackTab(id, data.title);
+        await fetch(`/api/documents/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: data.title }),
+        });
+        toast("Title generated");
+      } else {
+        toast(data.error || "Failed to generate title", "error");
+      }
+    } catch {
+      toast("Failed to generate title", "error");
+    } finally {
+      setGenerateTitleLoading(false);
+    }
+  }, [id]);
+
+  // Show "Generate title" button when doc is "Untitled" and has >50 words
+  const showGenerateTitle = useMemo(() => {
+    if (docTitle !== "Untitled" && docTitle !== id) return false;
+    if (!editor) return false;
+    const text = editor.state.doc.textContent.trim();
+    const wordCount = text ? text.split(/\s+/).length : 0;
+    return wordCount > 50;
+  }, [docTitle, id, editor]);
+
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentTone, setAgentTone] = useState("");
 
@@ -1195,6 +1234,9 @@ export default function DocumentPage({
         publishAt={publishAt}
         onSchedulePublish={userRole !== "viewer" ? handleSchedulePublish : undefined}
         onShowMetadata={() => setMetadataOpen(true)}
+        onGenerateTitle={handleGenerateTitle}
+        generateTitleLoading={generateTitleLoading}
+        showGenerateTitle={showGenerateTitle}
       />}
       {zenMode && (
         <div className="flex items-center justify-between bg-[#111110] px-4 py-2 shrink-0">
