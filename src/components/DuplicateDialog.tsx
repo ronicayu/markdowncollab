@@ -45,14 +45,18 @@ export default function DuplicateDialog({
 
   useEffect(() => {
     if (!isOpen) return;
-    fetch("/api/folders")
+    const controller = new AbortController();
+    fetch("/api/folders", { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: FolderOption[]) => {
         if (Array.isArray(data)) {
           setFolders(flattenFolders(data));
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch folders:", err);
+      });
+    return () => controller.abort();
   }, [isOpen]);
 
   if (!isOpen) return null;

@@ -143,12 +143,16 @@ export default function TopBar({
 
   // Fetch rating on mount
   useEffect(() => {
-    fetch(`/api/documents/${documentId}/ratings`)
+    const controller = new AbortController();
+    fetch(`/api/documents/${documentId}/ratings`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data) setAvgRating(data.average);
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch ratings:", err);
+      });
+    return () => controller.abort();
   }, [documentId]);
 
   const handleRate = useCallback(async (score: number) => {

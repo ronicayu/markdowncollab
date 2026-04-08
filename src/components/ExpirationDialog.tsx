@@ -19,12 +19,16 @@ export default function ExpirationDialog({ documentId, onClose }: ExpirationDial
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/documents/${documentId}/expiration`)
+    const controller = new AbortController();
+    fetch(`/api/documents/${documentId}/expiration`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.expiresAt) setCurrentExpiration(data.expiresAt);
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch expiration:", err);
+      });
+    return () => controller.abort();
   }, [documentId]);
 
   async function setExpiration(days: number | null) {

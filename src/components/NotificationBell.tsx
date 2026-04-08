@@ -120,7 +120,9 @@ export default function NotificationBell() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ids: [notif.id] }),
-      }).catch(() => {});
+      }).catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to mark notification read:", err);
+      });
       setUnreadCount((prev) => Math.max(0, prev - 1));
       setNotifications((prev) =>
         prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))

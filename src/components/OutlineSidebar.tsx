@@ -234,12 +234,16 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
   // Fetch backlinks on mount
   useEffect(() => {
     if (!documentId) return;
-    fetch(`/api/documents/${documentId}/backlinks`)
+    const controller = new AbortController();
+    fetch(`/api/documents/${documentId}/backlinks`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setBacklinks(data);
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch backlinks:", err);
+      });
+    return () => controller.abort();
   }, [documentId]);
 
   useEffect(() => {

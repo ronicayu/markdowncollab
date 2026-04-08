@@ -18,16 +18,21 @@ export default function RelatedDocs({ documentId }: RelatedDocsProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
     setLoading(true);
     fetch("/api/agent/suggest-links", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ documentId }),
+      signal: controller.signal,
     })
       .then((r) => (r.ok ? r.json() : { suggestions: [] }))
       .then((data) => setSuggestions(data.suggestions ?? []))
-      .catch(() => setSuggestions([]))
+      .catch((err) => {
+        if (err.name !== "AbortError") setSuggestions([]);
+      })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [documentId]);
 
   if (!loading && suggestions.length === 0) return null;

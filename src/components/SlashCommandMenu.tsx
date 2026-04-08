@@ -973,10 +973,14 @@ export default function SlashCommandMenu({
 
   // Fetch custom commands on mount
   useEffect(() => {
-    fetch("/api/commands")
+    const controller = new AbortController();
+    fetch("/api/commands", { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: CustomCommandItem[]) => setCustomCommands(data))
-      .catch(() => {});
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch custom commands:", err);
+      });
+    return () => controller.abort();
   }, []);
 
   // Convert custom commands to Command format

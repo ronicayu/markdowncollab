@@ -58,11 +58,15 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/stats")
+    const controller = new AbortController();
+    fetch("/api/stats", { signal: controller.signal })
       .then((r) => r.json())
       .then(setStats)
-      .catch(() => {})
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch stats:", err);
+      })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, []);
 
   return (

@@ -46,12 +46,16 @@ function SplitPane({ docId, userName }: { docId: string; userName: string }) {
   }, [provider, ydoc]);
 
   useEffect(() => {
-    fetch(`/api/documents/${docId}`)
+    const controller = new AbortController();
+    fetch(`/api/documents/${docId}`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : null))
       .then((doc) => {
         if (doc?.title) setTitle(doc.title);
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch document:", err);
+      });
+    return () => controller.abort();
   }, [docId]);
 
   const [editor, setEditor] = useState<import("@tiptap/core").Editor | null>(null);

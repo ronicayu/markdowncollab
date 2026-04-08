@@ -37,19 +37,20 @@ export default function DocumentMetadata({
 
   useEffect(() => {
     if (!isOpen) return;
+    const controller = new AbortController();
     setLoading(true);
 
     Promise.all([
-      fetch(`/api/documents/${documentId}/analytics`).then((r) =>
+      fetch(`/api/documents/${documentId}/analytics`, { signal: controller.signal }).then((r) =>
         r.ok ? r.json() : null
       ),
-      fetch(`/api/documents/${documentId}/activity`).then((r) =>
+      fetch(`/api/documents/${documentId}/activity`, { signal: controller.signal }).then((r) =>
         r.ok ? r.json() : null
       ),
-      fetch(`/api/documents/${documentId}/versions`).then((r) =>
+      fetch(`/api/documents/${documentId}/versions`, { signal: controller.signal }).then((r) =>
         r.ok ? r.json() : null
       ),
-      fetch(`/api/documents/${documentId}`).then((r) =>
+      fetch(`/api/documents/${documentId}`, { signal: controller.signal }).then((r) =>
         r.ok ? r.json() : null
       ),
     ])
@@ -79,8 +80,11 @@ export default function DocumentMetadata({
           setWordCount(text ? text.split(/\s+/).length : 0);
         }
       })
-      .catch(() => {})
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error("Failed to fetch document metadata:", err);
+      })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, [documentId, isOpen]);
 
   if (!isOpen) return null;
