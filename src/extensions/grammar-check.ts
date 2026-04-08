@@ -11,6 +11,16 @@ interface GrammarIssue {
   suggestion: string;
 }
 
+function paragraphHash(text: string): string {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash.toString(36);
+}
+
 /**
  * Grammar check extension that:
  * - Debounces 5s after last edit
@@ -27,6 +37,7 @@ export const GrammarCheck = Extension.create({
       issues: [] as GrammarIssue[],
       timeout: null as ReturnType<typeof setTimeout> | null,
       tooltip: null as HTMLDivElement | null,
+      cache: new Map<string, GrammarIssue[]>(),
     };
   },
 
@@ -208,6 +219,9 @@ export const GrammarCheck = Extension.create({
               const text = paragraph.textContent;
               if (!text || text.trim().length < 10) return;
 
+              const hash = paragraphHash(text);
+              if (storage.cache.has(hash)) return; // already checked, skip API call
+
               // Calculate the absolute position of the paragraph start
               const paragraphStart = $from.start();
 
@@ -237,6 +251,13 @@ export const GrammarCheck = Extension.create({
                 editorView.dispatch(
                   editorView.state.tr.setMeta(grammarCheckPluginKey, { issues })
                 );
+
+                // Cache results by paragraph hash
+                storage.cache.set(hash, issues);
+                if (storage.cache.size > 100) {
+                  const firstKey = storage.cache.keys().next().value;
+                  if (firstKey) storage.cache.delete(firstKey);
+                }
               } catch {
                 // silently fail
               }
