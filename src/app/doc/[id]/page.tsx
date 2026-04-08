@@ -808,6 +808,10 @@ export default function DocumentPage({
   const [focusMode, setFocusMode] = useState(false);
   const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
 
+  // Zen Mode — enhanced focus with vignette, larger text, all chrome hidden
+  const [zenMode, setZenMode] = useState(false);
+  const toggleZenMode = useCallback(() => setZenMode((prev) => !prev), []);
+
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const toggleChat = useCallback(() => setChatOpen((prev) => !prev), []);
@@ -817,16 +821,25 @@ export default function DocumentPage({
   }
 
   // Keyboard shortcut: Cmd+Shift+F to toggle focus mode
+  // Keyboard shortcut: Cmd+Alt+Z to toggle zen mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "F") {
         e.preventDefault();
         setFocusMode((prev) => !prev);
       }
+      if ((e.metaKey || e.ctrlKey) && e.altKey && e.key === "z") {
+        e.preventDefault();
+        setZenMode((prev) => !prev);
+      }
+      // Escape exits zen mode
+      if (e.key === "Escape" && zenMode) {
+        setZenMode(false);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [zenMode]);
 
   // Listen for bubble-menu-comment custom event to trigger comment form
   useEffect(() => {
@@ -917,8 +930,16 @@ export default function DocumentPage({
   }
 
   return (
-    <div id="main-content" className="flex h-screen flex-col bg-[#F2E8D5]">
-      <TopBar
+    <div id="main-content" className={`flex h-screen flex-col bg-[#F2E8D5] ${zenMode ? "zen-mode" : ""}`}
+      onClick={zenMode ? (e) => {
+        // Exit zen mode when clicking outside the editor text area
+        const target = e.target as HTMLElement;
+        if (!target.closest(".ProseMirror") && !target.closest("button")) {
+          setZenMode(false);
+        }
+      } : undefined}
+    >
+      {!zenMode && <TopBar
         title={docTitle}
         documentId={id}
         collaborators={collaborators}
@@ -958,11 +979,25 @@ export default function DocumentPage({
         forkedFrom={forkedFrom}
         onTranslate={handleTranslate}
         translateLoading={translateLoading}
-      />
-      {!focusMode && <TabBar />}
-      {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      />}
+      {zenMode && (
+        <div className="flex items-center justify-between bg-[#111110] px-4 py-2 shrink-0">
+          <span className="text-sm font-semibold text-white/60">{docTitle}</span>
+          <button
+            onClick={() => setZenMode(false)}
+            className="flex items-center gap-1.5 h-8 px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Exit Zen
+          </button>
+        </div>
+      )}
+      {!focusMode && !zenMode && <TabBar />}
+      {userRole !== "viewer" && !focusMode && !zenMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {/* Cover Image Banner */}
-      {!focusMode && (
+      {!focusMode && !zenMode && (
         <div className="relative group shrink-0">
           <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
           {coverImage ? (
@@ -997,9 +1032,9 @@ export default function DocumentPage({
           )}
         </div>
       )}
-      {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
+      {!focusMode && !zenMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
       <div className="flex flex-1 overflow-hidden">
-        {!focusMode && (
+        {!focusMode && !zenMode && (
           <div className="hidden lg:block">
             <ErrorBoundary>
               <OutlineSidebar editor={editor} documentId={id} ydoc={ydoc} currentUser={userName ?? undefined} />
@@ -1008,8 +1043,8 @@ export default function DocumentPage({
           </div>
         )}
         {ydoc && provider && (
-          <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode ? "max-w-[700px] mx-auto" : ""}`} style={{ fontFamily: getFontFamily(fontFamily) }}>
-            {!focusMode && <PinnedNotes ydoc={ydoc} userName={userName} />}
+          <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode || zenMode ? "max-w-[700px] mx-auto" : ""}`} style={{ fontFamily: getFontFamily(fontFamily) }}>
+            {!focusMode && !zenMode && <PinnedNotes ydoc={ydoc} userName={userName} />}
             <ErrorBoundary>
               <Editor
                 documentId={id}
@@ -1028,14 +1063,14 @@ export default function DocumentPage({
           </div>
         )}
         {/* Floating "+ Comment" button that appears above selected text (desktop) */}
-        {!focusMode && (
+        {!focusMode && !zenMode && (
           <FloatingCommentButton
             editor={editor}
             onAddComment={() => setOpenFormTrigger((n) => n + 1)}
             commentFormOpen={commentFormOpen}
           />
         )}
-        {!focusMode && <div className="hidden md:block">
+        {!focusMode && !zenMode && <div className="hidden md:block">
           <ErrorBoundary>
           <CommentSidebar
             suggestions={suggestions}
@@ -1061,7 +1096,7 @@ export default function DocumentPage({
           />
           </ErrorBoundary>
         </div>}
-        {versionHistoryOpen && !focusMode && (
+        {versionHistoryOpen && !focusMode && !zenMode && (
           <VersionHistoryPanel
             documentId={id}
             isOpen={versionHistoryOpen}
@@ -1069,7 +1104,7 @@ export default function DocumentPage({
             userName={userName}
           />
         )}
-        {chatOpen && !focusMode && (
+        {chatOpen && !focusMode && !zenMode && (
           <AIChatSidebar
             documentId={id}
             isOpen={chatOpen}

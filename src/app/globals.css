@@ -1090,3 +1090,33 @@ body {
 .typewriter-mode .ProseMirror {
   padding-bottom: 60vh;
 }
+
+/* Zen Mode: immersive writing with vignette and larger text */
+.zen-mode {
+  background: #1a1a18 !important;
+}
+.zen-mode .flex-1.overflow-auto {
+  background: #1a1a18 !important;
+}
+.zen-mode .ProseMirror {
+  font-size: 1.2em;
+  line-height: 1.9;
+  color: #e8e0d4;
+  max-width: 650px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+.zen-mode .ProseMirror::before {
+  color: #555 !important;
+}
+.zen-mode::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
+}
+.zen-mode .sticky.bottom-0 {
+  display: none;
+}
