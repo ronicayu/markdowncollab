@@ -49,15 +49,11 @@ export async function POST(
   }
 
   try {
-    const ydoc = new Y.Doc();
-    const connection = await connectYjsServer(WS_URL, id, {
-      ydoc,
-      timeoutMs: 5000,
-    });
+    const connection = await connectYjsServer(WS_URL, id);
 
-    const fragment = ydoc.getXmlFragment("default");
+    const fragment = connection.ydoc.getXmlFragment("default");
     const plainText = extractText(fragment).trim();
-    connection.close();
+    connection.cleanup();
 
     if (!plainText || plainText.length < 10) {
       return NextResponse.json(

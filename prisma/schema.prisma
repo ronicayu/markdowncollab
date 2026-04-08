@@ -24,6 +24,7 @@ model Document {
   password    String?
   coverImage  String?
   fontFamily  String?
+  maxVersions Int             @default(50)
   publishAt   DateTime?
   expiresAt   DateTime?
   deletedAt  DateTime?
@@ -209,4 +210,34 @@ model DocumentReaction {
 
   @@unique([documentId, userId, emoji])
   @@index([documentId])
+}
+
+model Macro {
+  id         String   @id @default(uuid())
+  name       String
+  steps      String
+  ownerId    String
+  documentId String?
+  createdAt  DateTime @default(now())
+
+  @@unique([ownerId, name])
+  @@index([ownerId])
+  @@index([documentId])
+}
+
+model UserPreference {
+  id                String  @id @default(uuid())
+  userId            String  @unique
+  digestFrequency   String  @default("none")
+  keyboardOverrides String?
+}
+
+model DocumentPin {
+  id         String   @id @default(uuid())
+  documentId String
+  userId     String
+  pinnedAt   DateTime @default(now())
+
+  @@unique([documentId, userId])
+  @@index([userId, pinnedAt])
 }

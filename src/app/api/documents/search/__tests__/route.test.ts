@@ -58,9 +58,9 @@ describe("GET /api/documents/search", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveLength(1);
-    expect(data[0].id).toBe("doc-1");
-    expect(data[0].title).toBe("Meeting Notes");
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].id).toBe("doc-1");
+    expect(data.items[0].title).toBe("Meeting Notes");
   });
 
   it("returns matching documents by title for unauthenticated user", async () => {
@@ -76,8 +76,8 @@ describe("GET /api/documents/search", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveLength(1);
-    expect(data[0].title).toBe("Budget Report");
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].title).toBe("Budget Report");
   });
 
   it("returns empty array when no title matches and no md files", async () => {
@@ -98,7 +98,7 @@ describe("GET /api/documents/search", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveLength(0);
+    expect(data.items).toHaveLength(0);
   });
 
   it("is case-insensitive for title search", async () => {
@@ -119,7 +119,7 @@ describe("GET /api/documents/search", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveLength(1);
+    expect(data.items).toHaveLength(1);
   });
 });
 
@@ -147,8 +147,8 @@ describe("GET /api/documents/search with filters", () => {
 
     expect(res.status).toBe(200);
     // Only doc-1 has the tag
-    expect(data).toHaveLength(1);
-    expect(data[0].id).toBe("doc-1");
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].id).toBe("doc-1");
   });
 
   it("filters by folderId", async () => {
@@ -169,8 +169,8 @@ describe("GET /api/documents/search with filters", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveLength(1);
-    expect(data[0].id).toBe("doc-1");
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].id).toBe("doc-1");
   });
 
   it("filters by date range", async () => {
@@ -191,8 +191,8 @@ describe("GET /api/documents/search with filters", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveLength(1);
-    expect(data[0].id).toBe("doc-1");
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].id).toBe("doc-1");
   });
 
   it("returns empty when tag filter matches no documents", async () => {
@@ -216,7 +216,7 @@ describe("GET /api/documents/search with filters", () => {
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data).toHaveLength(0);
+    expect(data.items).toHaveLength(0);
   });
 });
 

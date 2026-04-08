@@ -108,8 +108,10 @@ export default function TableSortMenu({ editor }: TableSortMenuProps) {
       const tablePos = result.pos;
 
       // Separate header rows from data rows
-      const headerRows: typeof tableNode.content.content = [];
-      const dataRows: typeof tableNode.content.content = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const headerRows: any[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const dataRows: any[] = [];
 
       tableNode.forEach((row, _offset, index) => {
         // First row with tableHeader cells is the header

@@ -14,11 +14,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import React from "react";
 import katex from "katex";
 
-function MathNodeView({ node, updateAttributes, selected }: {
-  node: { attrs: { content: string } };
-  updateAttributes: (attrs: { content: string }) => void;
-  selected: boolean;
-}) {
+function MathNodeView({ node, updateAttributes, selected }: any) {
   const [editing, setEditing] = useState(!node.attrs.content);
   const [value, setValue] = useState(node.attrs.content || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);

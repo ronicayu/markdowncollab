@@ -44,7 +44,7 @@ export const StatusBadge = Node.create({
     return [{ tag: 'span[data-type="status-badge"]' }];
   },
 
-  renderHTML({ node, HTMLAttributes }: { node: { attrs: { label: string; color: string } }; HTMLAttributes: Record<string, unknown> }) {
+  renderHTML({ node, HTMLAttributes }: any) {
     return [
       "span",
       mergeAttributes(HTMLAttributes, {
@@ -62,7 +62,7 @@ export const StatusBadge = Node.create({
     return {
       insertStatusBadge:
         (attrs: { label: string; color: string }) =>
-        ({ chain }: { chain: () => ReturnType<ReturnType<typeof chain>> }) => {
+        ({ chain }: { chain: () => any }) => {
           return chain()
             .insertContent({
               type: "statusBadge",

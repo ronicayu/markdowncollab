@@ -83,7 +83,7 @@ export const SectionLockExtension = Extension.create({
 
           const locksMap = ydoc.getMap("sectionLocks");
           const lockedHeadings = new Map<string, SectionLock>();
-          locksMap.forEach((value, key) => {
+          locksMap.forEach((value: any, key: any) => {
             lockedHeadings.set(key, value as SectionLock);
           });
 

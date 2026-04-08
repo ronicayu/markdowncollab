@@ -21,7 +21,7 @@ interface HeadingEntry {
   pos: number;
 }
 
-function TocNodeView({ editor }: { editor: any }) {
+function TocNodeView({ editor }: any) {
   const [headings, setHeadings] = useState<HeadingEntry[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

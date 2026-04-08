@@ -7,10 +7,7 @@ import React from "react";
  * InlineDateView — React NodeView for the inline date picker node.
  * Renders a styled date with a calendar icon. Click to edit via native date picker.
  */
-function InlineDateView(props: {
-  node: { attrs: { date: string } };
-  updateAttributes: (attrs: { date: string }) => void;
-}) {
+function InlineDateView(props: any) {
   const { node, updateAttributes } = props;
   const [editing, setEditing] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);

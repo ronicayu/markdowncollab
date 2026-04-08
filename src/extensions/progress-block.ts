@@ -38,7 +38,7 @@ export const ProgressBlock = Node.create({
     return [{ tag: 'div[data-type="progress-block"]' }];
   },
 
-  renderHTML({ node, HTMLAttributes }: { node: { attrs: { label: string; value: number; color: string } }; HTMLAttributes: Record<string, unknown> }) {
+  renderHTML({ node, HTMLAttributes }: any) {
     const { label, value, color } = node.attrs;
     const clampedValue = Math.max(0, Math.min(100, value));
 
@@ -95,7 +95,7 @@ export const ProgressBlock = Node.create({
     } as any;
   },
 
-  addNodeView() {
+  addNodeView(): any {
     return ({ node, getPos, editor }: { node: any; getPos: () => number; editor: any }) => {
       const dom = document.createElement("div");
       dom.className = "progress-block-wrapper";

@@ -18,7 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   while (currentId && !visited.has(currentId)) {
     visited.add(currentId);
-    const folder = await prisma.folder.findUnique({
+    const folder: { id: string; name: string; parentId: string | null } | null = await prisma.folder.findUnique({
       where: { id: currentId },
       select: { id: true, name: true, parentId: true },
     });

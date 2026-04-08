@@ -31,13 +31,13 @@ export const YjsUndo = Extension.create({
     return {
       undo:
         () =>
-        ({ state, dispatch }) => {
-          return yUndo(state, dispatch);
+        ({ state }: any) => {
+          return yUndo(state);
         },
       redo:
         () =>
-        ({ state, dispatch }) => {
-          return yRedo(state, dispatch);
+        ({ state }: any) => {
+          return yRedo(state);
         },
     };
   },

@@ -116,6 +116,6 @@ export const EmbedBlock = Node.create({
             attrs,
           });
         },
-    };
+    } as any;
   },
 });

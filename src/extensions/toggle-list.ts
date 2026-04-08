@@ -17,11 +17,7 @@ import React, { useState, useCallback } from "react";
 function ToggleItemView({
   node,
   updateAttributes,
-}: {
-  node: { attrs: { open: boolean } };
-  updateAttributes: (attrs: Partial<{ open: boolean }>) => void;
-  selected: boolean;
-}) {
+}: any) {
   const [open, setOpen] = useState(node.attrs.open);
 
   const toggle = useCallback(
@@ -126,7 +122,7 @@ export const ToggleList = Node.create({
     return {
       insertToggleList:
         () =>
-        ({ chain }: { chain: () => ReturnType<ReturnType<typeof chain>> }) => {
+        ({ chain }: { chain: () => any }) => {
           return chain()
             .insertContent({
               type: "toggleList",

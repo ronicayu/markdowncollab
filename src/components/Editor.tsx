@@ -458,7 +458,7 @@ export default function Editor({
       // We intercept and rebuild as a proper <ul>.
       handlePaste(view, event) {
         // Paste as plain text when Shift is held (Cmd+Shift+V)
-        if (event.shiftKey) {
+        if ((event as unknown as KeyboardEvent).shiftKey) {
           const plainText = event.clipboardData?.getData("text/plain");
           if (plainText) {
             event.preventDefault();
@@ -837,7 +837,7 @@ export default function Editor({
   // Toggle grammar check
   useEffect(() => {
     if (!editor) return;
-    editor.storage.grammarCheck.enabled = grammarCheckEnabled;
+    (editor.storage as any).grammarCheck.enabled = grammarCheckEnabled;
     if (!grammarCheckEnabled) {
       // Clear decorations when disabled
       editor.view.dispatch(

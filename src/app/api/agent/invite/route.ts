@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     // Fetch document metadata for context-aware agent
     const doc = await prisma.document.findUnique({
       where: { id: documentId },
-      select: { title: true, templateId: true },
+      select: { title: true, templateId: true, ownerId: true },
     });
 
     // Generate suggestions via Anthropic API with document context

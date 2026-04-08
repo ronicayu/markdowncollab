@@ -189,7 +189,7 @@ function convertList(el: Y.XmlElement, ordered: boolean, depth: number): Paragra
       }
 
       if (text || child.nodeName === "taskItem") {
-        const checked = child.getAttribute("checked") === "true" || child.getAttribute("checked") === true;
+        const checked = child.getAttribute("checked") === "true" || (child.getAttribute("checked") as any) === true;
         const taskPrefix = child.nodeName === "taskItem" ? (checked ? "\u2611 " : "\u2610 ") : "";
         items.push(
           new Paragraph({

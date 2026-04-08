@@ -13,11 +13,8 @@ import { NodeViewWrapper } from "@tiptap/react";
 import { useState, useRef, useEffect } from "react";
 import React from "react";
 
-function DetailsNodeView({ node, updateAttributes, selected }: {
-  node: { attrs: { summary: string; body: string } };
-  updateAttributes: (attrs: Partial<{ summary: string; body: string }>) => void;
-  selected: boolean;
-}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DetailsNodeView({ node, updateAttributes, selected }: any) {
   const [expanded, setExpanded] = useState(true);
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingBody, setEditingBody] = useState(false);
