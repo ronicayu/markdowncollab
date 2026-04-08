@@ -109,6 +109,15 @@ export default function Home() {
   const [tagFilterId, setTagFilterId] = useState<string | null>(null);
   const [tagPopoverDocId, setTagPopoverDocId] = useState<string | null>(null);
   const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState("#6b7280");
+  const TAG_PRESET_COLORS = [
+    { label: "Gray", value: "#6b7280" },
+    { label: "Red", value: "#ef4444" },
+    { label: "Amber", value: "#f59e0b" },
+    { label: "Green", value: "#22c55e" },
+    { label: "Blue", value: "#3b82f6" },
+    { label: "Purple", value: "#a855f7" },
+  ];
   const [folders, setFolders] = useState<Folder[]>([]);
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [showNewFolder, setShowNewFolder] = useState(false);
@@ -352,11 +361,11 @@ export default function Home() {
     }));
   }
 
-  async function createAndAddTag(docId: string, name: string) {
+  async function createAndAddTag(docId: string, name: string, color?: string) {
     const res = await fetch("/api/tags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, color: color || newTagColor }),
     });
     const tag = await res.json();
     if (tag && tag.id) {
@@ -367,6 +376,7 @@ export default function Home() {
       await addTagToDoc(docId, tag.id);
     }
     setNewTagName("");
+    setNewTagColor("#6b7280");
   }
 
   // Debounced full-text search with filters
@@ -1477,7 +1487,7 @@ export default function Home() {
                           const res = await fetch("/api/tags", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ name: trimmed }),
+                            body: JSON.stringify({ name: trimmed, color: newTagColor }),
                           });
                           const tag = await res.json();
                           if (tag && tag.id) {
@@ -1488,27 +1498,44 @@ export default function Home() {
                             await bulkAddTag(tag.id);
                           }
                           setNewTagName("");
+                          setNewTagColor("#6b7280");
                         }}
-                        className="flex items-center gap-1"
+                        className="space-y-1.5"
                       >
-                        <input
-                          type="text"
-                          value={newTagName}
-                          onChange={(e) => setNewTagName(e.target.value)}
-                          placeholder="New tag..."
-                          className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A]"
-                        />
-                        <button
-                          type="submit"
-                          disabled={!newTagName.trim()}
-                          className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
-                        >
-                          Add
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={newTagName}
+                            onChange={(e) => setNewTagName(e.target.value)}
+                            placeholder="New tag..."
+                            className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!newTagName.trim()}
+                            className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        {newTagName.trim() && (
+                          <div className="flex items-center gap-1">
+                            {TAG_PRESET_COLORS.map((c) => (
+                              <button
+                                key={c.value}
+                                type="button"
+                                onClick={() => setNewTagColor(c.value)}
+                                className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-gray-800 scale-110" : "border-transparent hover:border-gray-300"}`}
+                                style={{ backgroundColor: c.value }}
+                                title={c.label}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </form>
                     </div>
                   )}
-                  <a
+                  <
                     href={`/api/documents/export?ids=${[...selected].join(",")}`}
                     className="text-sm font-medium text-amber-400 hover:text-amber-300"
                   >
@@ -1730,22 +1757,38 @@ export default function Home() {
                       </div>
                       <form
                         onSubmit={(e) => { e.preventDefault(); if (newTagName.trim()) createAndAddTag(doc.id, newTagName.trim()); }}
-                        className="flex items-center gap-1"
+                        className="space-y-1.5"
                       >
-                        <input
-                          type="text"
-                          value={newTagName}
-                          onChange={(e) => setNewTagName(e.target.value)}
-                          placeholder="New tag..."
-                          className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
-                        />
-                        <button
-                          type="submit"
-                          disabled={!newTagName.trim()}
-                          className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
-                        >
-                          Add
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={newTagName}
+                            onChange={(e) => setNewTagName(e.target.value)}
+                            placeholder="New tag..."
+                            className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!newTagName.trim()}
+                            className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+                          >
+                            Add
+                          </button>
+                        </div>
+                        {newTagName.trim() && (
+                          <div className="flex items-center gap-1">
+                            {TAG_PRESET_COLORS.map((c) => (
+                              <button
+                                key={c.value}
+                                type="button"
+                                onClick={() => setNewTagColor(c.value)}
+                                className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-gray-800 scale-110" : "border-transparent hover:border-gray-300"}`}
+                                style={{ backgroundColor: c.value }}
+                                title={c.label}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </form>
                     </div>
                   )}
