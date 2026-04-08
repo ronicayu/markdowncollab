@@ -53,6 +53,8 @@ interface TopBarProps {
   forkedFrom?: { id: string; title: string } | null;
   onTranslate?: (language: string) => void;
   translateLoading?: boolean;
+  agentTone?: string;
+  onAgentToneChange?: (tone: string) => void;
 }
 
 export default function TopBar({
@@ -90,6 +92,8 @@ export default function TopBar({
   forkedFrom,
   onTranslate,
   translateLoading,
+  agentTone,
+  onAgentToneChange,
 }: TopBarProps) {
   const { data: session } = useSession();
   const { t, locale, setLocale } = useTranslation();
@@ -906,6 +910,23 @@ export default function TopBar({
             </svg>
             <span className="hidden sm:inline">{t("topbar.chat")}</span>
           </button>
+        )}
+
+        {/* Agent Tone Selector */}
+        {onAgentToneChange && (
+          <select
+            value={agentTone || ""}
+            onChange={(e) => onAgentToneChange(e.target.value)}
+            className="h-8 px-2 text-xs font-medium text-white/60 bg-transparent border border-white/15 rounded-md hover:border-white/30 focus:outline-none focus:border-white/40 transition-colors cursor-pointer"
+            title="AI writing tone"
+            aria-label="Select AI writing tone"
+          >
+            <option value="" className="bg-[#1a1a19] text-white">Default tone</option>
+            <option value="formal" className="bg-[#1a1a19] text-white">Formal</option>
+            <option value="casual" className="bg-[#1a1a19] text-white">Casual</option>
+            <option value="technical" className="bg-[#1a1a19] text-white">Technical</option>
+            <option value="friendly" className="bg-[#1a1a19] text-white">Friendly</option>
+          </select>
         )}
 
         {/* Invite Agent — icon-only on mobile, text on sm+ */}

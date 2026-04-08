@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { documentId } = body;
+    const { documentId, tone } = body;
 
     if (!documentId) {
       return NextResponse.json(
@@ -151,6 +151,7 @@ export async function POST(request: NextRequest) {
     const rawSuggestions = await generateSuggestions(plainText, {
       templateId: doc?.templateId,
       title: doc?.title,
+      tone: tone || null,
     });
 
     // Add each suggestion to the Yjs shared map with RelativePosition anchors

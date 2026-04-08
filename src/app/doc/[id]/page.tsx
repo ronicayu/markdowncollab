@@ -910,6 +910,7 @@ export default function DocumentPage({
   }, [id, router]);
 
   const [agentLoading, setAgentLoading] = useState(false);
+  const [agentTone, setAgentTone] = useState("");
 
   const handleInviteAgent = useCallback(async () => {
     setAgentLoading(true);
@@ -917,7 +918,7 @@ export default function DocumentPage({
       const res = await fetch("/api/agent/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: id }),
+        body: JSON.stringify({ documentId: id, tone: agentTone || undefined }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -933,7 +934,7 @@ export default function DocumentPage({
     } finally {
       setAgentLoading(false);
     }
-  }, [id]);
+  }, [id, agentTone]);
 
   const handlePasswordSubmit = useCallback(async () => {
     setPasswordError("");
@@ -1044,6 +1045,8 @@ export default function DocumentPage({
         forkedFrom={forkedFrom}
         onTranslate={handleTranslate}
         translateLoading={translateLoading}
+        agentTone={agentTone}
+        onAgentToneChange={setAgentTone}
       />}
       {zenMode && (
         <div className="flex items-center justify-between bg-[#111110] px-4 py-2 shrink-0">

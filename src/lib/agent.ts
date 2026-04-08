@@ -63,9 +63,12 @@ const TEMPLATE_GUIDANCE: Record<string, { context: string; guidance: string }> =
   },
 };
 
+export type WritingTone = "formal" | "casual" | "technical" | "friendly";
+
 interface PromptContext {
   templateId?: string | null;
   title?: string | null;
+  tone?: WritingTone | null;
 }
 
 /**
@@ -80,7 +83,9 @@ export function buildReviewPrompt(markdown: string, context: PromptContext): str
     ? template.guidance
     : "Review for general writing quality — clarity, grammar, style, conciseness.";
 
-  return `You are a writing assistant reviewing a ${docType}${titleLine}.
+  const toneLine = context.tone ? `Write in a ${context.tone} tone.\n\n` : "";
+
+  return `${toneLine}You are a writing assistant reviewing a ${docType}${titleLine}.
 
 ${guidanceLine}
 
