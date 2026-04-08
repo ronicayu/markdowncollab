@@ -1578,6 +1578,79 @@ export default function Home() {
                   >
                     Export ZIP
                   </a>
+                  <button
+                    onClick={() => setBulkMoveOpen((v) => !v)}
+                    className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
+                  >
+                    Move
+                  </button>
+                  {bulkMoveOpen && (
+                    <div
+                      className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-gray-700">Move {selected.size} docs to folder</p>
+                        <button onClick={() => setBulkMoveOpen(false)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
+                      </div>
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        <button
+                          onClick={() => bulkMoveToFolder(null)}
+                          className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          No folder (root)
+                        </button>
+                        {folders.map((f) => (
+                          <button
+                            key={f.id}
+                            onClick={() => bulkMoveToFolder(f.id)}
+                            className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            {f.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setBulkShareOpen((v) => !v)}
+                    className="text-sm font-medium text-pink-400 hover:text-pink-300"
+                  >
+                    Share
+                  </button>
+                  {bulkShareOpen && (
+                    <div
+                      className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-64"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-gray-700">Share {selected.size} docs</p>
+                        <button onClick={() => setBulkShareOpen(false)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
+                      </div>
+                      <input
+                        type="email"
+                        value={bulkShareEmail}
+                        onChange={(e) => setBulkShareEmail(e.target.value)}
+                        placeholder="Email address"
+                        className="w-full rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A] mb-2"
+                      />
+                      <select
+                        value={bulkShareRole}
+                        onChange={(e) => setBulkShareRole(e.target.value as "viewer" | "editor")}
+                        className="w-full rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A] mb-2"
+                      >
+                        <option value="viewer">Viewer</option>
+                        <option value="editor">Editor</option>
+                      </select>
+                      <button
+                        onClick={bulkShare}
+                        disabled={!bulkShareEmail.trim()}
+                        className="w-full px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+                      >
+                        Share
+                      </button>
+                    </div>
+                  )}
                   {selected.size === 2 && (
                     <>
                       <a
@@ -1602,7 +1675,7 @@ export default function Home() {
                     </>
                   )}
                   <button
-                    onClick={() => { setSelected(new Set()); setShowBulkTagPopover(false); }}
+                    onClick={() => { setSelected(new Set()); setShowBulkTagPopover(false); setBulkMoveOpen(false); setBulkShareOpen(false); }}
                     className="text-sm text-white/50 hover:text-white ml-auto"
                   >
                     Cancel
