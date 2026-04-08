@@ -9,6 +9,7 @@ import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import RecentDocs from "@/components/RecentDocs";
 import Scratchpad from "@/components/Scratchpad";
+import { I18nProvider } from "@/lib/i18n";
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={jakarta.className} suppressHydrationWarning>
         <SessionProvider>
+          <I18nProvider>
           <ThemeWrapper>
             <a href="#main-content" className="skip-to-content">
               Skip to content
@@ -37,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Scratchpad />
             <ServiceWorkerRegistration />
           </ThemeWrapper>
+          </I18nProvider>
           <ToastProvider />
         </SessionProvider>
       </body>

@@ -5,6 +5,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import ShareDialog from "@/components/ShareDialog";
 import ThemeEditor from "@/components/ThemeEditor";
 import FontSelector, { type FontOption } from "@/components/FontSelector";
+import { useTranslation, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 
 export interface Collaborator {
   name: string;
@@ -83,6 +84,8 @@ export default function TopBar({
   forkedFrom,
 }: TopBarProps) {
   const { data: session } = useSession();
+  const { t, locale, setLocale } = useTranslation();
+  const [langOpen, setLangOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState(`/doc/${documentId}`);
   useEffect(() => {
@@ -200,7 +203,7 @@ export default function TopBar({
             }`}
           />
           <span className="hidden md:inline text-xs text-white/40">
-            {connected ? "Connected" : "Connecting..."}
+            {connected ? t("status.connected") : t("status.connecting")}
           </span>
         </div>
         {userRole === "viewer" && (
@@ -243,6 +246,34 @@ export default function TopBar({
 
       {/* Right: collaborators + actions */}
       <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
+        {/* Language selector */}
+        <div className="relative">
+          <button
+            onClick={() => setLangOpen((v) => !v)}
+            className="flex items-center gap-1 h-8 px-2 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+            title={t("language")}
+            aria-label={t("language")}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+            </svg>
+          </button>
+          {langOpen && (
+            <div className="absolute right-0 top-full mt-1 w-36 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 py-1">
+              {(Object.keys(LOCALE_LABELS) as Locale[]).map((loc) => (
+                <button
+                  key={loc}
+                  onClick={() => { setLocale(loc); setLangOpen(false); }}
+                  className={`flex items-center gap-2 w-full px-3 py-2 text-sm transition-colors ${
+                    locale === loc ? "text-white bg-white/10" : "text-white/70 hover:text-white hover:bg-white/8"
+                  }`}
+                >
+                  {LOCALE_LABELS[loc]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {/* Theme selector */}
         <ThemeEditor />
         {/* Collaborator avatars */}
@@ -432,7 +463,7 @@ export default function TopBar({
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span className="hidden sm:inline">Focus</span>
+          <span className="hidden sm:inline">{t("topbar.focus")}</span>
         </button>
 
         {/* Version History toggle */}
@@ -450,7 +481,7 @@ export default function TopBar({
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span className="hidden sm:inline">History</span>
+          <span className="hidden sm:inline">{t("topbar.history")}</span>
         </button>
 
         {/* Auto-complete toggle */}
@@ -489,7 +520,7 @@ export default function TopBar({
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
             </svg>
-            <span className="hidden sm:inline">Chat</span>
+            <span className="hidden sm:inline">{t("topbar.chat")}</span>
           </button>
         )}
 
@@ -511,7 +542,7 @@ export default function TopBar({
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082" />
             </svg>
           )}
-          <span className="hidden sm:inline">{agentLoading ? "Working..." : "Invite Agent"}</span>
+          <span className="hidden sm:inline">{agentLoading ? "Working..." : t("topbar.inviteAgent")}</span>
         </button>
 
         {/* Auth */}

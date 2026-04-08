@@ -7,6 +7,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
 import NotificationBell from "@/components/NotificationBell";
 import WelcomeModal from "@/components/WelcomeModal";
+import { useTranslation } from "@/lib/i18n";
 
 interface Tag {
   id: string;
@@ -49,6 +50,7 @@ type Tab = "all" | "recent" | "shared" | "starred" | "trash";
 
 export default function Home() {
   const { data: session } = useSession();
+  const { t } = useTranslation();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -587,11 +589,11 @@ export default function Home() {
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {(
             [
-              { label: "All Documents", tab: "all" as Tab },
-              { label: "Recent", tab: "recent" as Tab },
-              { label: "Shared with me", tab: "shared" as Tab },
-              { label: "Starred", tab: "starred" as Tab },
-              { label: "Trash", tab: "trash" as Tab },
+              { label: t("tab.all"), tab: "all" as Tab },
+              { label: t("tab.recent"), tab: "recent" as Tab },
+              { label: t("tab.shared"), tab: "shared" as Tab },
+              { label: t("tab.starred"), tab: "starred" as Tab },
+              { label: t("tab.trash"), tab: "trash" as Tab },
             ] as { label: string; tab: Tab }[]
           ).map(({ label, tab }) => (
             <button
