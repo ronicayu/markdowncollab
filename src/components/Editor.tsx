@@ -57,6 +57,7 @@ import WordFrequencyTable from "./WordFrequencyTable";
 import { Extension } from "@tiptap/core";
 import { createHeatmapPlugin, heatmapPluginKey } from "@/extensions/heatmap-plugin";
 import { HeadingAnchor, initAnchorScrolling } from "@/extensions/heading-anchor";
+import { InlineDate } from "@/extensions/inline-date";
 
 
 interface EditorProps {
@@ -374,6 +375,7 @@ export default function Editor({
       }),
       IssueLinker,
       HeadingAnchor,
+      InlineDate,
       Extension.create({
         name: "heatmap",
         addProseMirrorPlugins() {

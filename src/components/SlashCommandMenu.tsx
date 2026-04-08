@@ -536,6 +536,20 @@ const COMMANDS: Command[] = [
     },
   },
   {
+    id: "date-picker",
+    label: "Date Picker",
+    description: "Insert an editable date picker",
+    icon: "\uD83D\uDCC6",
+    keywords: ["date-picker", "datepicker", "calendar", "pick", "editable"],
+    action: (editor) => {
+      const today = new Date().toISOString().slice(0, 10);
+      editor.chain().focus().insertContent({
+        type: "inlineDate",
+        attrs: { date: today },
+      }).run();
+    },
+  },
+  {
     id: "columns",
     label: "Two Columns",
     description: "Side-by-side layout",
