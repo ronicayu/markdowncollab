@@ -99,6 +99,7 @@ export default function Home() {
   const [searchDateTo, setSearchDateTo] = useState("");
   const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [dueReminders, setDueReminders] = useState<{ id: string; documentId: string; remindAt: string; message: string; docTitle: string }[]>([]);
+  const [docRatings, setDocRatings] = useState<Record<string, number>>({});
   const [showBulkTagPopover, setShowBulkTagPopover] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const [bulkTagging, setBulkTagging] = useState(false);
@@ -110,6 +111,17 @@ export default function Home() {
       .then((r) => r.json())
       .then((fetchedDocs: Doc[]) => {
         setDocs(fetchedDocs);
+        // Fetch ratings for all documents
+        fetchedDocs.forEach((doc) => {
+          fetch(`/api/documents/${doc.id}/ratings`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              if (data?.average) {
+                setDocRatings((prev) => ({ ...prev, [doc.id]: data.average }));
+              }
+            })
+            .catch(() => {});
+        });
         // Fetch tags for all documents
         fetchedDocs.forEach((doc) => {
           fetch(`/api/documents/${doc.id}/tags`)
@@ -1452,6 +1464,14 @@ export default function Home() {
                         )}
                       </div>
                     </div>
+                    {docRatings[doc.id] > 0 && (
+                      <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0 ml-2" title={`Rating: ${docRatings[doc.id]}/5`}>
+                        <svg className="h-3 w-3" fill="#F59E0B" viewBox="0 0 24 24" stroke="none">
+                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        {docRatings[doc.id]}
+                      </span>
+                    )}
                     <span className="text-xs text-gray-400 shrink-0 ml-4 mr-16">
                       {formatDate(doc.updatedAt)}
                     </span>

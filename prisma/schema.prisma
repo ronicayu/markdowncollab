@@ -183,3 +183,15 @@ model CustomCommand {
 
   @@index([ownerId])
 }
+
+model Rating {
+  id         String   @id @default(uuid())
+  documentId String
+  userId     String
+  score      Int
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, userId])
+  @@index([documentId])
+}
