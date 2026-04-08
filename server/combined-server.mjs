@@ -117,12 +117,14 @@ async function createAutoSnapshot(docName, doc) {
     const state = Y.encodeStateAsUpdate(doc);
     const snapshot = Buffer.from(state);
 
-    // Look up the document title from the database
+    // Look up the document title, version limit, and owner from the database
     const dbDoc = await wsDbClient.document.findUnique({
       where: { id: docName },
-      select: { title: true },
+      select: { title: true, maxVersions: true, ownerId: true },
     });
     const title = dbDoc?.title || "Untitled";
+    const maxVersions = dbDoc?.maxVersions ?? 50;
+    const ownerId = dbDoc?.ownerId;
 
     await wsDbClient.documentVersion.create({
       data: {
@@ -135,12 +137,28 @@ async function createAutoSnapshot(docName, doc) {
       },
     });
 
-    // Prune old auto snapshots (keep last 50)
+    // Prune old auto snapshots (keep last maxVersions)
     const count = await wsDbClient.documentVersion.count({
       where: { documentId: docName, type: "auto" },
     });
-    if (count > 50) {
-      const excess = count - 50;
+
+    // Warn owner at 90% capacity
+    const warningThreshold = Math.floor(maxVersions * 0.9);
+    if (count >= warningThreshold && count <= maxVersions && ownerId) {
+      await wsDbClient.notification.create({
+        data: {
+          userId: ownerId,
+          type: "system",
+          documentId: docName,
+          documentTitle: title,
+          actorName: "System",
+          message: `"${title}" has ${count}/${maxVersions} auto-snapshots. Older versions will be pruned automatically when the limit is reached.`,
+        },
+      });
+    }
+
+    if (count > maxVersions) {
+      const excess = count - maxVersions;
       const oldest = await wsDbClient.documentVersion.findMany({
         where: { documentId: docName, type: "auto" },
         orderBy: { createdAt: "asc" },
@@ -151,6 +169,20 @@ async function createAutoSnapshot(docName, doc) {
         await wsDbClient.documentVersion.deleteMany({
           where: { id: { in: oldest.map((v) => v.id) } },
         });
+
+        // Notify owner that pruning occurred
+        if (ownerId) {
+          await wsDbClient.notification.create({
+            data: {
+              userId: ownerId,
+              type: "system",
+              documentId: docName,
+              documentTitle: title,
+              actorName: "System",
+              message: `${excess} old auto-snapshot${excess > 1 ? "s" : ""} pruned from "${title}" to stay within the ${maxVersions}-version limit.`,
+            },
+          });
+        }
       }
     }
 
