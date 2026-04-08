@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const doc = await prisma.document.findUnique({
     where: { id },
-    select: { id: true, title: true, ownerId: true, visibility: true, status: true, approvedBy: true, approvedAt: true, folderId: true, createdAt: true, updatedAt: true },
+    select: { id: true, title: true, ownerId: true, visibility: true, status: true, approvedBy: true, approvedAt: true, folderId: true, coverImage: true, createdAt: true, updatedAt: true },
   });
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -45,6 +45,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const data: Record<string, any> = {};
   if (body.title !== undefined) data.title = body.title;
   if (body.folderId !== undefined) data.folderId = body.folderId;
+  if (body.coverImage !== undefined) data.coverImage = body.coverImage;
   const doc = await prisma.document.update({ where: { id }, data });
   return NextResponse.json({ ...doc, role: access.role });
 }

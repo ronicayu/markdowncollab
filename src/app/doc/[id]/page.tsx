@@ -161,6 +161,8 @@ export default function DocumentPage({
   const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockedBy: string | null } | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [expirationDialogOpen, setExpirationDialogOpen] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   // Fetch document title, role, status, and breadcrumbs on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
@@ -168,6 +170,7 @@ export default function DocumentPage({
       .then((doc) => {
         if (doc?.title) setDocTitle(doc.title);
         if (doc?.role) setUserRole(doc.role);
+        if (doc?.coverImage) setCoverImage(doc.coverImage);
         if (doc?.status) setDocStatus(doc.status);
         // Track recent document open for the RecentDocs widget
         trackDocumentOpen(id, doc?.title || id);
@@ -253,6 +256,36 @@ export default function DocumentPage({
   // Track document view on mount
   useEffect(() => {
     fetch(`/api/documents/${id}/analytics`, { method: "POST" }).catch(() => {});
+  }, [id]);
+
+  const handleCoverUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    try {
+      const uploadRes = await fetch(`/api/documents/${id}/upload`, { method: "POST", body: formData });
+      if (!uploadRes.ok) return;
+      const { url } = await uploadRes.json();
+      await fetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coverImage: url }),
+      });
+      setCoverImage(url);
+    } catch { /* silently fail */ }
+    if (coverInputRef.current) coverInputRef.current.value = "";
+  }, [id]);
+
+  const handleRemoveCover = useCallback(async () => {
+    try {
+      await fetch(`/api/documents/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coverImage: null }),
+      });
+      setCoverImage(null);
+    } catch { /* silently fail */ }
   }, [id]);
 
   const handleTitleChange = useCallback(
@@ -830,6 +863,42 @@ export default function DocumentPage({
         onSetExpiration={() => setExpirationDialogOpen(true)}
       />
       {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      {/* Cover Image Banner */}
+      {!focusMode && (
+        <div className="relative group shrink-0">
+          <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
+          {coverImage ? (
+            <div className="relative w-full" style={{ maxHeight: 200 }}>
+              <img src={coverImage} alt="Document cover" className="w-full object-cover" style={{ maxHeight: 200 }} />
+              {userRole !== "viewer" && (
+                <button
+                  onClick={handleRemoveCover}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs px-2 py-1 rounded hover:bg-black/80"
+                >
+                  Remove cover
+                </button>
+              )}
+              {userRole !== "viewer" && (
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs px-2 py-1 rounded hover:bg-black/80"
+                >
+                  Change cover
+                </button>
+              )}
+            </div>
+          ) : (
+            userRole !== "viewer" && (
+              <button
+                onClick={() => coverInputRef.current?.click()}
+                className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 opacity-0 group-hover:opacity-100 transition-all text-center"
+              >
+                + Add cover image
+              </button>
+            )
+          )}
+        </div>
+      )}
       {!focusMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
       <div className="flex flex-1 overflow-hidden">
         {!focusMode && (

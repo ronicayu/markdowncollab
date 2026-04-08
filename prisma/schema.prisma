@@ -20,6 +20,7 @@ model Document {
   approvedAt DateTime?
   lockedBy   String?
   lockedAt   DateTime?
+  coverImage String?
   expiresAt  DateTime?
   deletedAt  DateTime?
   createdAt  DateTime           @default(now())
