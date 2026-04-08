@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Editor } from "@tiptap/core";
-import { findParentNodeOfType } from "@tiptap/core";
+import { findParentNode } from "@tiptap/core";
 
 interface TableSortMenuProps {
   editor: Editor;
@@ -50,7 +50,7 @@ export default function TableSortMenu({ editor }: TableSortMenuProps) {
         return;
       }
 
-      const result = findParentNodeOfType(tableType)(state.selection);
+      const result = findParentNode((node) => node.type === tableType)(state.selection);
       if (!result) {
         setIsInTable(false);
         setMenuOpen(false);
@@ -101,7 +101,7 @@ export default function TableSortMenu({ editor }: TableSortMenuProps) {
       const tableRowType = state.schema.nodes.tableRow;
       if (!tableType || !tableRowType) return;
 
-      const result = findParentNodeOfType(tableType)(state.selection);
+      const result = findParentNode((node) => node.type === tableType)(state.selection);
       if (!result) return;
 
       const tableNode = result.node;
