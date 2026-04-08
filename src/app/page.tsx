@@ -1292,21 +1292,27 @@ export default function Home() {
                     Export ZIP
                   </a>
                   {selected.size === 2 && (
-                    <a
-                      href={`/compare?a=${[...selected][0]}&b=${[...selected][1]}`}
-                      className="text-sm font-medium text-blue-400 hover:text-blue-300"
-                    >
-                      Compare
-                    </a>
-                  )}
-                  {selected.size === 2 && (
-                    <button
-                      onClick={mergeDocuments}
-                      disabled={merging}
-                      className="text-sm font-medium text-purple-400 hover:text-purple-300 disabled:opacity-50"
-                    >
-                      {merging ? "Merging..." : "Merge"}
-                    </button>
+                    <>
+                      <a
+                        href={`/compare?a=${[...selected][0]}&b=${[...selected][1]}`}
+                        className="text-sm font-medium text-blue-400 hover:text-blue-300"
+                      >
+                        Compare
+                      </a>
+                      <a
+                        href={`/split?left=${[...selected][0]}&right=${[...selected][1]}`}
+                        className="text-sm font-medium text-teal-400 hover:text-teal-300"
+                      >
+                        Split View
+                      </a>
+                      <button
+                        onClick={mergeDocuments}
+                        disabled={merging}
+                        className="text-sm font-medium text-purple-400 hover:text-purple-300 disabled:opacity-50"
+                      >
+                        {merging ? "Merging..." : "Merge"}
+                      </button>
+                    </>
                   )}
                   <button
                     onClick={() => { setSelected(new Set()); setShowBulkTagPopover(false); }}
