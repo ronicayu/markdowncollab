@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
 import TemplatePicker from "@/components/TemplatePicker";
 import NotificationBell from "@/components/NotificationBell";
-import ActivityDots from "@/components/ActivityDots";
 import WelcomeModal from "@/components/WelcomeModal";
 import DuplicateDialog from "@/components/DuplicateDialog";
 import TemplateVariableDialog from "@/components/TemplateVariableDialog";
+import DocumentRow from "@/components/dashboard/DocumentRow";
+import BulkActionsBar from "@/components/dashboard/BulkActionsBar";
+import SearchBar, { SearchFiltersRow } from "@/components/dashboard/SearchBar";
 import { useTranslation } from "@/lib/i18n";
 import { templates, extractCustomVariables } from "@/lib/templates";
 
@@ -1164,97 +1166,31 @@ export default function Home() {
               <h1 className="text-lg font-semibold text-gray-900">{headingLabel[activeTab]}</h1>
             )}
           </div>
-          <div className="flex items-center gap-2 flex-1 max-w-sm">
-            <div className="relative flex-1 min-w-0">
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search titles and content..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setShowRecentSearches(false); }}
-                onFocus={() => { if (!search.trim() && recentSearches.length > 0) setShowRecentSearches(true); }}
-                onBlur={() => { setTimeout(() => setShowRecentSearches(false), 150); }}
-                className="w-full rounded-lg border border-black/10 bg-white/60 px-3 py-1.5 text-sm outline-none placeholder:text-gray-400 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
-              />
-              {showRecentSearches && recentSearches.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
-                  <p className="px-3 py-1 text-[10px] text-gray-400 font-medium uppercase tracking-wide">Recent searches</p>
-                  {recentSearches.map((q) => (
-                    <button
-                      key={q}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setSearch(q);
-                        setShowRecentSearches(false);
-                        searchInputRef.current?.focus();
-                      }}
-                      className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-[#B8692A] transition-colors flex items-center gap-2"
-                    >
-                      <svg className="h-3 w-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {q}
-                    </button>
-                  ))}
-                  <div className="border-t border-gray-100 mt-1 pt-1">
-                    <button
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setRecentSearches([]);
-                        try { localStorage.removeItem("recentSearches"); } catch {}
-                        setShowRecentSearches(false);
-                      }}
-                      className="w-full text-left px-3 py-1 text-xs text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      Clear history
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => setSortBy(sortBy === "date" ? "name" : "date")}
-              className="shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg border border-black/10 bg-white/60 text-xs text-gray-500 hover:text-gray-700 hover:border-black/20 transition-colors"
-              title={`Sort by ${sortBy === "date" ? "name" : "date"}`}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h12M3 17h6" />
-              </svg>
-              <span className="hidden sm:inline">{sortBy === "date" ? "Date" : "Name"}</span>
-            </button>
-            <button
-              onClick={() => {
-                const next = !relativeDates;
-                setRelativeDates(next);
-                try { localStorage.setItem("relativeDates", String(next)); } catch {}
-              }}
-              className={`shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs transition-colors ${
-                !relativeDates
-                  ? "border-[#B8692A]/40 bg-amber-50 text-[#B8692A]"
-                  : "border-black/10 bg-white/60 text-gray-500 hover:text-gray-700 hover:border-black/20"
-              }`}
-              title={relativeDates ? "Switch to absolute dates" : "Switch to relative dates"}
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="hidden sm:inline">{relativeDates ? "Relative" : "Absolute"}</span>
-            </button>
-            <button
-              onClick={() => setShowSearchFilters((v) => !v)}
-              className={`shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs transition-colors ${
-                showSearchFilters || searchTagFilter || searchFolderFilter || searchDateFrom || searchDateTo
-                  ? "border-[#B8692A]/40 bg-amber-50 text-[#B8692A]"
-                  : "border-black/10 bg-white/60 text-gray-500 hover:text-gray-700 hover:border-black/20"
-              }`}
-              title="Toggle search filters"
-            >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
-              </svg>
-              <span className="hidden sm:inline">Filters</span>
-            </button>
-          </div>
+          <SearchBar
+            search={search}
+            onSearchChange={setSearch}
+            searchInputRef={searchInputRef}
+            showRecentSearches={showRecentSearches}
+            onSetShowRecentSearches={setShowRecentSearches}
+            recentSearches={recentSearches}
+            onSetRecentSearches={setRecentSearches}
+            sortBy={sortBy}
+            onSetSortBy={setSortBy}
+            relativeDates={relativeDates}
+            onSetRelativeDates={setRelativeDates}
+            showSearchFilters={showSearchFilters}
+            onSetShowSearchFilters={(v) => setShowSearchFilters(v)}
+            searchTagFilter={searchTagFilter}
+            onSetSearchTagFilter={setSearchTagFilter}
+            searchFolderFilter={searchFolderFilter}
+            onSetSearchFolderFilter={setSearchFolderFilter}
+            searchDateFrom={searchDateFrom}
+            onSetSearchDateFrom={setSearchDateFrom}
+            searchDateTo={searchDateTo}
+            onSetSearchDateTo={setSearchDateTo}
+            allTags={allTags}
+            folders={folders}
+          />
           {session && <NotificationBell />}
           <input
             ref={importInputRef}
@@ -1301,64 +1237,19 @@ export default function Home() {
         </header>
 
         {/* Search filters row */}
-        {showSearchFilters && (
-          <div className="flex items-center gap-2 px-4 sm:px-6 py-2 bg-[#F2E8D5] border-b border-black/5 flex-wrap">
-            <select
-              value={searchTagFilter}
-              onChange={(e) => setSearchTagFilter(e.target.value)}
-              className="rounded-lg border border-black/10 bg-white/60 px-2 py-1.5 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
-            >
-              <option value="">All tags</option>
-              {allTags.map((tag) => (
-                <option key={tag.id} value={tag.name}>{tag.name}</option>
-              ))}
-            </select>
-            <select
-              value={searchFolderFilter}
-              onChange={(e) => setSearchFolderFilter(e.target.value)}
-              className="rounded-lg border border-black/10 bg-white/60 px-2 py-1.5 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
-            >
-              <option value="">All folders</option>
-              {(function flattenFolders(nodes: Folder[], depth: number): React.ReactNode[] {
-                return nodes.flatMap((f) => [
-                  <option key={f.id} value={f.id}>{"  ".repeat(depth) + f.name}</option>,
-                  ...flattenFolders(f.children, depth + 1),
-                ]);
-              })(folders, 0)}
-            </select>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-400">From</span>
-              <input
-                type="date"
-                value={searchDateFrom}
-                onChange={(e) => setSearchDateFrom(e.target.value)}
-                className="rounded-lg border border-black/10 bg-white/60 px-2 py-1 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
-              />
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-400">To</span>
-              <input
-                type="date"
-                value={searchDateTo}
-                onChange={(e) => setSearchDateTo(e.target.value)}
-                className="rounded-lg border border-black/10 bg-white/60 px-2 py-1 text-xs text-gray-600 outline-none focus:border-[#B8692A]"
-              />
-            </div>
-            {(searchTagFilter || searchFolderFilter || searchDateFrom || searchDateTo) && (
-              <button
-                onClick={() => {
-                  setSearchTagFilter("");
-                  setSearchFolderFilter("");
-                  setSearchDateFrom("");
-                  setSearchDateTo("");
-                }}
-                className="text-xs text-[#B8692A] hover:text-[#96541F] font-medium transition-colors"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        )}
+        <SearchFiltersRow
+          showSearchFilters={showSearchFilters}
+          searchTagFilter={searchTagFilter}
+          onSetSearchTagFilter={setSearchTagFilter}
+          searchFolderFilter={searchFolderFilter}
+          onSetSearchFolderFilter={setSearchFolderFilter}
+          searchDateFrom={searchDateFrom}
+          onSetSearchDateFrom={setSearchDateFrom}
+          searchDateTo={searchDateTo}
+          onSetSearchDateTo={setSearchDateTo}
+          allTags={allTags}
+          folders={folders}
+        />
 
         {/* Document list */}
         <main className="flex-1 overflow-y-auto px-6 py-6">
@@ -1514,551 +1405,84 @@ export default function Home() {
               }}
             >
               {selected.size > 0 && (
-                <div className="relative flex items-center gap-3 bg-[#111110] text-white rounded-xl px-4 py-3 mb-2">
-                  <span className="text-sm">{selected.size} selected</span>
-                  <button
-                    onClick={bulkDelete}
-                    disabled={bulkDeleting}
-                    className="text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
-                  >
-                    {bulkDeleting ? "Deleting..." : "Delete"}
-                  </button>
-                  <button
-                    onClick={() => setShowBulkTagPopover((v) => !v)}
-                    disabled={bulkTagging}
-                    className="text-sm font-medium text-green-400 hover:text-green-300 disabled:opacity-50"
-                  >
-                    {bulkTagging ? "Tagging..." : "Tag"}
-                  </button>
-                  {showBulkTagPopover && (
-                    <div
-                      className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-semibold text-gray-700">Tag {selected.size} documents</p>
-                        <button onClick={() => setShowBulkTagPopover(false)} className="text-gray-400 hover:text-gray-600 text-xs">
-                          x
-                        </button>
-                      </div>
-                      <div className="space-y-1 max-h-40 overflow-y-auto mb-2">
-                        {allTags.length === 0 ? (
-                          <p className="text-xs text-gray-400 text-center py-2">No tags yet</p>
-                        ) : (
-                          allTags.map((tag) => {
-                            const allHave = [...selected].every((docId) =>
-                              (docTags[docId] || []).some((t) => t.id === tag.id)
-                            );
-                            const someHave = [...selected].some((docId) =>
-                              (docTags[docId] || []).some((t) => t.id === tag.id)
-                            );
-                            return (
-                              <button
-                                key={tag.id}
-                                onClick={() => allHave ? bulkRemoveTag(tag.id) : bulkAddTag(tag.id)}
-                                className={`w-full text-left flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors ${
-                                  allHave ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
-                                }`}
-                              >
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
-                                <span className="truncate text-gray-700">{tag.name}</span>
-                                {allHave && <span className="ml-auto text-xs text-gray-400">&#10003;</span>}
-                                {!allHave && someHave && <span className="ml-auto text-xs text-gray-400">&#8212;</span>}
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                      <form
-                        onSubmit={async (e) => {
-                          e.preventDefault();
-                          const trimmed = newTagName.trim();
-                          if (!trimmed) return;
-                          const res = await fetch("/api/tags", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ name: trimmed, color: newTagColor }),
-                          });
-                          const tag = await res.json();
-                          if (tag && tag.id) {
-                            setAllTags((prev) => {
-                              if (prev.some((t) => t.id === tag.id)) return prev;
-                              return [...prev, tag].sort((a, b) => a.name.localeCompare(b.name));
-                            });
-                            await bulkAddTag(tag.id);
-                          }
-                          setNewTagName("");
-                          setNewTagColor("#6b7280");
-                        }}
-                        className="space-y-1.5"
-                      >
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={newTagName}
-                            onChange={(e) => setNewTagName(e.target.value)}
-                            placeholder="New tag..."
-                            className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A]"
-                          />
-                          <button
-                            type="submit"
-                            disabled={!newTagName.trim()}
-                            className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
-                          >
-                            Add
-                          </button>
-                        </div>
-                        {newTagName.trim() && (
-                          <div className="flex items-center gap-1">
-                            {TAG_PRESET_COLORS.map((c) => (
-                              <button
-                                key={c.value}
-                                type="button"
-                                onClick={() => setNewTagColor(c.value)}
-                                className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-gray-800 scale-110" : "border-transparent hover:border-gray-300"}`}
-                                style={{ backgroundColor: c.value }}
-                                title={c.label}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </form>
-                    </div>
-                  )}
-                  <a
-                    href={`/api/documents/export?ids=${[...selected].join(",")}`}
-                    className="text-sm font-medium text-amber-400 hover:text-amber-300"
-                  >
-                    Export ZIP
-                  </a>
-                  <button
-                    onClick={() => setBulkMoveOpen((v) => !v)}
-                    className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
-                  >
-                    Move
-                  </button>
-                  {bulkMoveOpen && (
-                    <div
-                      className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-semibold text-gray-700">Move {selected.size} docs to folder</p>
-                        <button onClick={() => setBulkMoveOpen(false)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
-                      </div>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        <button
-                          onClick={() => bulkMoveToFolder(null)}
-                          className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          No folder (root)
-                        </button>
-                        {folders.map((f) => (
-                          <button
-                            key={f.id}
-                            onClick={() => bulkMoveToFolder(f.id)}
-                            className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 hover:bg-gray-50"
-                          >
-                            {f.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <button
-                    onClick={() => setBulkShareOpen((v) => !v)}
-                    className="text-sm font-medium text-pink-400 hover:text-pink-300"
-                  >
-                    Share
-                  </button>
-                  {bulkShareOpen && (
-                    <div
-                      className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-64"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-semibold text-gray-700">Share {selected.size} docs</p>
-                        <button onClick={() => setBulkShareOpen(false)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
-                      </div>
-                      <input
-                        type="email"
-                        value={bulkShareEmail}
-                        onChange={(e) => setBulkShareEmail(e.target.value)}
-                        placeholder="Email address"
-                        className="w-full rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A] mb-2"
-                      />
-                      <select
-                        value={bulkShareRole}
-                        onChange={(e) => setBulkShareRole(e.target.value as "viewer" | "editor")}
-                        className="w-full rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A] mb-2"
-                      >
-                        <option value="viewer">Viewer</option>
-                        <option value="editor">Editor</option>
-                      </select>
-                      <button
-                        onClick={bulkShare}
-                        disabled={!bulkShareEmail.trim()}
-                        className="w-full px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
-                      >
-                        Share
-                      </button>
-                    </div>
-                  )}
-                  {selected.size === 2 && (
-                    <>
-                      <a
-                        href={`/compare?a=${[...selected][0]}&b=${[...selected][1]}`}
-                        className="text-sm font-medium text-blue-400 hover:text-blue-300"
-                      >
-                        Compare
-                      </a>
-                      <a
-                        href={`/split?left=${[...selected][0]}&right=${[...selected][1]}`}
-                        className="text-sm font-medium text-teal-400 hover:text-teal-300"
-                      >
-                        Split View
-                      </a>
-                      <button
-                        onClick={mergeDocuments}
-                        disabled={merging}
-                        className="text-sm font-medium text-purple-400 hover:text-purple-300 disabled:opacity-50"
-                      >
-                        {merging ? "Merging..." : "Merge"}
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => { setSelected(new Set()); setShowBulkTagPopover(false); setBulkMoveOpen(false); setBulkShareOpen(false); }}
-                    className="text-sm text-white/50 hover:text-white ml-auto"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <BulkActionsBar
+                  selectedCount={selected.size}
+                  selected={selected}
+                  bulkDeleting={bulkDeleting}
+                  bulkTagging={bulkTagging}
+                  merging={merging}
+                  showBulkTagPopover={showBulkTagPopover}
+                  bulkMoveOpen={bulkMoveOpen}
+                  bulkShareOpen={bulkShareOpen}
+                  bulkShareEmail={bulkShareEmail}
+                  bulkShareRole={bulkShareRole}
+                  allTags={allTags}
+                  docTags={docTags}
+                  folders={folders}
+                  newTagName={newTagName}
+                  newTagColor={newTagColor}
+                  TAG_PRESET_COLORS={TAG_PRESET_COLORS}
+                  onBulkDelete={bulkDelete}
+                  onBulkAddTag={bulkAddTag}
+                  onBulkRemoveTag={bulkRemoveTag}
+                  onBulkMoveToFolder={bulkMoveToFolder}
+                  onBulkShare={bulkShare}
+                  onMergeDocuments={mergeDocuments}
+                  onSetShowBulkTagPopover={setShowBulkTagPopover}
+                  onSetBulkMoveOpen={setBulkMoveOpen}
+                  onSetBulkShareOpen={setBulkShareOpen}
+                  onSetBulkShareEmail={setBulkShareEmail}
+                  onSetBulkShareRole={setBulkShareRole}
+                  onSetNewTagName={setNewTagName}
+                  onSetNewTagColor={setNewTagColor}
+                  onSetAllTags={setAllTags}
+                  onCancel={() => { setSelected(new Set()); setShowBulkTagPopover(false); setBulkMoveOpen(false); setBulkShareOpen(false); }}
+                />
               )}
               {filteredDocs.map((doc, index) => (
-                <div
+                <DocumentRow
                   key={doc.id}
-                  draggable="true"
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", doc.id);
-                    e.dataTransfer.effectAllowed = "move";
-                  }}
-                  className={`relative group flex items-center gap-2 ${focusedIndex === index ? "ring-2 ring-[#B8692A] rounded-xl" : ""}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(doc.id)}
-                    onChange={() => toggleSelect(doc.id)}
-                    className="shrink-0 h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A] md:opacity-0 md:group-hover:opacity-100 transition-opacity checked:!opacity-100 cursor-pointer"
-                  />
-                  <button
-                    onClick={(e) => toggleStar(doc.id, e)}
-                    className={`shrink-0 p-0.5 rounded transition-colors ${
-                      doc.starred
-                        ? "text-amber-500"
-                        : "text-gray-300 hover:text-amber-400 md:opacity-0 md:group-hover:opacity-100"
-                    }`}
-                    title={doc.starred ? "Unstar document" : "Star document"}
-                  >
-                    <svg className="h-4 w-4" fill={doc.starred ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => togglePin(doc.id, e)}
-                    className={`shrink-0 p-0.5 rounded transition-colors ${
-                      pinnedIds.has(doc.id)
-                        ? "text-[#B8692A]"
-                        : "text-gray-300 hover:text-[#B8692A] md:opacity-0 md:group-hover:opacity-100"
-                    }`}
-                    title={pinnedIds.has(doc.id) ? "Unpin document" : "Pin document"}
-                  >
-                    <svg className="h-4 w-4" fill={pinnedIds.has(doc.id) ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 3l-4 4-4-4M12 7v10m-5 4h10" />
-                    </svg>
-                  </button>
-                  <Link
-                    href={`/doc/${doc.id}`}
-                    className="flex-1 flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-1 h-8 rounded-full bg-[#B8692A] md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0" />
-                      <div className="min-w-0">
-                        {editingId === doc.id ? (
-                          <input
-                            autoFocus
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            onBlur={() => commitRename(doc.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                              if (e.key === "Escape") setEditingId(null);
-                            }}
-                            onClick={(e) => e.preventDefault()}
-                            className="font-medium text-gray-900 bg-white border border-[#B8692A] rounded px-1.5 py-0.5 outline-none w-full"
-                          />
-                        ) : (
-                          <>
-                          <p
-                            className="font-medium text-gray-900 truncate"
-                            onDoubleClick={(e) => {
-                              e.preventDefault();
-                              setEditingId(doc.id);
-                              setEditTitle(doc.title || "Untitled");
-                            }}
-                          >
-                            {doc.title || "Untitled"}
-                          </p>
-                          {doc.role && doc.role !== "owner" && doc.ownerId && (
-                            <span className={`inline-flex items-center ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
-                              doc.role === "editor"
-                                ? "bg-blue-50 text-blue-600"
-                                : "bg-gray-100 text-gray-500"
-                            }`}>
-                              {doc.role === "editor" ? "Editor" : "Viewer"}
-                            </span>
-                          )}
-                          {doc.status && doc.status !== "draft" && (
-                            <span className={`inline-flex items-center ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
-                              doc.status === "approved"
-                                ? "bg-green-50 text-green-700"
-                                : "bg-amber-50 text-amber-700"
-                            }`}>
-                              {doc.status === "approved" ? "Approved" : "In Review"}
-                            </span>
-                          )}
-                          {(docTags[doc.id] || []).length > 0 && (
-                            <div className="flex items-center gap-1 mt-1 flex-wrap">
-                              {(docTags[doc.id] || []).map((tag) => (
-                                <span
-                                  key={tag.id}
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium text-white"
-                                  style={{ backgroundColor: tag.color }}
-                                >
-                                  {tag.name}
-                                  <button
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeTagFromDoc(doc.id, tag.id); }}
-                                    className="hover:opacity-70 ml-0.5"
-                                  >
-                                    x
-                                  </button>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          {/* Quick Reactions */}
-                          <div className="flex items-center gap-1 mt-1 flex-wrap">
-                            {(docReactions[doc.id] || []).map((r) => (
-                              <button
-                                key={r.emoji}
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleReaction(doc.id, r.emoji); }}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs bg-gray-100 hover:bg-gray-200 transition-colors"
-                                title={`${r.count} reaction${r.count > 1 ? "s" : ""}`}
-                              >
-                                <span>{r.emoji}</span>
-                                <span className="text-gray-500 text-[10px]">{r.count}</span>
-                              </button>
-                            ))}
-                            <div className="relative">
-                              <button
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReactionPickerDocId(reactionPickerDocId === doc.id ? null : doc.id); }}
-                                className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
-                                title="Add reaction"
-                              >
-                                +
-                              </button>
-                              {reactionPickerDocId === doc.id && (
-                                <div
-                                  className="absolute left-0 bottom-full mb-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-1.5 flex gap-1"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  {["\u{1F44D}", "\u{2764}\u{FE0F}", "\u{1F680}", "\u{1F389}", "\u{1F440}", "\u{1F4AF}"].map((emoji) => (
-                                    <button
-                                      key={emoji}
-                                      onClick={(e) => { e.preventDefault(); toggleReaction(doc.id, emoji); setReactionPickerDocId(null); }}
-                                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-base transition-colors"
-                                    >
-                                      {emoji}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {docRatings[doc.id] > 0 && (
-                      <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0 ml-2" title={`Rating: ${docRatings[doc.id]}/5`}>
-                        <svg className="h-3 w-3" fill="#F59E0B" viewBox="0 0 24 24" stroke="none">
-                          <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                        {docRatings[doc.id]}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-2 text-xs text-gray-400 shrink-0 ml-4 mr-16">
-                      <ActivityDots updatedAt={doc.updatedAt} />
-                      {formatDate(doc.updatedAt)}
-                    </span>
-                  </Link>
-                  {/* Tag popover */}
-                  {tagPopoverDocId === doc.id && (
-                    <div
-                      className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-semibold text-gray-700">Add tag</p>
-                        <button onClick={() => setTagPopoverDocId(null)} className="text-gray-400 hover:text-gray-600 text-xs">
-                          x
-                        </button>
-                      </div>
-                      <div className="space-y-1 max-h-32 overflow-y-auto mb-2">
-                        {allTags.map((tag) => {
-                          const isApplied = (docTags[doc.id] || []).some((t) => t.id === tag.id);
-                          return (
-                            <button
-                              key={tag.id}
-                              onClick={() => isApplied ? removeTagFromDoc(doc.id, tag.id) : addTagToDoc(doc.id, tag.id)}
-                              className={`w-full text-left flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors ${
-                                isApplied ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
-                              }`}
-                            >
-                              <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
-                              <span className="truncate text-gray-700">{tag.name}</span>
-                              {isApplied && <span className="ml-auto text-xs text-gray-400">&#10003;</span>}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <form
-                        onSubmit={(e) => { e.preventDefault(); if (newTagName.trim()) createAndAddTag(doc.id, newTagName.trim()); }}
-                        className="space-y-1.5"
-                      >
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={newTagName}
-                            onChange={(e) => setNewTagName(e.target.value)}
-                            placeholder="New tag..."
-                            className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
-                          />
-                          <button
-                            type="submit"
-                            disabled={!newTagName.trim()}
-                            className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
-                          >
-                            Add
-                          </button>
-                        </div>
-                        {newTagName.trim() && (
-                          <div className="flex items-center gap-1">
-                            {TAG_PRESET_COLORS.map((c) => (
-                              <button
-                                key={c.value}
-                                type="button"
-                                onClick={() => setNewTagColor(c.value)}
-                                className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-gray-800 scale-110" : "border-transparent hover:border-gray-300"}`}
-                                style={{ backgroundColor: c.value }}
-                                title={c.label}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </form>
-                    </div>
-                  )}
-                  {/* Analytics popover */}
-                  {analyticsDocId === doc.id && analyticsData && (
-                    <div
-                      className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-xs font-semibold text-gray-700">Analytics</p>
-                        <button onClick={() => setAnalyticsDocId(null)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
-                      </div>
-                      <div className="space-y-1.5 text-xs text-gray-600">
-                        <div className="flex justify-between"><span>Views</span><span className="font-medium text-gray-900">{analyticsData.viewCount}</span></div>
-                        <div className="flex justify-between"><span>Activity events</span><span className="font-medium text-gray-900">{analyticsData.editCount}</span></div>
-                        <div className="flex justify-between"><span>Collaborators</span><span className="font-medium text-gray-900">{analyticsData.collaboratorCount}</span></div>
-                        <div className="flex justify-between"><span>Created</span><span className="font-medium text-gray-900">{formatDate(analyticsData.createdAt)}</span></div>
-                        <div className="flex justify-between"><span>Last edited</span><span className="font-medium text-gray-900">{formatDate(analyticsData.lastEditedAt)}</span></div>
-                      </div>
-                    </div>
-                  )}
-                  {/* Analytics + Tag + Duplicate + Delete buttons — appear on hover */}
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (analyticsDocId === doc.id) {
-                          setAnalyticsDocId(null);
-                          return;
-                        }
-                        setAnalyticsDocId(doc.id);
-                        setAnalyticsLoading(true);
-                        fetch(`/api/documents/${doc.id}/analytics`)
-                          .then((r) => r.ok ? r.json() : null)
-                          .then((data) => { if (data) setAnalyticsData(data); })
-                          .catch(() => {})
-                          .finally(() => setAnalyticsLoading(false));
-                      }}
-                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
-                      title="View analytics"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTagPopoverDocId(tagPopoverDocId === doc.id ? null : doc.id); setNewTagName(""); }}
-                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
-                      title="Manage tags"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => { e.preventDefault(); forkDoc(doc); }}
-                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
-                      title="Fork document"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => { e.preventDefault(); duplicateDoc(doc); }}
-                      className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
-                      title="Duplicate document"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => { e.preventDefault(); setConfirmDelete(doc); }}
-                      disabled={deletingId === doc.id}
-                      className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
-                      title="Delete document"
-                    >
-                      {deletingId === doc.id ? (
-                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                      ) : (
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
+                  doc={doc}
+                  index={index}
+                  focusedIndex={focusedIndex}
+                  formatDate={formatDate}
+                  selected={selected.has(doc.id)}
+                  onToggleSelect={toggleSelect}
+                  onToggleStar={toggleStar}
+                  onTogglePin={togglePin}
+                  pinnedIds={pinnedIds}
+                  editingId={editingId}
+                  editTitle={editTitle}
+                  onSetEditingId={setEditingId}
+                  onSetEditTitle={setEditTitle}
+                  onCommitRename={commitRename}
+                  docTags={docTags[doc.id] || []}
+                  onRemoveTagFromDoc={removeTagFromDoc}
+                  docReactions={docReactions[doc.id] || []}
+                  onToggleReaction={toggleReaction}
+                  reactionPickerDocId={reactionPickerDocId}
+                  onSetReactionPickerDocId={setReactionPickerDocId}
+                  docRating={docRatings[doc.id]}
+                  deletingId={deletingId}
+                  onConfirmDelete={setConfirmDelete}
+                  onDuplicateDoc={duplicateDoc}
+                  onForkDoc={forkDoc}
+                  tagPopoverDocId={tagPopoverDocId}
+                  onSetTagPopoverDocId={setTagPopoverDocId}
+                  allTags={allTags}
+                  onAddTagToDoc={addTagToDoc}
+                  newTagName={newTagName}
+                  onSetNewTagName={setNewTagName}
+                  newTagColor={newTagColor}
+                  onSetNewTagColor={setNewTagColor}
+                  TAG_PRESET_COLORS={TAG_PRESET_COLORS}
+                  onCreateAndAddTag={createAndAddTag}
+                  analyticsDocId={analyticsDocId}
+                  onSetAnalyticsDocId={setAnalyticsDocId}
+                  analyticsData={analyticsData}
+                  onSetAnalyticsData={setAnalyticsData}
+                  onSetAnalyticsLoading={setAnalyticsLoading}
+                />
               ))}
             </div>
           )}
