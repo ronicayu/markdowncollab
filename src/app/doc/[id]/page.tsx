@@ -19,6 +19,7 @@ import Toolbar from "@/components/Toolbar";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import TopBar from "@/components/TopBar";
 import type { Collaborator, BreadcrumbSegment } from "@/components/TopBar";
+import { getFontFamily, type FontOption } from "@/components/FontSelector";
 import CommentSidebar from "@/components/CommentSidebar";
 import VersionHistoryPanel from "@/components/VersionHistoryPanel";
 import OutlineSidebar from "@/components/OutlineSidebar";
@@ -163,6 +164,7 @@ export default function DocumentPage({
   const [expirationDialogOpen, setExpirationDialogOpen] = useState(false);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [fontFamily, setFontFamily] = useState<string | null>(null);
   // Fetch document title, role, status, and breadcrumbs on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
@@ -171,6 +173,7 @@ export default function DocumentPage({
         if (doc?.title) setDocTitle(doc.title);
         if (doc?.role) setUserRole(doc.role);
         if (doc?.coverImage) setCoverImage(doc.coverImage);
+        if (doc?.fontFamily) setFontFamily(doc.fontFamily);
         if (doc?.status) setDocStatus(doc.status);
         // Track recent document open for the RecentDocs widget
         trackDocumentOpen(id, doc?.title || id);
@@ -287,6 +290,22 @@ export default function DocumentPage({
       setCoverImage(null);
     } catch { /* silently fail */ }
   }, [id]);
+
+  const handleFontChange = useCallback(
+    async (font: FontOption) => {
+      setFontFamily(font);
+      try {
+        await fetch(`/api/documents/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fontFamily: font }),
+        });
+      } catch {
+        // silently fail — font is already set optimistically
+      }
+    },
+    [id]
+  );
 
   const handleTitleChange = useCallback(
     async (newTitle: string) => {
@@ -742,6 +761,20 @@ export default function DocumentPage({
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const toggleShortcutsHelp = useCallback(() => setShortcutsOpen((prev) => !prev), []);
 
+  // AI Auto-complete toggle (persisted to localStorage)
+  const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(false);
+  useEffect(() => {
+    const stored = localStorage.getItem("autoComplete:enabled");
+    if (stored === "true") setAutoCompleteEnabled(true);
+  }, []);
+  const toggleAutoComplete = useCallback(() => {
+    setAutoCompleteEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("autoComplete:enabled", String(next));
+      return next;
+    });
+  }, []);
+
   const [focusMode, setFocusMode] = useState(false);
   const toggleFocusMode = useCallback(() => setFocusMode((prev) => !prev), []);
 
@@ -861,6 +894,10 @@ export default function DocumentPage({
         onSummarize={handleSummarize}
         summaryLoading={summaryLoading}
         onSetExpiration={() => setExpirationDialogOpen(true)}
+        fontFamily={(fontFamily as FontOption) ?? "default"}
+        onFontChange={userRole !== "viewer" ? handleFontChange : undefined}
+        autoCompleteEnabled={autoCompleteEnabled}
+        onToggleAutoComplete={toggleAutoComplete}
       />
       {userRole !== "viewer" && !focusMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
       {/* Cover Image Banner */}
@@ -922,6 +959,7 @@ export default function DocumentPage({
                 editable={userRole !== "viewer" && !(lockInfo?.locked && lockInfo.lockedBy !== userName)}
                 initialContent={templateContent}
                 onToggleShortcutsHelp={toggleShortcutsHelp}
+                autoCompleteEnabled={autoCompleteEnabled}
               />
             </ErrorBoundary>
           </div>

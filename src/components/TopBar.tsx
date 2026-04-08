@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import ShareDialog from "@/components/ShareDialog";
 import ThemeEditor from "@/components/ThemeEditor";
+import FontSelector, { type FontOption } from "@/components/FontSelector";
 
 export interface Collaborator {
   name: string;
@@ -42,6 +43,10 @@ interface TopBarProps {
   onSummarize?: () => void;
   summaryLoading?: boolean;
   onSetExpiration?: () => void;
+  fontFamily?: FontOption;
+  onFontChange?: (font: FontOption) => void;
+  autoCompleteEnabled?: boolean;
+  onToggleAutoComplete?: () => void;
 }
 
 export default function TopBar({
@@ -70,6 +75,10 @@ export default function TopBar({
   onSummarize,
   summaryLoading,
   onSetExpiration,
+  fontFamily,
+  onFontChange,
+  autoCompleteEnabled,
+  onToggleAutoComplete,
 }: TopBarProps) {
   const { data: session } = useSession();
   const [copied, setCopied] = useState(false);
@@ -267,6 +276,11 @@ export default function TopBar({
           </button>
         )}
 
+        {/* Font selector */}
+        {onFontChange && (
+          <FontSelector value={fontFamily ?? "default"} onChange={onFontChange} />
+        )}
+
         {/* Summarize button */}
         {onSummarize && (
           <button
@@ -424,6 +438,26 @@ export default function TopBar({
           </svg>
           <span className="hidden sm:inline">History</span>
         </button>
+
+        {/* Auto-complete toggle */}
+        {onToggleAutoComplete && (
+          <button
+            onClick={onToggleAutoComplete}
+            className={`flex items-center gap-1.5 h-8 px-2 sm:px-3 text-sm font-medium transition-colors rounded-md ${
+              autoCompleteEnabled
+                ? "text-white bg-white/15"
+                : "text-white/60 hover:text-white hover:bg-white/8"
+            }`}
+            title="Toggle AI auto-complete"
+            aria-label="Toggle AI auto-complete"
+            aria-pressed={autoCompleteEnabled ? "true" : "false"}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+            </svg>
+            <span className="hidden sm:inline">Auto-complete</span>
+          </button>
+        )}
 
         {/* AI Chat toggle */}
         {onToggleChat && (

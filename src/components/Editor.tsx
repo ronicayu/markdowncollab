@@ -42,6 +42,7 @@ import LinkDialog from "./LinkDialog";
 import TableSortMenu from "./TableSortMenu";
 import { PersonalHighlight } from "@/extensions/personal-highlight";
 import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib/health-score";
+import AIAutoComplete from "./AIAutoComplete";
 import FocusTimer from "./FocusTimer";
 
 
@@ -56,6 +57,7 @@ interface EditorProps {
   initialContent?: string | null;
   onToggleShortcutsHelp?: () => void;
   templateId?: string;
+  autoCompleteEnabled?: boolean;
 }
 
 export default function Editor({
@@ -69,6 +71,7 @@ export default function Editor({
   initialContent,
   onToggleShortcutsHelp,
   templateId,
+  autoCompleteEnabled = false,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getUserColor(userName), [userName]);
@@ -670,6 +673,7 @@ export default function Editor({
         </BubbleMenu>
       )}
       <EditorContent editor={editor} />
+      {editor && <AIAutoComplete editor={editor} enabled={autoCompleteEnabled} />}
       <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
         <span>
           {saveStatus === "saving" ? (
