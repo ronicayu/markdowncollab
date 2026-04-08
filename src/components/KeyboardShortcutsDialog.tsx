@@ -109,11 +109,13 @@ function keyComboFromEvent(e: KeyboardEvent, isMac: boolean): string | null {
 interface KeyboardShortcutsDialogProps {
   open: boolean;
   onClose: () => void;
+  overlayMode?: boolean;
 }
 
 export default function KeyboardShortcutsDialog({
   open,
   onClose,
+  overlayMode = false,
 }: KeyboardShortcutsDialogProps) {
   const [isMac, setIsMac] = useState(false);
   const [customizeMode, setCustomizeMode] = useState(false);
@@ -140,6 +142,12 @@ export default function KeyboardShortcutsDialog({
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      // In overlay mode, dismiss on any keypress
+      if (overlayMode) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (e.key === "Escape") {
         e.preventDefault();
         if (editingActionId) {
@@ -151,7 +159,7 @@ export default function KeyboardShortcutsDialog({
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose, editingActionId]);
+  }, [open, onClose, editingActionId, overlayMode]);
 
   // Listen for key combo when editing
   useEffect(() => {
@@ -194,6 +202,57 @@ export default function KeyboardShortcutsDialog({
       return bindings[shortcut.actionId];
     }
     return shortcut.keys;
+  }
+
+  // Overlay mode: full-screen semi-transparent cheat sheet
+  if (overlayMode) {
+    return (
+      <div
+        data-testid="shortcuts-overlay"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm cursor-pointer"
+        onClick={onClose}
+      >
+        <div className="max-w-5xl w-full mx-8 pointer-events-none">
+          <h2 className="text-center text-2xl font-bold text-white/90 mb-8">
+            Keyboard Shortcuts
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+            {SHORTCUT_DATA.map((category) => (
+              <div key={category.title}>
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
+                  {category.title}
+                </h3>
+                <div className="space-y-2">
+                  {category.shortcuts.map((shortcut) => (
+                    <div
+                      key={shortcut.action}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-sm text-white/70">{shortcut.action}</span>
+                      <div className="flex items-center gap-0.5 ml-3">
+                        {formatKey(getDisplayKeys(shortcut), isMac)
+                          .split("+")
+                          .map((part, i) => (
+                            <kbd
+                              key={i}
+                              className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 text-sm font-medium rounded-md border text-white/80 bg-white/10 border-white/20"
+                            >
+                              {part}
+                            </kbd>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xs text-white/30 mt-8">
+            Press any key to dismiss
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -876,7 +876,20 @@ export default function DocumentPage({
   }, [editor, provider]);
 
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [shortcutsOverlayOpen, setShortcutsOverlayOpen] = useState(false);
   const toggleShortcutsHelp = useCallback(() => setShortcutsOpen((prev) => !prev), []);
+
+  // Cmd+Shift+/ to open the full-screen shortcuts overlay
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "/") {
+        e.preventDefault();
+        setShortcutsOverlayOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // AI Auto-complete toggle (persisted to localStorage)
   const [autoCompleteEnabled, setAutoCompleteEnabled] = useState(false);
@@ -1485,6 +1498,11 @@ export default function DocumentPage({
       <KeyboardShortcutsDialog
         open={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
+      />
+      <KeyboardShortcutsDialog
+        open={shortcutsOverlayOpen}
+        onClose={() => setShortcutsOverlayOpen(false)}
+        overlayMode
       />
       <SaveTemplateDialog
         open={saveTemplateOpen}
