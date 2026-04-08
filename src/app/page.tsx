@@ -37,7 +37,7 @@ interface Doc {
   status?: string;
 }
 
-function formatDate(dateStr: string) {
+function formatDateRelative(dateStr: string) {
   const d = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
@@ -47,6 +47,17 @@ function formatDate(dateStr: string) {
   if (days === 1) return `Yesterday, ${time}`;
   if (days < 7) return `${days}d ago`;
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function formatDateAbsolute(dateStr: string) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 type Tab = "all" | "recent" | "shared" | "starred" | "trash";
@@ -62,6 +73,14 @@ export default function Home() {
   const [confirmDelete, setConfirmDelete] = useState<Doc | null>(null);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
+  const [relativeDates, setRelativeDates] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try { return localStorage.getItem("relativeDates") !== "false"; } catch { return true; }
+  });
+  const formatDate = useCallback(
+    (dateStr: string) => relativeDates ? formatDateRelative(dateStr) : formatDateAbsolute(dateStr),
+    [relativeDates]
+  );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -1072,6 +1091,24 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M3 12h12M3 17h6" />
               </svg>
               <span className="hidden sm:inline">{sortBy === "date" ? "Date" : "Name"}</span>
+            </button>
+            <button
+              onClick={() => {
+                const next = !relativeDates;
+                setRelativeDates(next);
+                try { localStorage.setItem("relativeDates", String(next)); } catch {}
+              }}
+              className={`shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg border text-xs transition-colors ${
+                !relativeDates
+                  ? "border-[#B8692A]/40 bg-amber-50 text-[#B8692A]"
+                  : "border-black/10 bg-white/60 text-gray-500 hover:text-gray-700 hover:border-black/20"
+              }`}
+              title={relativeDates ? "Switch to absolute dates" : "Switch to relative dates"}
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="hidden sm:inline">{relativeDates ? "Relative" : "Absolute"}</span>
             </button>
             <button
               onClick={() => setShowSearchFilters((v) => !v)}
