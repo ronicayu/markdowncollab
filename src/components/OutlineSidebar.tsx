@@ -2,6 +2,13 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { Editor } from "@tiptap/core";
+import type * as Y from "yjs";
+import SectionLockIndicator from "./SectionLockIndicator";
+
+interface SectionLock {
+  lockedBy: string;
+  lockedAt: number;
+}
 
 interface Heading {
   level: number;
@@ -40,6 +47,8 @@ function saveBookmarks(docId: string, bookmarks: Bookmark[]) {
 interface OutlineSidebarProps {
   editor: Editor | null;
   documentId?: string;
+  ydoc?: Y.Doc;
+  currentUser?: string;
 }
 
 function computeHeadingNumbers(headings: Heading[]): string[] {
@@ -65,7 +74,7 @@ function computeHeadingNumbers(headings: Heading[]): string[] {
   return numbers;
 }
 
-export default function OutlineSidebar({ editor, documentId }: OutlineSidebarProps) {
+export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }: OutlineSidebarProps) {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const [backlinks, setBacklinks] = useState<Backlink[]>([]);
@@ -84,6 +93,35 @@ export default function OutlineSidebar({ editor, documentId }: OutlineSidebarPro
   }, []);
 
   const headingNumbers = showNumbering ? computeHeadingNumbers(headings) : [];
+
+  // Section locks via Yjs
+  const [sectionLocks, setSectionLocks] = useState<Record<string, SectionLock>>({});
+
+  useEffect(() => {
+    if (!ydoc) return;
+    const locksMap = ydoc.getMap("sectionLocks");
+    const updateLocks = () => {
+      const locks: Record<string, SectionLock> = {};
+      locksMap.forEach((value, key) => {
+        locks[key] = value as SectionLock;
+      });
+      setSectionLocks(locks);
+    };
+    locksMap.observe(updateLocks);
+    updateLocks();
+    return () => { locksMap.unobserve(updateLocks); };
+  }, [ydoc]);
+
+  const handleToggleSectionLock = useCallback((headingText: string) => {
+    if (!ydoc || !currentUser) return;
+    const locksMap = ydoc.getMap("sectionLocks");
+    const existing = locksMap.get(headingText) as SectionLock | undefined;
+    if (existing && existing.lockedBy === currentUser) {
+      locksMap.delete(headingText);
+    } else if (!existing) {
+      locksMap.set(headingText, { lockedBy: currentUser, lockedAt: Date.now() });
+    }
+  }, [ydoc, currentUser]);
 
   // Load bookmarks from localStorage
   useEffect(() => {
@@ -207,34 +245,45 @@ export default function OutlineSidebar({ editor, documentId }: OutlineSidebarPro
       ) : (
         <div className="space-y-0.5">
           {headings.map((h, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (!editor) return;
-                editor.commands.setTextSelection(h.pos + 1);
-                const editorDom = editor.view.dom;
-                const headingTag = `h${h.level}`;
-                const headingEls = editorDom.querySelectorAll(headingTag);
-                let matched: Element | null = null;
-                headingEls.forEach((el) => {
-                  if (el.textContent?.trim() === h.text.trim() && !matched) {
-                    matched = el;
+            <div key={i} className="flex items-center group gap-0.5">
+              <button
+                onClick={() => {
+                  if (!editor) return;
+                  editor.commands.setTextSelection(h.pos + 1);
+                  const editorDom = editor.view.dom;
+                  const headingTag = `h${h.level}`;
+                  const headingEls = editorDom.querySelectorAll(headingTag);
+                  let matched: Element | null = null;
+                  headingEls.forEach((el) => {
+                    if (el.textContent?.trim() === h.text.trim() && !matched) {
+                      matched = el;
+                    }
+                  });
+                  if (matched) {
+                    (matched as Element).scrollIntoView({ behavior: "smooth", block: "center" });
+                  } else {
+                    editor.commands.scrollIntoView();
                   }
-                });
-                if (matched) {
-                  (matched as Element).scrollIntoView({ behavior: "smooth", block: "center" });
-                } else {
-                  editor.commands.scrollIntoView();
-                }
-              }}
-              className="block w-full text-left text-sm text-gray-600 hover:text-gray-900 truncate py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors"
-              style={{ paddingLeft: `${(h.level - 1) * 12 + 8}px` }}
-            >
-              {showNumbering && headingNumbers[i] ? (
-                <span className="text-gray-400 mr-1 text-xs font-mono">{headingNumbers[i]}</span>
-              ) : null}
-              {h.text}
-            </button>
+                }}
+                className={`flex-1 text-left text-sm truncate py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors ${
+                  sectionLocks[h.text] ? "text-amber-700" : "text-gray-600 hover:text-gray-900"
+                }`}
+                style={{ paddingLeft: `${(h.level - 1) * 12 + 8}px` }}
+              >
+                {showNumbering && headingNumbers[i] ? (
+                  <span className="text-gray-400 mr-1 text-xs font-mono">{headingNumbers[i]}</span>
+                ) : null}
+                {h.text}
+              </button>
+              {ydoc && currentUser && (
+                <SectionLockIndicator
+                  headingText={h.text}
+                  lock={sectionLocks[h.text] || null}
+                  onToggle={handleToggleSectionLock}
+                  currentUser={currentUser}
+                />
+              )}
+            </div>
           ))}
         </div>
       )}

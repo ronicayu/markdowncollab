@@ -50,6 +50,7 @@ import CursorChat from "./CursorChat";
 import SessionHistory from "./SessionHistory";
 import { GrammarCheck, grammarCheckPluginKey } from "@/extensions/grammar-check";
 import { ProgressBlock } from "@/extensions/progress-block";
+import { SectionLockExtension } from "@/extensions/section-lock";
 
 
 interface EditorProps {
@@ -300,6 +301,10 @@ export default function Editor({
       }),
       GrammarCheck,
       ProgressBlock,
+      SectionLockExtension.configure({
+        ydoc,
+        currentUser: userName,
+      }),
     ],
     editorProps: {
       attributes: {
