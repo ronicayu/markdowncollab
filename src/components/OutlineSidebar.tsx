@@ -84,6 +84,82 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
   const bookmarkInputRef = useRef<HTMLInputElement>(null);
   const [showNumbering, setShowNumbering] = useState(false);
 
+  // Drag reorder state
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+
+  const handleDragStart = useCallback((e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDropIndex(index);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDropIndex(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    setDropIndex(null);
+    setDragIndex(null);
+
+    if (!editor || dragIndex === null || dragIndex === targetIndex) return;
+
+    const sourceHeading = headings[dragIndex];
+    const targetHeading = headings[targetIndex];
+
+    // Find the range of the source section (heading + all content until next heading of same/higher level)
+    const doc = editor.state.doc;
+    const sourceStart = sourceHeading.pos;
+    let sourceEnd = doc.content.size;
+    for (let i = dragIndex + 1; i < headings.length; i++) {
+      if (headings[i].level <= sourceHeading.level) {
+        sourceEnd = headings[i].pos;
+        break;
+      }
+    }
+
+    // Find the target position
+    let targetPos: number;
+    if (targetIndex > dragIndex) {
+      // Moving down: insert after target section
+      let nextAfterTarget = doc.content.size;
+      for (let i = targetIndex + 1; i < headings.length; i++) {
+        if (headings[i].level <= targetHeading.level) {
+          nextAfterTarget = headings[i].pos;
+          break;
+        }
+      }
+      targetPos = nextAfterTarget;
+    } else {
+      // Moving up: insert before target heading
+      targetPos = targetHeading.pos;
+    }
+
+    // Extract the section content
+    const slice = doc.slice(sourceStart, sourceEnd);
+
+    // Perform the ProseMirror transaction
+    const { tr } = editor.state;
+    // Delete the source section first
+    tr.delete(sourceStart, sourceEnd);
+    // Adjust target position after deletion
+    const adjustedTarget = tr.mapping.map(targetPos);
+    tr.insert(adjustedTarget, slice.content);
+    editor.view.dispatch(tr);
+  }, [editor, dragIndex, headings]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragIndex(null);
+    setDropIndex(null);
+  }, []);
+
   // Load numbering preference from localStorage
   useEffect(() => {
     try {
@@ -245,7 +321,19 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
       ) : (
         <div className="space-y-0.5">
           {headings.map((h, i) => (
-            <div key={i} className="flex items-center group gap-0.5">
+            <div
+              key={i}
+              className={`flex items-center group gap-0.5 relative ${dragIndex === i ? "opacity-40" : ""}`}
+              draggable
+              onDragStart={(e) => handleDragStart(e, i)}
+              onDragOver={(e) => handleDragOver(e, i)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, i)}
+              onDragEnd={handleDragEnd}
+            >
+              {dropIndex === i && dragIndex !== null && dragIndex !== i && (
+                <div className="absolute -top-0.5 left-0 right-0 h-0.5 bg-[#B8692A] rounded-full z-10" />
+              )}
               <button
                 onClick={() => {
                   if (!editor) return;
