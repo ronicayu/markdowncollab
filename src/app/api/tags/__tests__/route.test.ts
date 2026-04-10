@@ -10,14 +10,29 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  authOptions: {},
+}));
+
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
 
 const mockTagFindMany = vi.mocked(prisma.tag.findMany);
 const mockTagFindFirst = vi.mocked(prisma.tag.findFirst);
 const mockTagCreate = vi.mocked(prisma.tag.create);
+const mockGetSession = vi.mocked(getServerSession);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: authenticated user
+  mockGetSession.mockResolvedValue({
+    user: { id: "user-1", email: "a@b.com", name: "Alice" },
+    expires: "never",
+  } as any);
 });
 
 describe("GET /api/tags", () => {

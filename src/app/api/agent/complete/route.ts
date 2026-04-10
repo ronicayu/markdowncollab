@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = (session.user as any).id;
+  const rateResult = checkRateLimit(`agent-complete:${userId}`, 20, 3_000);
+  if (!rateResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests", retryAfter: rateResult.retryAfter },
+      { status: 429 }
+    );
+  }
+
   try {
     const { text } = await req.json();
     if (!text || typeof text !== "string" || text.trim().length < 5) {

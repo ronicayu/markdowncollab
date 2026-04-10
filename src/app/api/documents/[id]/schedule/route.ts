@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkDocumentAccess } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
+
+async function getSessionInfo() {
+  const session = await getServerSession(authOptions);
+  return {
+    userId: (session?.user as any)?.id as string | undefined,
+    userEmail: session?.user?.email ?? undefined,
+  };
+}
 
 /**
  * PUT /api/documents/[id]/schedule
@@ -10,15 +21,17 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+  const { userId, userEmail } = await getSessionInfo();
+
+  const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null, undefined, "editor");
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
-    const { id } = await params;
     const body = await request.json();
     const { publishAt } = body;
-
-    const doc = await prisma.document.findUnique({ where: { id } });
-    if (!doc) {
-      return NextResponse.json({ error: "Document not found" }, { status: 404 });
-    }
 
     const updated = await prisma.document.update({
       where: { id },
@@ -47,8 +60,15 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+  const { userId, userEmail } = await getSessionInfo();
+
+  const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null);
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   try {
-    const { id } = await params;
     const doc = await prisma.document.findUnique({
       where: { id },
       select: { publishAt: true, status: true },

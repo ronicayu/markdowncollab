@@ -8,7 +8,7 @@ import GlobalCommandPalette from "@/components/GlobalCommandPalette";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/OfflineIndicator";
 import RecentDocs from "@/components/RecentDocs";
-import Scratchpad from "@/components/Scratchpad";
+
 import KeyboardDocCreate from "@/components/KeyboardDocCreate";
 import { I18nProvider } from "@/lib/i18n";
 
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <KeyboardDocCreate />
             <OfflineIndicator />
             <RecentDocs />
-            <Scratchpad />
+
             <ServiceWorkerRegistration />
           </ThemeWrapper>
           </I18nProvider>

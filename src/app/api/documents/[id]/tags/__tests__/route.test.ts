@@ -16,7 +16,21 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
+}));
+
+vi.mock("@/lib/auth", () => ({
+  authOptions: {},
+}));
+
+vi.mock("@/lib/access-control", () => ({
+  checkDocumentAccess: vi.fn(),
+}));
+
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { checkDocumentAccess } from "@/lib/access-control";
 
 const mockDocTagFindMany = vi.mocked(prisma.documentTag.findMany);
 const mockDocTagFindFirst = vi.mocked(prisma.documentTag.findFirst);
@@ -24,11 +38,56 @@ const mockDocTagCreate = vi.mocked(prisma.documentTag.create);
 const mockDocTagDeleteMany = vi.mocked(prisma.documentTag.deleteMany);
 const mockTagFindMany = vi.mocked(prisma.tag.findMany);
 const mockTagFindUnique = vi.mocked(prisma.tag.findUnique);
+const mockGetSession = vi.mocked(getServerSession);
+const mockCheckAccess = vi.mocked(checkDocumentAccess);
 
 const makeParams = (id: string) => Promise.resolve({ id });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Default: authenticated user with editor access
+  mockGetSession.mockResolvedValue({
+    user: { id: "user-1", email: "a@b.com", name: "Alice" },
+    expires: "never",
+  } as any);
+  mockCheckAccess.mockResolvedValue({ hasAccess: true, role: "editor" });
+});
+
+describe("Access control", () => {
+  it("GET returns 403 when user has no access", async () => {
+    mockCheckAccess.mockResolvedValue({ hasAccess: false, role: null });
+
+    const { GET } = await import("../route");
+    const req = new NextRequest("http://localhost/api/documents/doc-1/tags");
+    const res = await GET(req, { params: makeParams("doc-1") });
+    expect(res.status).toBe(403);
+  });
+
+  it("POST returns 403 when user is not editor", async () => {
+    mockCheckAccess.mockResolvedValue({ hasAccess: false, role: "viewer" });
+
+    const { POST } = await import("../route");
+    const req = new NextRequest("http://localhost/api/documents/doc-1/tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tagId: "t1" }),
+    });
+    const res = await POST(req, { params: makeParams("doc-1") });
+    expect(res.status).toBe(403);
+  });
+
+  it("DELETE returns 403 when user is not editor", async () => {
+    mockCheckAccess.mockResolvedValue({ hasAccess: false, role: "viewer" });
+
+    const { DELETE } = await import("../route");
+    const req = new NextRequest("http://localhost/api/documents/doc-1/tags", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tagId: "t1" }),
+    });
+    const res = await DELETE(req, { params: makeParams("doc-1") });
+    expect(res.status).toBe(403);
+  });
 });
 
 describe("GET /api/documents/[id]/tags", () => {

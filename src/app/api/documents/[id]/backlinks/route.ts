@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkDocumentAccess } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
 import { readFileSync, readdirSync, existsSync } from "fs";
 import { join } from "path";
@@ -10,6 +13,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as any)?.id as string | undefined;
+  const userEmail = session?.user?.email ?? undefined;
+  const access = await checkDocumentAccess(id, userId ?? null, userEmail ?? null);
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   // Get this document's title for wiki-link matching
   const doc = await prisma.document.findUnique({

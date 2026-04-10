@@ -1,23 +1,41 @@
-# gstack
+## Project
 
-Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
+Collaborative markdown editor where both human users and AI agents are first-class participants — AI-as-collaborator, not AI-as-tool. Built with Next.js 15, Tiptap 3, Prisma (SQLite), and Yjs over WebSocket.
 
-Available gstack skills: `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+Path alias: `@/*` → `./src/*`
 
-## Skill routing
+## Commands
 
-When the user's request matches an available skill, ALWAYS invoke it using the Skill
-tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
-The skill has specialized workflows that produce better results than ad-hoc answers.
+```bash
+npm run dev          # Combined Next.js + WebSocket server (port 3000)
+npm run build        # Production build
+npm run test         # Vitest unit tests
+npm run test:e2e     # Playwright e2e tests
+npm run test:all     # Unit + e2e
+npm run lint         # ESLint
+```
 
-Key routing rules:
-- Product ideas, "is this worth building", brainstorming → invoke office-hours
-- Bugs, errors, "why is this broken", 500 errors → invoke investigate
-- Ship, deploy, push, create PR → invoke ship
-- QA, test the site, find bugs → invoke qa
-- Code review, check my diff → invoke review
-- Update docs after shipping → invoke document-release
-- Weekly retro → invoke retro
-- Design system, brand → invoke design-consultation
-- Visual audit, design polish → invoke design-review
-- Architecture review → invoke plan-eng-review
+## Architecture
+
+```
+src/app/           # Next.js app router (pages + API routes)
+src/components/    # React components (Tiptap editor, dialogs, etc.)
+server/            # WebSocket server (combined-server.mjs, ws-server.mjs)
+prisma/            # Schema + migrations (SQLite: dev.db)
+tests/             # Vitest unit tests
+e2e/               # Playwright e2e tests
+```
+
+## Environment
+
+Required in `.env`:
+- `DATABASE_URL` — Prisma connection string (default: `file:./dev.db`)
+- `WS_URL` — WebSocket URL (must match server mode, see gotchas)
+- `ANTHROPIC_API_KEY` — For AI features
+
+## Gotchas
+
+- **Tiptap StarterKit conflicts**: StarterKit already includes Link and Underline — don't register them separately. y-prosemirror PluginKey crash if duplicated.
+- **WS_URL must match server mode**: Combined server (`npm run dev`) → `ws://localhost:3000/ws`. Standalone WS server → `ws://localhost:1234`.
+- **Gitignore trap**: `documents/` in .gitignore catches `src/app/api/documents/` — use `git add -f` for new files there.
+- **Turbopack cache**: Stale HTTP methods after route changes need `.next/` cleared. Default export strict checking requires namespace imports.

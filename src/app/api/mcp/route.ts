@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import * as Y from "yjs";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import { connectYjsServer } from "@/lib/yjs-server-connect";
 import { addComment, getComments } from "@/lib/suggestion-store";
 import type { Comment } from "@/types";
@@ -274,6 +275,13 @@ function findTextAnchors(
 // ---------------------------------------------------------------------------
 
 export async function POST(req: NextRequest): Promise<Response> {
+  // Rate limit MCP calls by IP (agents don't have sessions)
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+  const rateResult = checkRateLimit(`mcp:${ip}`, 30, 2_000);
+  if (!rateResult.allowed) {
+    return rpcError(null, -32000, "Rate limit exceeded");
+  }
+
   let body: unknown;
   try {
     body = await req.json();

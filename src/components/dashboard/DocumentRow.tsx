@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import ActivityDots from "@/components/ActivityDots";
+
 
 interface Tag {
   id: string;
@@ -275,7 +275,6 @@ export default function DocumentRow({
           </span>
         )}
         <span className="flex items-center gap-2 text-xs text-gray-400 shrink-0 ml-4 mr-16">
-          <ActivityDots updatedAt={doc.updatedAt} />
           {formatDate(doc.updatedAt)}
         </span>
       </Link>

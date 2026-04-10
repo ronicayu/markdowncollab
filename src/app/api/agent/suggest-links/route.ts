@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limiter";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -7,6 +10,20 @@ import { prisma } from "@/lib/prisma";
  * Returns top 3 related documents based on keyword overlap.
  */
 export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const userId = (session.user as any).id;
+  const rateResult = checkRateLimit(`agent-suggest-links:${userId}`, 30, 2_000);
+  if (!rateResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests", retryAfter: rateResult.retryAfter },
+      { status: 429 }
+    );
+  }
+
   try {
     const { documentId } = await req.json();
     if (!documentId) {

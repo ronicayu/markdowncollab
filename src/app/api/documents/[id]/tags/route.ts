@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkDocumentAccess } from "@/lib/access-control";
 import { prisma } from "@/lib/prisma";
+
+async function getSessionInfo() {
+  const session = await getServerSession(authOptions);
+  return {
+    userId: (session?.user as any)?.id as string | undefined,
+    userEmail: session?.user?.email ?? undefined,
+  };
+}
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: documentId } = await params;
+  const { userId, userEmail } = await getSessionInfo();
+  const access = await checkDocumentAccess(documentId, userId ?? null, userEmail ?? null);
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const docTags = await prisma.documentTag.findMany({
     where: { documentId },
   });
@@ -24,6 +40,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: documentId } = await params;
+  const { userId, userEmail } = await getSessionInfo();
+  const access = await checkDocumentAccess(documentId, userId ?? null, userEmail ?? null, undefined, "editor");
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { tagId } = await req.json();
   if (!tagId) {
     return NextResponse.json({ error: "tagId is required" }, { status: 400 });
@@ -50,6 +71,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: documentId } = await params;
+  const { userId, userEmail } = await getSessionInfo();
+  const access = await checkDocumentAccess(documentId, userId ?? null, userEmail ?? null, undefined, "editor");
+  if (!access.hasAccess) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const { tagId } = await req.json();
   if (!tagId) {
     return NextResponse.json({ error: "tagId is required" }, { status: 400 });
