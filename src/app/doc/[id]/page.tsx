@@ -36,7 +36,7 @@ import PinnedNotes from "@/components/PinnedNotes";
 import AIChatSidebar from "@/components/AIChatSidebar";
 import ReminderDialog from "@/components/ReminderDialog";
 import ExpirationDialog from "@/components/ExpirationDialog";
-import EditorMinimap from "@/components/EditorMinimap";
+
 import DocumentMetadata from "@/components/DocumentMetadata";
 import TabBar, { trackTab } from "@/components/TabBar";
 import {
@@ -518,50 +518,66 @@ export default function DocumentPage({
 
   const handleAccept = useCallback(
     (suggestionId: string) => {
-      const sugg = suggestions.find((s) => s.id === suggestionId);
-      if (!sugg || !editor) return;
-      const startAbs = Y.createAbsolutePositionFromRelativePosition(
-        Y.decodeRelativePosition(sugg.startRelPos),
-        ydoc
-      );
-      const endAbs = Y.createAbsolutePositionFromRelativePosition(
-        Y.decodeRelativePosition(sugg.endRelPos),
-        ydoc
-      );
-      if (startAbs && endAbs) {
-        editor
-          .chain()
-          .setTextSelection({ from: startAbs.index + 1, to: endAbs.index + 1 })
-          .insertContent(sugg.suggestedText)
-          .unsetSuggestionMark()
-          .run();
+      if (!editor) return;
+      const { doc, tr } = editor.state;
+      const markType = editor.schema.marks.suggestionMark;
+      if (!markType) return;
+      // Collect ranges (reverse order so later deletions don't shift earlier positions)
+      const deleteRanges: { from: number; to: number }[] = [];
+      const addRanges: { from: number; to: number }[] = [];
+      doc.descendants((node, pos) => {
+        node.marks.forEach((mark) => {
+          if (mark.type === markType && mark.attrs.suggestionId === suggestionId) {
+            if (mark.attrs.type === "delete") {
+              deleteRanges.push({ from: pos, to: pos + node.nodeSize });
+            } else if (mark.attrs.type === "add") {
+              addRanges.push({ from: pos, to: pos + node.nodeSize });
+            }
+          }
+        });
+      });
+      // Single transaction: unmark "add" text, delete "delete" text
+      for (const range of addRanges) {
+        tr.removeMark(range.from, range.to, markType);
       }
+      // Delete in reverse to preserve earlier positions
+      for (const range of [...deleteRanges].reverse()) {
+        tr.delete(range.from, range.to);
+      }
+      editor.view.dispatch(tr);
       updateSuggestionStatus(ydoc, suggestionId, "accepted");
     },
-    [ydoc, editor, suggestions]
+    [ydoc, editor]
   );
 
   const handleReject = useCallback(
     (suggestionId: string) => {
       if (!editor) return;
-      const { doc } = editor.state;
+      const { doc, tr } = editor.state;
       const markType = editor.schema.marks.suggestionMark;
-      if (markType) {
-        doc.descendants((node, pos) => {
-          node.marks.forEach((mark) => {
-            if (
-              mark.type === markType &&
-              mark.attrs.suggestionId === suggestionId
-            ) {
-              editor
-                .chain()
-                .setTextSelection({ from: pos, to: pos + node.nodeSize })
-                .unsetSuggestionMark()
-                .run();
+      if (!markType) return;
+      const deleteRanges: { from: number; to: number }[] = [];
+      const addRanges: { from: number; to: number }[] = [];
+      doc.descendants((node, pos) => {
+        node.marks.forEach((mark) => {
+          if (mark.type === markType && mark.attrs.suggestionId === suggestionId) {
+            if (mark.attrs.type === "delete") {
+              deleteRanges.push({ from: pos, to: pos + node.nodeSize });
+            } else if (mark.attrs.type === "add") {
+              addRanges.push({ from: pos, to: pos + node.nodeSize });
             }
-          });
+          }
         });
+      });
+      // Single transaction: unmark "delete" text, remove "add" text
+      for (const range of deleteRanges) {
+        tr.removeMark(range.from, range.to, markType);
       }
+      // Delete in reverse to preserve earlier positions
+      for (const range of [...addRanges].reverse()) {
+        tr.delete(range.from, range.to);
+      }
+      editor.view.dispatch(tr);
       updateSuggestionStatus(ydoc, suggestionId, "rejected");
     },
     [ydoc, editor]
@@ -1609,8 +1625,7 @@ export default function DocumentPage({
             onClose={() => setChatOpen(false)}
           />
         )}
-        {/* Editor Minimap */}
-        {!focusMode && !zenMode && <EditorMinimap editor={editor} />}
+
       </div>
       {/* Mobile: floating comment button when text is selected */}
       {hasSelection && (
