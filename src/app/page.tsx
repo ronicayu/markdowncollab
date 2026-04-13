@@ -205,8 +205,8 @@ export default function Home() {
   // Fetch all tags for the filter sidebar
   useEffect(() => {
     fetch("/api/tags")
-      .then((r) => r.ok ? r.json() : null)
-      .then(setAllTags)
+      .then((r) => r.ok ? r.json() : [])
+      .then((tags) => setAllTags(tags ?? []))
       .catch(() => {});
   }, []);
 

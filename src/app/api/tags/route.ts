@@ -4,10 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const tags = await prisma.tag.findMany({
-    orderBy: { name: "asc" },
-  });
-  return NextResponse.json(tags);
+  try {
+    const tags = await prisma.tag.findMany({
+      orderBy: { name: "asc" },
+    });
+    return NextResponse.json(tags);
+  } catch {
+    return NextResponse.json([], { status: 200 });
+  }
 }
 
 export async function POST(req: Request) {
