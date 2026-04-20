@@ -67,11 +67,11 @@ export default function DiffViewer({
   return (
     <div className="diff-viewer">
       {/* Header with stats */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[rgba(0,0,0,0.1)] bg-[#f6f5f4] rounded-t-lg">
         <div className="flex items-center gap-4 text-xs">
-          <span className="font-medium text-gray-600">{oldLabel}</span>
-          <span className="text-gray-300">vs</span>
-          <span className="font-medium text-gray-600">{newLabel}</span>
+          <span className="font-medium text-[#615d59]">{oldLabel}</span>
+          <span className="text-[#a39e98]">vs</span>
+          <span className="font-medium text-[#615d59]">{newLabel}</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
           {addedCount > 0 && (
@@ -81,7 +81,7 @@ export default function DiffViewer({
             <span className="text-red-700 font-medium">-{removedCount}</span>
           )}
           {addedCount === 0 && removedCount === 0 && (
-            <span className="text-gray-500">No changes</span>
+            <span className="text-[#615d59]">No changes</span>
           )}
         </div>
       </div>

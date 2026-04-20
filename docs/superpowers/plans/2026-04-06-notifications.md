@@ -817,7 +817,7 @@ export default function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-[#B8692A] hover:text-[#96541F] font-medium"
+                className="text-xs text-[#0075de] hover:text-[#005bab] font-medium"
               >
                 Mark all as read
               </button>
@@ -843,7 +843,7 @@ export default function NotificationBell() {
                 >
                   <div className="flex items-start gap-3">
                     {!notif.read && (
-                      <span className="mt-1.5 h-2 w-2 rounded-full bg-[#B8692A] shrink-0" />
+                      <span className="mt-1.5 h-2 w-2 rounded-full bg-[#0075de] shrink-0" />
                     )}
                     <div className={`min-w-0 ${notif.read ? "ml-5" : ""}`}>
                       <p className="text-sm text-gray-700 line-clamp-2">

@@ -226,7 +226,7 @@ export default function CommandPalette({
               onClick={() => { setActiveTab(tab.key); setSelectedIndex(0); }}
               className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
                 activeTab === tab.key
-                  ? "text-[var(--text-primary)] border-b-2 border-amber-500 bg-amber-50/50 dark:bg-amber-900/10"
+                  ? "text-[var(--text-primary)] border-b-2 border-[#dd5b00] bg-[#fbece0]/50 dark:bg-[rgba(221,91,0,0.1)]"
                   : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--card-hover-bg)]"
               }`}
             >
@@ -291,7 +291,7 @@ export default function CommandPalette({
                     onClick={() => navigate(doc)}
                     className={`w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors ${
                       i === selectedIndex
-                        ? "bg-amber-50 dark:bg-amber-900/20"
+                        ? "bg-[#fbece0] dark:bg-[rgba(221,91,0,0.2)]"
                         : "hover:bg-[var(--card-hover-bg)]"
                     }`}
                   >
@@ -322,7 +322,7 @@ export default function CommandPalette({
                   onClick={() => handleCommandSelect(cmd)}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                     i === selectedIndex
-                      ? "bg-amber-50 dark:bg-amber-900/20"
+                      ? "bg-[#fbece0] dark:bg-[rgba(221,91,0,0.2)]"
                       : "hover:bg-[var(--card-hover-bg)]"
                   }`}
                 >
@@ -361,7 +361,7 @@ export default function CommandPalette({
                   onClick={() => handleSettingSelect(item)}
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
                     i === selectedIndex
-                      ? "bg-amber-50 dark:bg-amber-900/20"
+                      ? "bg-[#fbece0] dark:bg-[rgba(221,91,0,0.2)]"
                       : "hover:bg-[var(--card-hover-bg)]"
                   }`}
                 >

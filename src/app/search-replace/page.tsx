@@ -85,27 +85,48 @@ export default function SearchReplacePage() {
   const totalMatches = results.reduce((sum, r) => sum + r.matches.length, 0);
 
   return (
-    <div className="min-h-screen bg-[#F2E8D5]">
-      {/* Header */}
-      <div className="bg-[#111110] text-white px-6 py-4 flex items-center gap-4">
+    <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
+      {/* Header: white surface with whisper border */}
+      <div
+        className="px-6 py-4 flex items-center gap-4 border-b"
+        style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
+      >
         <Link
           href="/"
-          className="text-white/60 hover:text-white transition-colors"
+          className="hover:underline"
           title="Back to documents"
+          style={{ color: "var(--accent)" }}
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
-        <h1 className="text-lg font-semibold">Search &amp; Replace Across Documents</h1>
+        <h1
+          className="text-[22px] font-bold"
+          style={{ color: "var(--ink)", letterSpacing: "-0.25px", lineHeight: 1.27 }}
+        >
+          Search &amp; Replace Across Documents
+        </h1>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Search / Replace Inputs */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5 mb-6">
+        {/* Search / Replace Inputs — standard card */}
+        <div
+          className="rounded-xl border p-5 mb-6"
+          style={{
+            background: "var(--surface)",
+            borderColor: "var(--rule)",
+            boxShadow: "var(--shadow-card)",
+          }}
+        >
           <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+              <label
+                className="block text-xs font-semibold mb-1"
+                style={{ color: "var(--ink-soft)", letterSpacing: "0.125px" }}
+              >
+                Search
+              </label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -113,32 +134,82 @@ export default function SearchReplacePage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Find text across all documents..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                  className="flex-1 px-3 py-2 text-base rounded focus:outline-none"
+                  style={{
+                    background: "var(--input-bg)",
+                    border: "1px solid var(--input-border)",
+                    color: "var(--ink-2)",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "transparent";
+                    e.currentTarget.style.boxShadow = "0 0 0 2px var(--accent-focus)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--input-border)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
                   autoFocus
                 />
                 <button
                   onClick={handleSearch}
                   disabled={searching || !searchTerm.trim()}
-                  className="px-4 py-2 bg-[#B8692A] text-white text-sm font-medium rounded-md hover:bg-[#96541F] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="text-[15px] font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: "var(--accent)",
+                    color: "#ffffff",
+                    padding: "8px 16px",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!e.currentTarget.disabled)
+                      e.currentTarget.style.background = "var(--accent-hover)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "var(--accent)";
+                  }}
                 >
                   {searching ? "Searching..." : "Search"}
                 </button>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Replace with</label>
+              <label
+                className="block text-xs font-semibold mb-1"
+                style={{ color: "var(--ink-soft)", letterSpacing: "0.125px" }}
+              >
+                Replace with
+              </label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={replaceTerm}
                   onChange={(e) => setReplaceTerm(e.target.value)}
                   placeholder="Replacement text..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                  className="flex-1 px-3 py-2 text-base rounded focus:outline-none"
+                  style={{
+                    background: "var(--input-bg)",
+                    border: "1px solid var(--input-border)",
+                    color: "var(--ink-2)",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "transparent";
+                    e.currentTarget.style.boxShadow = "0 0 0 2px var(--accent-focus)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--input-border)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
                 />
                 <button
                   onClick={() => handleReplace()}
                   disabled={!searchTerm.trim() || replacing !== null || results.length === 0}
-                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="text-[15px] font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: "var(--accent)",
+                    color: "#ffffff",
+                    padding: "8px 16px",
+                  }}
+                  onMouseEnter={(e) => { if (!e.currentTarget.disabled) e.currentTarget.style.background = "var(--accent-hover)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "var(--accent)"; }}
                 >
                   {replacing === "all" ? "Replacing..." : "Replace All"}
                 </button>
@@ -149,14 +220,20 @@ export default function SearchReplacePage() {
 
         {/* Replacement Success Banner */}
         {replacementResults && replacementResults.length > 0 && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <p className="text-sm font-medium text-green-800">
+          <div
+            className="rounded-xl border p-4 mb-6"
+            style={{
+              background: "var(--ok-soft)",
+              borderColor: "var(--ok)",
+            }}
+          >
+            <p className="text-base font-semibold" style={{ color: "var(--ok)" }}>
               Replaced {replacementResults.reduce((s, r) => s + r.count, 0)} occurrences
               across {replacementResults.length} document{replacementResults.length > 1 ? "s" : ""}:
             </p>
             <ul className="mt-2 space-y-1">
               {replacementResults.map((r) => (
-                <li key={r.documentId} className="text-xs text-green-700">
+                <li key={r.documentId} className="text-xs" style={{ color: "var(--ok)" }}>
                   {r.title}: {r.count} replacement{r.count > 1 ? "s" : ""}
                 </li>
               ))}
@@ -164,10 +241,10 @@ export default function SearchReplacePage() {
           </div>
         )}
 
-        {/* Results */}
+        {/* Results summary */}
         {hasSearched && !searching && (
           <div className="mb-4">
-            <p className="text-sm text-gray-500">
+            <p className="text-base" style={{ color: "var(--ink-soft)" }}>
               {results.length === 0
                 ? "No matches found."
                 : `${totalMatches} match${totalMatches !== 1 ? "es" : ""} in ${results.length} document${results.length !== 1 ? "s" : ""}`}
@@ -179,42 +256,72 @@ export default function SearchReplacePage() {
           {results.map((docResult) => (
             <div
               key={docResult.documentId}
-              className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden"
+              className="rounded-xl border overflow-hidden"
+              style={{
+                background: "var(--surface)",
+                borderColor: "var(--rule)",
+                boxShadow: "var(--shadow-card)",
+              }}
             >
-              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <div
+                className="flex items-center justify-between px-4 py-3 border-b"
+                style={{ background: "var(--surface-2)", borderColor: "var(--rule)" }}
+              >
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/doc/${docResult.documentId}`}
-                    className="text-sm font-medium text-gray-900 hover:text-amber-700 hover:underline"
+                    className="text-[15px] font-semibold hover:underline"
+                    style={{ color: "var(--ink)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--ink)")}
                   >
                     {docResult.title || "Untitled"}
                   </Link>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs" style={{ color: "var(--ink-muted)" }}>
                     {docResult.matches.length} match{docResult.matches.length !== 1 ? "es" : ""}
                   </span>
                 </div>
                 <button
                   onClick={() => handleReplace(docResult.documentId)}
                   disabled={!searchTerm.trim() || replacing !== null}
-                  className="px-3 py-1 text-xs font-medium text-red-600 border border-red-200 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-1 text-xs font-semibold rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    color: "var(--warn)",
+                    border: "1px solid var(--warn)",
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!e.currentTarget.disabled)
+                      e.currentTarget.style.background = "var(--warn-soft)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                  }}
                 >
                   {replacing === docResult.documentId ? "Replacing..." : "Replace in this document"}
                 </button>
               </div>
-              <ul className="divide-y divide-gray-50">
+              <ul className="divide-y" style={{ borderColor: "var(--rule)" }}>
                 {docResult.matches.slice(0, 20).map((match, idx) => (
-                  <li key={idx} className="px-4 py-2 flex gap-3 text-sm">
-                    <span className="text-gray-400 text-xs font-mono w-8 text-right shrink-0 pt-0.5">
+                  <li key={idx} className="px-4 py-2 flex gap-3 text-sm" style={{ borderColor: "var(--rule)" }}>
+                    <span
+                      className="text-xs font-mono w-8 text-right shrink-0 pt-0.5"
+                      style={{ color: "var(--ink-muted)" }}
+                    >
                       {match.lineNumber}
                     </span>
                     <span
-                      className="text-gray-700 break-all [&>mark]:bg-yellow-200 [&>mark]:rounded-sm [&>mark]:px-0.5"
+                      className="break-all [&>mark]:bg-[#f2f9ff] [&>mark]:text-[#097fe8] [&>mark]:rounded-sm [&>mark]:px-0.5"
+                      style={{ color: "var(--ink-2)" }}
                       dangerouslySetInnerHTML={{ __html: match.context }}
                     />
                   </li>
                 ))}
                 {docResult.matches.length > 20 && (
-                  <li className="px-4 py-2 text-xs text-gray-400 italic">
+                  <li
+                    className="px-4 py-2 text-xs italic"
+                    style={{ color: "var(--ink-muted)" }}
+                  >
                     ...and {docResult.matches.length - 20} more matches
                   </li>
                 )}

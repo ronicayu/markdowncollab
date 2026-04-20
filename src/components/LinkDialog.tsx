@@ -96,11 +96,11 @@ export default function LinkDialog({ editor, onClose }: LinkDialogProps) {
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
       >
-        <h3 id="link-dialog-title" className="text-sm font-semibold text-gray-900">Insert Link</h3>
+        <h3 id="link-dialog-title" className="text-sm font-semibold text-[#31302e]">Insert Link</h3>
 
         <div className="space-y-3">
           <div>
-            <label htmlFor="link-url" className="block text-xs font-medium text-gray-500 mb-1">
+            <label htmlFor="link-url" className="block text-xs font-medium text-[#615d59] mb-1">
               URL
             </label>
             <input
@@ -110,12 +110,12 @@ export default function LinkDialog({ editor, onClose }: LinkDialogProps) {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://example.com"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+              className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dd5b00]/40 focus:border-[#dd5b00]"
             />
           </div>
 
           <div>
-            <label htmlFor="link-text" className="block text-xs font-medium text-gray-500 mb-1">
+            <label htmlFor="link-text" className="block text-xs font-medium text-[#615d59] mb-1">
               Display text
             </label>
             <input
@@ -124,7 +124,7 @@ export default function LinkDialog({ editor, onClose }: LinkDialogProps) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Link text"
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+              className="w-full px-3 py-2 text-sm border border-[rgba(0,0,0,0.1)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#dd5b00]/40 focus:border-[#dd5b00]"
             />
           </div>
         </div>
@@ -145,14 +145,14 @@ export default function LinkDialog({ editor, onClose }: LinkDialogProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-900 transition-colors"
+              className="px-3 py-1.5 text-xs text-[#615d59] hover:text-[#31302e] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!url.trim()}
-              className="px-4 py-1.5 text-xs font-medium text-white bg-[#B8692A] rounded-lg hover:bg-[#A05A22] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-1.5 text-xs font-medium text-white bg-[#0075de] rounded-lg hover:bg-[#A05A22] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               Apply
             </button>

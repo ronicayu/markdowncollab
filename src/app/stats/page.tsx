@@ -25,7 +25,7 @@ function BarChart({
   valueKey: string;
 }) {
   if (items.length === 0) {
-    return <p className="text-sm text-gray-400">No data yet.</p>;
+    return <p className="text-sm" style={{ color: "var(--ink-muted)" }}>No data yet.</p>;
   }
   const maxVal = Math.max(...items.map((i) => i[valueKey]), 1);
   return (
@@ -34,16 +34,19 @@ function BarChart({
         const pct = Math.max((item[valueKey] / maxVal) * 100, 2);
         return (
           <div key={idx} className="flex items-center gap-3">
-            <span className="text-sm text-gray-600 w-32 truncate shrink-0">
+            <span className="text-[15px] w-32 truncate shrink-0" style={{ color: "var(--ink-soft)" }}>
               {item[labelKey]}
             </span>
-            <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+            <div
+              className="flex-1 rounded-full h-5 overflow-hidden"
+              style={{ background: "var(--surface-2)" }}
+            >
               <div
-                className="h-full bg-[#B8692A] rounded-full transition-all duration-500"
-                style={{ width: `${pct}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, background: "var(--accent)" }}
               />
             </div>
-            <span className="text-sm font-medium text-gray-700 w-10 text-right shrink-0">
+            <span className="text-[15px] font-semibold w-10 text-right shrink-0" style={{ color: "var(--ink)" }}>
               {item[valueKey]}
             </span>
           </div>
@@ -69,54 +72,79 @@ export default function StatsPage() {
     return () => controller.abort();
   }, []);
 
+  const cardStyle: React.CSSProperties = {
+    background: "#ffffff",
+    border: "1px solid var(--rule)",
+    boxShadow:
+      "rgba(0,0,0,0.04) 0 4px 18px, rgba(0,0,0,0.027) 0 2.025px 7.84688px, rgba(0,0,0,0.02) 0 0.8px 2.925px, rgba(0,0,0,0.01) 0 0.175px 1.04062px",
+  };
+
   return (
-    <div className="min-h-screen bg-[#FFFEF9]">
+    <div className="min-h-screen" style={{ background: "#ffffff" }}>
       {/* Header */}
-      <header className="bg-[#1a1a19] text-white px-6 py-4 flex items-center justify-between">
+      <header
+        className="px-6 py-4 flex items-center justify-between"
+        style={{ background: "#ffffff", borderBottom: "1px solid var(--rule)", color: "var(--ink)" }}
+      >
         <div className="flex items-center gap-4">
           <Link
             href="/"
-            className="text-white/60 hover:text-white transition-colors text-sm"
+            className="transition-colors text-[15px] font-semibold hover:underline"
+            style={{ color: "var(--accent)" }}
           >
             &larr; Back to Documents
           </Link>
-          <h1 className="text-lg font-semibold">Document Statistics</h1>
+          <h1 className="text-[22px] font-bold" style={{ color: "var(--ink)", letterSpacing: "-0.25px" }}>
+            Document Statistics
+          </h1>
         </div>
       </header>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 border-2 border-[#B8692A] border-t-transparent rounded-full animate-spin" />
+          <div
+            className="h-8 w-8 rounded-full animate-spin"
+            style={{ border: "2px solid var(--accent)", borderTopColor: "transparent" }}
+          />
         </div>
       ) : !stats ? (
-        <div className="text-center py-20 text-gray-500">
+        <div className="text-center py-20" style={{ color: "var(--ink-soft)" }}>
           Failed to load statistics.
         </div>
       ) : (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+            <div className="rounded-xl p-5" style={cardStyle}>
+              <p
+                className="text-xs mb-1"
+                style={{ color: "var(--ink-muted)", letterSpacing: "0.125px", fontWeight: 600, textTransform: "uppercase" }}
+              >
                 Total Documents
               </p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-[40px] font-bold leading-none" style={{ color: "var(--ink)", letterSpacing: "-0.025em" }}>
                 {stats.totalDocs}
               </p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+            <div className="rounded-xl p-5" style={cardStyle}>
+              <p
+                className="text-xs mb-1"
+                style={{ color: "var(--ink-muted)", letterSpacing: "0.125px", fontWeight: 600, textTransform: "uppercase" }}
+              >
                 Folders Used
               </p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-[40px] font-bold leading-none" style={{ color: "var(--ink)", letterSpacing: "-0.025em" }}>
                 {stats.docsPerFolder.filter((f) => f.folderId !== "__root__").length}
               </p>
             </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+            <div className="rounded-xl p-5" style={cardStyle}>
+              <p
+                className="text-xs mb-1"
+                style={{ color: "var(--ink-muted)", letterSpacing: "0.125px", fontWeight: 600, textTransform: "uppercase" }}
+              >
                 Active Collaborators
               </p>
-              <p className="text-3xl font-bold text-gray-900">
+              <p className="text-[40px] font-bold leading-none" style={{ color: "var(--ink)", letterSpacing: "-0.025em" }}>
                 {stats.collaborators.length}
               </p>
             </div>
@@ -125,8 +153,11 @@ export default function StatsPage() {
           {/* Charts grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Docs per folder */}
-            <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">
+            <section className="rounded-xl p-5" style={cardStyle}>
+              <h2
+                className="text-xs mb-4"
+                style={{ color: "var(--ink-soft)", letterSpacing: "0.125px", fontWeight: 600, textTransform: "uppercase" }}
+              >
                 Documents per Folder
               </h2>
               <BarChart
@@ -137,8 +168,11 @@ export default function StatsPage() {
             </section>
 
             {/* Most active docs */}
-            <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">
+            <section className="rounded-xl p-5" style={cardStyle}>
+              <h2
+                className="text-xs mb-4"
+                style={{ color: "var(--ink-soft)", letterSpacing: "0.125px", fontWeight: 600, textTransform: "uppercase" }}
+              >
                 Most Active Documents
               </h2>
               <BarChart
@@ -149,8 +183,11 @@ export default function StatsPage() {
             </section>
 
             {/* Top collaborators */}
-            <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">
+            <section className="rounded-xl p-5" style={cardStyle}>
+              <h2
+                className="text-xs mb-4"
+                style={{ color: "var(--ink-soft)", letterSpacing: "0.125px", fontWeight: 600, textTransform: "uppercase" }}
+              >
                 Top Collaborators
               </h2>
               <BarChart
@@ -161,8 +198,11 @@ export default function StatsPage() {
             </section>
 
             {/* Docs created per week */}
-            <section className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4 uppercase tracking-wider">
+            <section className="rounded-xl p-5" style={cardStyle}>
+              <h2
+                className="text-xs mb-4"
+                style={{ color: "var(--ink-soft)", letterSpacing: "0.125px", fontWeight: 600, textTransform: "uppercase" }}
+              >
                 Documents Created per Week
               </h2>
               <BarChart

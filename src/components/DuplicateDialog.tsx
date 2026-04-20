@@ -94,21 +94,21 @@ export default function DuplicateDialog({
         className="bg-white rounded-xl shadow-xl p-6 mx-4 max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-base font-semibold text-gray-900 mb-4">
+        <h3 className="text-base font-semibold text-[#31302e] mb-4">
           Duplicate Document
         </h3>
 
         <div className="space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#31302e] mb-1">
               New title
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              className="w-full border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]"
               autoFocus
             />
           </div>
@@ -116,13 +116,13 @@ export default function DuplicateDialog({
           {/* Folder selector */}
           {folders.length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-[#31302e] mb-1">
                 Destination folder
               </label>
               <select
                 value={folderId}
                 onChange={(e) => setFolderId(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+                className="w-full border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]"
               >
                 <option value="">No folder (root)</option>
                 {folders.map((f) => (
@@ -136,18 +136,18 @@ export default function DuplicateDialog({
 
           {/* Options */}
           <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700">Include:</p>
+            <p className="text-sm font-medium text-[#31302e]">Include:</p>
 
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeComments}
                 onChange={(e) => setIncludeComments(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A]"
+                className="h-4 w-4 rounded border-[#dddddd] text-[#0075de] focus:ring-[#0075de]"
               />
               <div>
-                <p className="text-sm text-gray-900">Comments</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-[#31302e]">Comments</p>
+                <p className="text-xs text-[#615d59]">
                   Copy inline comments and discussions
                 </p>
               </div>
@@ -158,11 +158,11 @@ export default function DuplicateDialog({
                 type="checkbox"
                 checked={includeVersions}
                 onChange={(e) => setIncludeVersions(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A]"
+                className="h-4 w-4 rounded border-[#dddddd] text-[#0075de] focus:ring-[#0075de]"
               />
               <div>
-                <p className="text-sm text-gray-900">Version history</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-[#31302e]">Version history</p>
+                <p className="text-xs text-[#615d59]">
                   Copy all saved versions and snapshots
                 </p>
               </div>
@@ -173,11 +173,11 @@ export default function DuplicateDialog({
                 type="checkbox"
                 checked={includeTags}
                 onChange={(e) => setIncludeTags(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A]"
+                className="h-4 w-4 rounded border-[#dddddd] text-[#0075de] focus:ring-[#0075de]"
               />
               <div>
-                <p className="text-sm text-gray-900">Tags</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm text-[#31302e]">Tags</p>
+                <p className="text-xs text-[#615d59]">
                   Copy all document tags
                 </p>
               </div>
@@ -188,14 +188,14 @@ export default function DuplicateDialog({
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-[#615d59] hover:text-[#31302e] rounded-lg hover:bg-[#f6f5f4] transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleDuplicate}
             disabled={loading || !title.trim()}
-            className="px-4 py-2 text-sm font-medium text-white bg-[#B8692A] hover:bg-[#96541F] rounded-lg transition-colors disabled:opacity-40"
+            className="px-4 py-2 text-sm font-medium text-white bg-[#0075de] hover:bg-[#005bab] rounded-lg transition-colors disabled:opacity-40"
           >
             {loading ? "Duplicating..." : "Duplicate"}
           </button>

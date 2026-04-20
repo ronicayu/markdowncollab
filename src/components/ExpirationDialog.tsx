@@ -59,8 +59,8 @@ export default function ExpirationDialog({ documentId, onClose }: ExpirationDial
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">Set Document Expiration</h3>
-        <p className="text-xs text-gray-500 mb-4">
+        <h3 className="text-sm font-semibold text-[#31302e] mb-1">Set Document Expiration</h3>
+        <p className="text-xs text-[#615d59] mb-4">
           {daysLeft !== null
             ? `Currently expires in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`
             : "No expiration set"}
@@ -71,14 +71,14 @@ export default function ExpirationDialog({ documentId, onClose }: ExpirationDial
               key={opt.label}
               onClick={() => setExpiration(opt.days)}
               disabled={loading}
-              className="w-full text-left px-3 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors disabled:opacity-50"
+              className="w-full text-left px-3 py-2 text-sm rounded-lg border border-[rgba(0,0,0,0.1)] hover:bg-[#f6f5f4] hover:border-[#dddddd] transition-colors disabled:opacity-50"
             >
               {opt.label}
             </button>
           ))}
         </div>
         <div className="flex justify-end mt-4">
-          <button onClick={onClose} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
+          <button onClick={onClose} className="text-sm font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5">
             Cancel
           </button>
         </div>

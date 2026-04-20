@@ -117,7 +117,7 @@ function buildDecorations(doc: any): DecorationSet {
             rel: "noopener noreferrer",
             class: "issue-link",
             style:
-              "color: #B8692A; text-decoration: underline; text-decoration-style: dotted; cursor: pointer;",
+              "color: #0075de; text-decoration: underline; text-decoration-style: dotted; cursor: pointer;",
           })
         );
       }

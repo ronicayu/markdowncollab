@@ -47,17 +47,29 @@ function CompareContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#F2E8D5]">
-        <p className="text-sm text-gray-500">Loading documents...</p>
+      <div
+        className="flex items-center justify-center min-h-screen"
+        style={{ background: "var(--page-bg)" }}
+      >
+        <p className="text-base" style={{ color: "var(--ink-soft)" }}>
+          Loading documents...
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#F2E8D5] gap-4">
-        <p className="text-sm text-red-600">{error}</p>
-        <Link href="/" className="text-sm text-[#B8692A] hover:underline">
+      <div
+        className="flex flex-col items-center justify-center min-h-screen gap-4"
+        style={{ background: "var(--page-bg)" }}
+      >
+        <p className="text-base" style={{ color: "var(--warn)" }}>{error}</p>
+        <Link
+          href="/"
+          className="text-[15px] font-semibold hover:underline"
+          style={{ color: "var(--accent)" }}
+        >
           Back to documents
         </Link>
       </div>
@@ -65,17 +77,37 @@ function CompareContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F2E8D5]">
-      <header className="sticky top-0 z-10 bg-[#111110] text-white px-6 py-3 flex items-center justify-between">
+    <div className="min-h-screen" style={{ background: "var(--page-bg)" }}>
+      {/* Header: white surface with whisper border (not dark chrome) */}
+      <header
+        className="sticky top-0 z-10 px-6 py-3 flex items-center justify-between border-b"
+        style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
+      >
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-sm text-white/60 hover:text-white transition-colors">
+          <Link
+            href="/"
+            className="text-[15px] font-semibold hover:underline"
+            style={{ color: "var(--accent)" }}
+          >
             &larr; Documents
           </Link>
-          <h1 className="text-sm font-semibold">Document Comparison</h1>
+          <h1
+            className="text-[22px] font-bold"
+            style={{ color: "var(--ink)", letterSpacing: "-0.25px", lineHeight: 1.27 }}
+          >
+            Document Comparison
+          </h1>
         </div>
       </header>
       <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+        <div
+          className="rounded-xl border overflow-hidden"
+          style={{
+            background: "var(--surface)",
+            borderColor: "var(--rule)",
+            boxShadow: "var(--shadow-card)",
+          }}
+        >
           {docA && docB && (
             <DiffViewer
               oldText={docA.markdown}
@@ -94,8 +126,11 @@ export default function ComparePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-[#F2E8D5]">
-          <p className="text-sm text-gray-500">Loading...</p>
+        <div
+          className="flex items-center justify-center min-h-screen"
+          style={{ background: "var(--page-bg)" }}
+        >
+          <p className="text-base" style={{ color: "var(--ink-soft)" }}>Loading...</p>
         </div>
       }
     >

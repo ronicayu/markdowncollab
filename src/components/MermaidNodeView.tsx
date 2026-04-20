@@ -131,7 +131,7 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
 
   return (
     <NodeViewWrapper
-      className="mermaid-block relative my-4 rounded-lg border border-gray-200 bg-gray-50 p-4"
+      className="mermaid-block relative my-4 rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f6f5f4] p-4"
       data-language="mermaid"
     >
       {/* Top-right toggle.
@@ -145,7 +145,7 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
           e.stopPropagation();
           setIsEditing((prev) => !prev);
         }}
-        className="absolute right-3 top-2.5 select-none rounded px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-200 hover:text-gray-600 transition-colors"
+        className="absolute right-3 top-2.5 select-none rounded px-1.5 py-0.5 text-xs text-[#a39e98] hover:bg-[#dddddd] hover:text-[#615d59] transition-colors"
       >
         {isEditing ? "Hide source" : "Edit source"}
       </button>
@@ -166,7 +166,7 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
               {error}
             </div>
           ) : (
-            <div className="text-sm text-gray-400 italic">
+            <div className="text-sm text-[#a39e98] italic">
               {code.trim() ? "Rendering diagram…" : "Empty diagram — add code below."}
             </div>
           )}
@@ -183,7 +183,7 @@ export default function MermaidNodeView({ node, selected }: NodeViewProps) {
             The generic <T> lets us use a semantic element while keeping TypeScript happy. */}
         <NodeViewContent<"pre">
           as={"pre" as "pre"}
-          className="block w-full whitespace-pre-wrap rounded border border-gray-300 bg-white p-3 font-mono text-sm text-gray-800 focus:outline-none"
+          className="block w-full whitespace-pre-wrap rounded border border-[#dddddd] bg-white p-3 font-mono text-sm text-[#31302e] focus:outline-none"
         />
       </div>
     </NodeViewWrapper>

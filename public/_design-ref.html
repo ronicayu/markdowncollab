@@ -1,0 +1,1297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>markdown-collab · prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ffffff;
+  --surface:#ffffff;
+  --surface-2:#f6f5f4;
+  --ink:#31302e;
+  --ink-2:#31302e;
+  --ink-soft:#615d59;
+  --ink-muted:#a39e98;
+  --rule:#eeeceb;
+  --rule-2:#dddddd;
+  --accent:#0075de;
+  --accent-soft:#f2f9ff;
+  --ai:#2a9d99;
+  --ai-soft:#e0f2f1;
+  --ok:#059669;
+  --ok-soft:#d1fae5;
+  --warn:#d97706;
+  --warn-soft:#fef3c7;
+  --radius:10px;
+  --radius-sm:6px;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,.04);
+  --shadow-md: 0 4px 14px rgba(15,23,42,.06);
+  --shadow-lg: 0 12px 40px rgba(15,23,42,.12);
+  --font-ui: 'Inter Tight', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-doc: 'Source Serif 4', Georgia, serif;
+}
+[data-theme="warm"]{ --bg:#faf7f2; --surface:#ffffff; --surface-2:#f7f3ec; --rule:#ece5d8; --rule-2:#d9d0bd; --accent:#b8501f; --accent-soft:#fbe4d5; --ai:#207d79; --ai-soft:#e0f2f1;}
+[data-theme="mono"]{ --bg:#f5f5f5; --surface:#ffffff; --surface-2:#efefef; --rule:#e5e5e5; --rule-2:#d4d4d4; --accent:#171717; --accent-soft:#e5e5e5; --ai:#525252; --ai-soft:#e5e5e5;}
+[data-theme="dark"]{ --bg:#0b1220; --surface:#111a2e; --surface-2:#172238; --ink:#eeeceb; --ink-2:#dddddd; --ink-soft:#a39e98; --ink-muted:#615d59; --rule:#31302e; --rule-2:#334155; --accent:#62aef0; --accent-soft:#1e3a8a; --ai:#a78bfa; --ai-soft:#3b1f6b;}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:var(--font-ui); font-size:14px; -webkit-font-smoothing:antialiased;
+  font-feature-settings:'ss01','cv11';
+}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+.app{display:flex;flex-direction:column;height:100vh;width:100vw;overflow:hidden}
+
+/* -------- Top bar (shared) -------- */
+.topbar{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 16px;background:var(--surface);
+  border-bottom:1px solid var(--rule);
+  z-index:10;
+}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:-0.02em;font-size:14px;white-space:nowrap;flex-shrink:0}
+.brand-mark{width:22px;height:22px;background:var(--ink);border-radius:5px;display:flex;align-items:center;justify-content:center;color:var(--surface);font-family:var(--font-mono);font-size:12px;font-weight:600}
+.topbar .sep{width:1px;height:20px;background:var(--rule)}
+.topbar .crumbs{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+.topbar .crumbs b{color:var(--ink);font-weight:500}
+.topbar .spacer{flex:1}
+.topbar .presence{display:flex;align-items:center;gap:8px}
+.topbar-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:5px 10px;
+  border:1px solid var(--rule);border-radius:6px;background:var(--surface);
+  font-size:12.5px;color:var(--ink-2);font-weight:500;
+  transition: all .12s;
+}
+.topbar-btn:hover{border-color:var(--rule-2);background:var(--surface-2)}
+.topbar-btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.topbar-btn.primary:hover{background:var(--ink-2)}
+.kbd{font-family:var(--font-mono);font-size:10.5px;padding:1px 5px;border:1px solid var(--rule);border-radius:3px;background:var(--surface-2);color:var(--ink-soft)}
+
+/* -------- Avatars -------- */
+.avatar{
+  width:24px;height:24px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;color:var(--surface);
+  border:2px solid var(--surface);
+  flex-shrink:0;
+}
+.avatar.sm{width:20px;height:20px;font-size:10px}
+.avatar.lg{width:32px;height:32px;font-size:13px}
+.avatar.u1{background:#3b82f6}
+.avatar.u2{background:#ec4899}
+.avatar.u3{background:#10b981}
+.avatar.ai{background:var(--ai);position:relative}
+.avatar.ai::after{content:'';position:absolute;inset:-2px;border:2px dashed var(--ai);border-radius:50%;opacity:.35}
+.avatars{display:inline-flex}
+.avatars .avatar + .avatar{margin-left:-6px}
+
+/* -------- Tabs in header -------- */
+.navtabs{display:flex;gap:2px;background:var(--surface-2);padding:3px;border-radius:8px;border:1px solid var(--rule)}
+.navtab{
+  padding:5px 11px;border-radius:5px;font-size:12.5px;font-weight:500;
+  color:var(--ink-soft);border:none;background:transparent;
+}
+.navtab:hover{color:var(--ink)}
+.navtab.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow-sm)}
+
+/* -------- Main split -------- */
+.stage{flex:1;display:flex;min-height:0}
+.view{flex:1;display:none;min-height:0}
+.view.active{display:flex}
+
+/* ========== DASHBOARD ========== */
+#view-dashboard{flex-direction:row;background:var(--bg)}
+.side{
+  width:220px;background:var(--surface);border-right:1px solid var(--rule);
+  padding:16px 12px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;
+}
+.side h5{
+  font:500 10.5px/1 var(--font-mono); letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-soft);margin:16px 8px 6px;
+}
+.side h5:first-of-type{margin-top:8px}
+.side-item{
+  display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;
+  font-size:13px;color:var(--ink-2);cursor:pointer;border:none;background:transparent;text-align:left;
+}
+.side-item:hover{background:var(--surface-2)}
+.side-item.active{background:var(--surface-2);color:var(--ink);font-weight:500}
+.side-item svg{width:14px;height:14px;color:var(--ink-soft);flex-shrink:0}
+.side-item .count{margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted)}
+.side-divider{height:1px;background:var(--rule);margin:10px 0}
+
+.dash-main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.dash-head{padding:28px 40px 14px;display:flex;align-items:flex-end;gap:16px;border-bottom:1px solid var(--rule);background:var(--surface)}
+.dash-head h1{font-size:22px;margin:0;font-weight:600;letter-spacing:-0.02em}
+.dash-head .muted{color:var(--ink-soft);font-size:13px;margin-top:2px}
+.dash-head .spacer{flex:1}
+.dash-filters{display:flex;gap:6px}
+.dash-filter{
+  padding:5px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);
+  font-size:12px;color:var(--ink-soft);cursor:pointer;
+}
+.dash-filter.active{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+.dash-body{flex:1;display:flex;min-height:0;background:var(--bg)}
+.doc-list{flex:1;overflow-y:auto;padding:8px 24px 24px}
+.doc-group{margin-top:20px}
+.doc-group h6{
+  font:500 10.5px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-muted);margin:0 0 8px 12px;
+}
+.doc-row{
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border-radius:8px;cursor:pointer;transition:all .1s;
+  border:1px solid transparent;min-width:0;
+}
+.doc-row > .doc-row-mid{flex:1;min-width:0;overflow:hidden}
+.doc-row .title{font-weight:500;font-size:14.5px;color:var(--ink);letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-row .meta{font-size:12px;color:var(--ink-soft);display:flex;gap:8px;align-items:center;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-row .meta .chip{
+  font-family:var(--font-mono);font-size:10px;padding:1px 5px;border-radius:3px;
+  background:var(--surface-2);color:var(--ink-soft);
+}
+.doc-row .icon{
+  width:34px;height:34px;border-radius:6px;background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);font-weight:500;
+  flex-shrink:0;
+}
+.doc-row .right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.doc-row .time{font-size:11.5px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+
+.activity{
+  width:300px;background:var(--surface);border-left:1px solid var(--rule);
+  overflow-y:auto;padding:20px 18px;flex-shrink:0;
+}
+.activity h5{font:500 10.5px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 12px}
+.act-item{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--rule)}
+.act-item:first-of-type{border-top:none;padding-top:0}
+.act-item .body{flex:1;min-width:0}
+.act-item .who{font-weight:500;font-size:13px}
+.act-item .what{font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin-top:2px}
+.act-item .when{font-size:11px;color:var(--ink-muted);margin-top:3px;font-variant-numeric:tabular-nums}
+
+/* ========== EDITOR ========== */
+#view-editor{flex-direction:row;background:var(--bg)}
+.editor-wrap{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.editor-topbar{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 18px;background:var(--surface);border-bottom:1px solid var(--rule);
+}
+.editor-topbar .crumbs{font-family:var(--font-ui);font-size:13px;color:var(--ink-soft);letter-spacing:-.005em}
+.editor-topbar .crumbs b{color:var(--ink);font-weight:600}
+.editor-topbar .crumbs .sep{margin:0 6px;color:var(--ink-muted)}
+.editor-topbar .doc-status{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);letter-spacing:.02em}
+.editor-topbar .doc-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.editor-topbar .tb-divider{width:1px;height:18px;background:var(--rule);margin:0 2px}
+.editor-main{
+  flex:1;min-height:0;display:flex;overflow:hidden;
+}
+.editor-scroll{flex:1;overflow-y:auto;padding:44px 8px 80px;display:flex;justify-content:center}
+.doc{
+  width:100%;max-width:720px;padding:0 28px;
+  font-family:var(--font-doc);font-size:17.5px;line-height:1.75;color:var(--ink-2);
+  text-wrap:pretty;
+}
+.doc h1{font-family:var(--font-ui);font-size:40px;font-weight:600;letter-spacing:-0.03em;color:var(--ink);margin:0 0 10px;line-height:1.1}
+.doc .subtitle{font-family:var(--font-ui);font-size:13px;color:var(--ink-soft);margin-bottom:36px;display:flex;gap:10px;align-items:center;letter-spacing:0}
+.doc .subtitle .dot{width:3px;height:3px;border-radius:50%;background:var(--ink-muted)}
+.doc .subtitle .draft-tag{font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-muted);border:1px solid var(--rule);padding:1px 6px;border-radius:3px}
+.doc h2{font-family:var(--font-ui);font-size:22px;font-weight:600;letter-spacing:-0.02em;color:var(--ink);margin:44px 0 14px;line-height:1.25}
+.doc h3{font-family:var(--font-ui);font-size:15px;font-weight:600;color:var(--ink);margin:28px 0 10px;letter-spacing:-0.005em}
+.doc p{margin:12px 0}
+.doc ul,.doc ol{margin:10px 0;padding-left:24px}
+.doc li{margin:6px 0}
+.doc .todo{list-style:none;padding-left:0}
+.doc .todo li{display:flex;align-items:flex-start;gap:12px;padding:4px 0}
+.doc .todo .chk{
+  width:17px;height:17px;border:1.5px solid var(--rule-2);border-radius:4px;margin-top:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;cursor:pointer;
+  transition:all .12s;
+}
+.doc .todo .chk:hover{border-color:var(--ink-muted)}
+.doc .todo li.done .chk{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+.doc .todo li.done{color:var(--ink-muted);text-decoration:line-through}
+.doc code{
+  font-family:var(--font-mono);font-size:13.5px;background:var(--surface-2);
+  padding:1.5px 6px;border-radius:4px;color:var(--ink);
+}
+.doc blockquote{
+  border-left:2px solid var(--rule-2);padding:4px 18px;margin:22px 0;
+  color:var(--ink-soft);font-style:italic;font-size:17px;
+}
+.doc .cmt-anchor{
+  background:rgba(245,158,11,0.12);border-bottom:1.5px solid var(--warn);
+  cursor:pointer;padding:1px 2px;border-radius:0;transition:background .15s;
+}
+.doc .cmt-anchor:hover,.doc .cmt-anchor.active{background:rgba(245,158,11,0.28)}
+.doc .cmt-anchor.ai{background:color-mix(in oklab,var(--ai) 10%,transparent);border-bottom-color:var(--ai)}
+.doc .cmt-anchor.ai:hover,.doc .cmt-anchor.ai.active{background:color-mix(in oklab,var(--ai) 22%,transparent)}
+.doc .cursor-flag{
+  display:inline-block;width:2px;height:18px;background:#ec4899;vertical-align:middle;
+  position:relative;margin:0 1px;animation:blink 1.2s steps(2) infinite;
+}
+.doc .cursor-flag::after{
+  content:attr(data-name);position:absolute;top:-15px;left:0;
+  font-family:var(--font-ui);font-size:9.5px;font-weight:500;color:var(--surface);letter-spacing:.02em;
+  background:#ec4899;padding:1.5px 6px;border-radius:3px 3px 3px 0;white-space:nowrap;
+}
+@keyframes blink{50%{opacity:.3}}
+
+/* Floating toolbar (only appears on selection - faux) */
+.bubble-tb{
+  position:absolute;display:flex;gap:2px;padding:4px;background:var(--surface);
+  border:1px solid var(--rule);border-radius:8px;box-shadow:var(--shadow-md);
+  font-size:12px;
+}
+.bubble-tb button{
+  padding:4px 7px;border:none;background:transparent;border-radius:4px;color:var(--ink-2);font-size:12px;
+}
+.bubble-tb button:hover{background:var(--surface-2)}
+.bubble-tb .div{width:1px;background:var(--rule);margin:2px 2px}
+
+/* Margin threads column */
+.margin{
+  width:300px;background:var(--bg);border-left:1px solid var(--rule);
+  overflow-y:auto;padding:44px 18px 60px;flex-shrink:0;
+}
+.margin-head{font:500 10.5px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 18px;display:flex;align-items:center;gap:8px}
+.margin-head .count{margin-left:auto;color:var(--ink-muted)}
+.thread{
+  padding:12px 12px 10px 14px;margin-bottom:14px;position:relative;
+  background:var(--surface);border:1px solid var(--rule);border-radius:8px;
+  cursor:pointer;transition:border-color .15s, box-shadow .15s;
+}
+.thread::before{
+  content:'';position:absolute;left:-1px;top:10px;bottom:10px;width:2px;
+  background:var(--warn);border-radius:1px;opacity:.65;transition:opacity .15s;
+}
+.thread.ai::before{background:var(--ai)}
+.thread:hover{border-color:var(--rule-2)}
+.thread:hover::before{opacity:1}
+.thread.active{border-color:var(--rule-2);box-shadow:0 0 0 3px color-mix(in oklab,var(--warn) 18%,transparent)}
+.thread.ai.active{box-shadow:0 0 0 3px color-mix(in oklab,var(--ai) 18%,transparent)}
+.thread .anchor{
+  font-family:var(--font-doc);font-style:italic;font-size:12.5px;
+  color:var(--ink-soft);margin-bottom:10px;line-height:1.45;
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;
+}
+.thread .anchor::before{content:'“';margin-right:1px}
+.thread .anchor::after{content:'”';margin-left:1px}
+.thread .msg{display:flex;gap:9px;margin-top:10px;align-items:flex-start}
+.thread .msg:first-of-type{margin-top:0}
+.thread .msg .body{flex:1;min-width:0}
+.thread .msg .who{font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;color:var(--ink)}
+.thread .msg .tstamp{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);font-weight:400;margin-left:auto}
+.thread .msg .text{font-size:12.5px;color:var(--ink-2);margin-top:3px;line-height:1.5}
+.thread .msg .text code{font-family:var(--font-mono);font-size:11.5px;background:var(--surface-2);padding:1px 5px;border-radius:3px;color:var(--ink)}
+.thread .actions{display:flex;gap:6px;margin-top:10px;align-items:center}
+.thread .reply-box{
+  margin-top:10px;border-top:1px solid var(--rule);padding-top:8px;
+  color:var(--ink-muted);font-size:11.5px;display:flex;align-items:center;gap:6px;
+}
+.badge-ai{
+  display:inline-flex;align-items:center;
+  font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+  padding:1px 5px;border-radius:3px;background:transparent;color:var(--ai);border:1px solid color-mix(in oklab,var(--ai) 30%,transparent);
+}
+.chip-accept{
+  padding:4px 9px;font-size:11px;border:1px solid var(--rule);border-radius:5px;background:var(--surface);color:var(--ink-2);font-weight:500;cursor:pointer;
+  font-family:var(--font-ui);
+}
+.chip-accept:hover{background:var(--surface-2);color:var(--ink)}
+.chip-accept.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip-accept.primary:hover{background:var(--ink-2)}
+.margin-empty{margin-top:18px;font-size:11.5px;color:var(--ink-muted);text-align:left;padding:10px 12px;border:1px dashed var(--rule);border-radius:8px;line-height:1.5}
+.margin-empty .kbd{background:var(--surface);border:1px solid var(--rule);border-bottom-width:1.5px;border-radius:3px;padding:0 4px;font-family:var(--font-mono);font-size:10px;color:var(--ink-2);margin:0 2px}
+
+/* Agent pair rail (right-most) */
+.pair{
+  width:360px;background:var(--surface);border-left:1px solid var(--rule);
+  display:flex;flex-direction:column;flex-shrink:0;
+}
+.pair-head{padding:14px 16px 12px;border-bottom:1px solid var(--rule);display:flex;align-items:flex-start;gap:11px}
+.pair-head .avatar{margin-top:1px;flex-shrink:0}
+.pair-head .info{flex:1;min-width:0}
+.pair-head .name{font-weight:600;font-size:13.5px;letter-spacing:-.005em;display:flex;align-items:center;gap:7px}
+.pair-head .name .badge-ai{font-size:8.5px}
+.pair-head .status{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);margin-top:3px;letter-spacing:.02em;display:flex;align-items:center;gap:5px}
+.pair-head .status .live-dot{width:5px;height:5px;border-radius:50%;background:var(--ok);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.pair-head .icon-btn{width:26px;height:26px;border-radius:6px;border:none;background:transparent;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;font-size:14px}
+.pair-head .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
+
+.pair-scroll{flex:1;overflow-y:auto;padding:16px 16px 8px}
+
+/* Timeline style: user messages as small right-aligned italic notes; agent as proper cards */
+.pair-msg{margin-bottom:18px;position:relative}
+.pair-msg.user{text-align:right;margin-bottom:10px}
+.pair-msg.user .meta{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);letter-spacing:.04em;margin-bottom:3px}
+.pair-msg.user .instruction{
+  display:inline-block;font-family:var(--font-doc);font-style:italic;
+  font-size:13.5px;color:var(--ink-2);line-height:1.5;
+  background:var(--surface-2);padding:7px 11px;border-radius:10px 10px 2px 10px;
+  max-width:90%;text-align:left;
+}
+
+.pair-msg.agent .meta{display:flex;align-items:center;gap:7px;margin-bottom:6px;font-size:11.5px}
+.pair-msg.agent .meta .nm{font-weight:600;color:var(--ink);font-size:12px}
+.pair-msg.agent .meta .tm{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);letter-spacing:.04em;margin-left:auto}
+.pair-msg.agent .body{font-size:13px;color:var(--ink-2);line-height:1.55;padding-left:30px}
+.pair-msg.agent .body code{font-family:var(--font-mono);font-size:11.5px;background:var(--surface-2);padding:1px 5px;border-radius:3px;color:var(--ink)}
+.pair-msg.agent .body .check{color:var(--ok);font-weight:600}
+
+/* Proposal card: clean diff with per-hunk accept/reject */
+.proposal{
+  margin-top:10px;margin-left:30px;
+  border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--surface);
+}
+.proposal .phead{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  border-bottom:1px solid var(--rule);background:var(--surface-2);
+}
+.proposal .phead .label{font-family:var(--font-mono);color:var(--ink-soft);font-size:10px;text-transform:uppercase;letter-spacing:.1em}
+.proposal .phead .section{font-size:12px;color:var(--ink);font-weight:500}
+.proposal .phead .stat{margin-left:auto;display:flex;gap:7px;font-family:var(--font-mono);font-size:11px}
+.proposal .phead .stat .add{color:var(--ok)}
+.proposal .phead .stat .rem{color:#dc2626}
+
+.proposal .hunks{padding:4px 0}
+.hunk{padding:6px 12px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid var(--rule);position:relative}
+.hunk:last-child{border-bottom:none}
+.hunk .lines{flex:1;min-width:0;font-family:var(--font-mono);font-size:11.5px;line-height:1.55}
+.hunk .lines .d-rm{display:block;color:#991b1b;background:color-mix(in oklab,#dc2626 8%,transparent);padding:1px 6px;border-radius:2px;margin:1px 0}
+.hunk .lines .d-rm::before{content:'−';color:#dc2626;margin-right:6px;opacity:.7}
+.hunk .lines .d-ad{display:block;color:#065f46;background:color-mix(in oklab,var(--ok) 10%,transparent);padding:1px 6px;border-radius:2px;margin:1px 0}
+.hunk .lines .d-ad::before{content:'+';color:var(--ok);margin-right:6px;opacity:.8}
+.hunk .hacts{display:flex;gap:2px;flex-shrink:0;opacity:0;transition:opacity .12s}
+.hunk:hover .hacts{opacity:1}
+.hunk .hbtn{width:22px;height:22px;border-radius:4px;border:1px solid var(--rule);background:var(--surface);color:var(--ink-soft);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.hunk .hbtn:hover{color:var(--ink);border-color:var(--rule-2)}
+.hunk .hbtn.accept:hover{color:var(--ok);border-color:var(--ok)}
+.hunk .hbtn.reject:hover{color:#dc2626;border-color:#dc2626}
+
+.proposal .pacts{display:flex;gap:6px;padding:8px 12px;background:var(--surface);border-top:1px solid var(--rule);align-items:center}
+.proposal .pacts .spacer{flex:1}
+.proposal .pacts button{padding:5px 11px;font-size:11.5px;border-radius:5px;border:1px solid var(--rule);background:var(--surface);color:var(--ink-2);font-weight:500;font-family:var(--font-ui);cursor:pointer}
+.proposal .pacts button:hover{background:var(--surface-2);color:var(--ink)}
+.proposal .pacts button.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.proposal .pacts button.primary:hover{background:var(--ink-2)}
+
+/* Compose: clean input with inline hints */
+.pair-compose{border-top:1px solid var(--rule);padding:12px 14px;background:var(--surface)}
+.pair-input{
+  border:1px solid var(--rule);border-radius:10px;padding:10px 12px;
+  font-size:13px;color:var(--ink-muted);background:var(--bg);
+  display:flex;align-items:center;gap:8px;min-height:44px;
+  transition:border-color .15s;
+}
+.pair-input:hover{border-color:var(--rule-2)}
+.pair-input .slash{font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);padding:2px 6px;background:var(--surface);border:1px solid var(--rule);border-radius:4px}
+.pair-input .send{width:26px;height:26px;border-radius:6px;background:var(--surface-2);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.pair-hints{display:flex;gap:14px;margin-top:8px;font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);letter-spacing:.02em}
+.pair-hints .h{display:flex;align-items:center;gap:4px}
+.pair-hints .kbd{background:var(--surface);border:1px solid var(--rule);border-bottom-width:1.5px;border-radius:3px;padding:0 4px;font-size:10px;color:var(--ink-2)}
+
+/* Mobile view */
+#view-mobile{align-items:center;justify-content:center;background:linear-gradient(180deg,var(--bg),var(--surface-2))}
+.phones{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;justify-content:center;padding:30px;overflow:auto;max-height:100%}
+.phone-col{display:flex;flex-direction:column;gap:10px;align-items:center}
+.phone-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.phone{
+  width:300px;background:#111;border-radius:38px;padding:8px;box-shadow:0 20px 50px rgba(15,23,42,.16);
+}
+.phone .screen{
+  background:var(--surface);border-radius:30px;aspect-ratio:9/19.5;
+  padding:10px 14px 70px;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;gap:8px;
+}
+.phone .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:90px;height:22px;background:#111;border-radius:14px;z-index:2}
+.phone .statusbar{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--ink);padding:4px 8px 0}
+.phone .pheader{display:flex;align-items:center;gap:8px;padding:14px 2px 10px;border-bottom:1px solid var(--rule);margin-top:20px}
+.phone .pheader .back{width:28px;height:28px;border-radius:6px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ink-soft)}
+.phone .pheader .t{font-size:13px;font-weight:600;letter-spacing:-0.01em;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phone .pdoc{flex:1;overflow-y:auto;padding:10px 2px}
+.phone .pdoc h1{font-family:var(--font-ui);font-size:22px;font-weight:600;margin:0 0 4px;letter-spacing:-0.02em}
+.phone .pdoc .sub{font-size:11px;color:var(--ink-soft);margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.phone .pdoc p, .phone .pdoc li{font-family:var(--font-doc);font-size:14px;line-height:1.55;color:var(--ink-2);margin:8px 0}
+.phone .pdoc h2{font-family:var(--font-ui);font-size:15px;font-weight:600;margin:16px 0 4px}
+.phone .pdoc .cmt{background:rgba(245,158,11,.18);border-bottom:1.5px solid var(--warn);padding:1px 2px}
+.phone .pnotify{
+  display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--ai-soft);border-bottom:1px solid var(--rule);font-family:var(--font-ui);font-size:11.5px;color:var(--ink-2);cursor:pointer;
+}
+.phone .pnotify b{color:var(--ai);font-weight:600}
+.phone .pnotify .chev{margin-left:auto;color:var(--ink-soft);font-family:var(--font-ui)}
+.phone .ptab{
+  position:absolute;bottom:8px;left:8px;right:8px;display:flex;justify-content:space-around;
+  padding:8px 0 16px;background:var(--surface);border-top:1px solid var(--rule);
+}
+.phone .ptab .t{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9.5px;color:var(--ink-muted);font-family:var(--font-mono);letter-spacing:.04em}
+.phone .ptab .t.active{color:var(--ink)}
+.phone .ptab .t .ic{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.phone .pdoc .fab{position:absolute;bottom:80px;right:16px;width:48px;height:48px;border-radius:50%;background:var(--ink);color:var(--surface);display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-lg);font-size:18px}
+
+/* Onboarding view */
+#view-onboarding{background:linear-gradient(180deg,var(--bg),var(--surface-2));align-items:center;justify-content:center;padding:30px;overflow:auto}
+.ob-frame{
+  width:min(920px, 96%);background:var(--surface);border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--shadow-lg);overflow:hidden;display:flex;flex-direction:column;
+}
+.ob-head{padding:10px 14px;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:10px;background:var(--surface)}
+.ob-head .lights{display:flex;gap:5px;margin-right:4px}
+.ob-head .l{width:10px;height:10px;border-radius:50%;background:var(--rule-2)}
+.ob-head .addr{flex:1;text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);background:var(--surface-2);border-radius:6px;padding:4px 10px;max-width:320px;margin:0 auto}
+.ob-body{padding:30px 40px 40px;display:flex;gap:32px;align-items:flex-start}
+.ob-doc{flex:1;font-family:var(--font-doc);font-size:16px;line-height:1.65;color:var(--ink-2);min-width:0}
+.ob-doc h1{font-family:var(--font-ui);font-size:30px;font-weight:600;margin:0 0 4px;letter-spacing:-0.02em;color:var(--ink)}
+.ob-doc .intro-sub{font-family:var(--font-ui);font-size:13px;color:var(--ink-soft);margin-bottom:22px;display:flex;align-items:center;gap:10px}
+.ob-doc h2{font-family:var(--font-ui);font-size:18px;font-weight:600;margin:26px 0 6px;letter-spacing:-0.01em}
+.ob-doc .typing{
+  border-left:3px solid var(--ai);background:var(--ai-soft);
+  padding:8px 12px;border-radius:0 8px 8px 0;margin:14px 0;
+  font-family:var(--font-ui);font-size:13.5px;color:var(--ink-2);display:flex;gap:10px;align-items:flex-start;
+}
+.ob-doc .typing .a{flex-shrink:0;margin-top:2px}
+.ob-doc .typing .typing-dots{display:inline-flex;gap:3px;margin-left:2px;vertical-align:middle}
+.ob-doc .typing-dots span{width:5px;height:5px;background:var(--ai);border-radius:50%;opacity:.4;animation:tdot 1.2s infinite ease-in-out}
+.ob-doc .typing-dots span:nth-child(2){animation-delay:.15s}
+.ob-doc .typing-dots span:nth-child(3){animation-delay:.3s}
+@keyframes tdot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
+.ob-doc .try{list-style:none;padding:0;margin:8px 0}
+.ob-doc .try li{display:flex;align-items:baseline;gap:10px;padding:7px 10px;border-radius:6px;cursor:pointer;font-family:var(--font-ui);font-size:14px}
+.ob-doc .try li > span:last-child{flex:1;min-width:0;line-height:1.5}
+.ob-doc .try li:hover{background:var(--surface-2)}
+.ob-doc .try li.done{color:var(--ink-muted);text-decoration:line-through}
+.ob-doc .try .chk{width:16px;height:16px;border:1.5px solid var(--rule-2);border-radius:4px;display:flex;align-items:center;justify-content:center;color:transparent;font-size:11px;margin-top:3px;flex-shrink:0}
+.ob-doc .try li.done .chk{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.ob-doc .try li code{font-family:var(--font-mono);font-size:12px;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.ob-doc .cta{display:inline-flex;gap:8px;margin-top:22px;align-items:center}
+.ob-doc .cta-btn{padding:7px 14px;border-radius:7px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);font-weight:500;font-family:var(--font-ui);font-size:13px}
+.ob-doc .cta-btn.ghost{background:transparent;color:var(--ink-2);border-color:var(--rule)}
+
+.ob-side{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:14px}
+.ob-card{border:1px solid var(--rule);border-radius:10px;padding:12px;font-family:var(--font-ui);background:var(--surface-2)}
+.ob-card h6{font:500 10.5px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 8px}
+.ob-card .row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin:4px 0}
+.ob-card .row .muted{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Tweaks panel */
+.tweaks{
+  position:fixed;right:14px;bottom:14px;z-index:50;
+  width:260px;background:var(--surface);border:1px solid var(--rule);border-radius:12px;
+  box-shadow:var(--shadow-lg);padding:14px;display:none;
+}
+.tweaks.open{display:block}
+.tweaks h4{font:500 10.5px/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px}
+.tweaks .row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:12.5px}
+.tweaks select{font-family:var(--font-ui);font-size:12px;padding:3px 6px;border:1px solid var(--rule);border-radius:5px;background:var(--surface);color:var(--ink-2)}
+.tweaks .swatches{display:flex;gap:5px}
+.tweaks .sw{width:22px;height:22px;border-radius:6px;border:1px solid var(--rule-2);cursor:pointer}
+.tweaks .sw.active{outline:2px solid var(--ink);outline-offset:2px}
+.tweak-tog{
+  position:fixed;right:14px;bottom:14px;z-index:49;
+  background:var(--ink);color:var(--surface);border:none;border-radius:999px;
+  padding:8px 14px;font-size:12px;font-weight:500;font-family:var(--font-ui);
+  box-shadow:var(--shadow-md);display:none;
+}
+.tweak-tog.show{display:inline-flex;align-items:center;gap:6px}
+
+/* utility */
+.muted{color:var(--ink-soft)}
+.hide{display:none!important}
+
+/* data-sidebar variants */
+[data-sidebar="hidden"] .side{display:none}
+[data-sidebar="right"] #view-dashboard{flex-direction:row-reverse}
+[data-sidebar="right"] .side{border-right:none;border-left:1px solid var(--rule)}
+
+[data-density="compact"] .doc-row{padding:8px 12px}
+[data-density="compact"] .dash-head{padding:18px 30px 10px}
+[data-density="cozy"] .doc-row{padding:16px 16px}
+[data-density="cozy"] .dash-head{padding:36px 50px 18px}
+
+[data-presence="off"] .presence{display:none}
+[data-presence="off"] .doc .cursor-flag{display:none}
+
+/* Responsive: hide margin + narrow pair at smaller widths */
+@media (max-width: 1400px){
+  .pair{width:300px}
+}
+@media (max-width: 1180px){
+  .margin{display:none}
+  .pair{width:280px}
+  .activity{width:260px}
+}
+@media (max-width: 980px){
+  .pair{width:260px}
+  .activity{display:none}
+  .side{width:180px}
+}
+
+/* Scroll aesthetic */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--rule-2);border-radius:5px;border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-muted)}
+</style>
+</head>
+<body data-theme="cool" data-density="normal" data-sidebar="left" data-presence="on">
+
+<script>
+  window.__tweakDefaults = /*EDITMODE-BEGIN*/{
+    "theme": "cool",
+    "density": "normal",
+    "sidebar": "left",
+    "presence": true
+  }/*EDITMODE-END*/;
+</script>
+
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">m</span>markdown-collab</div>
+    <div class="sep"></div>
+    <div class="navtabs" id="tabs">
+      <button class="navtab" data-view="onboarding">Onboarding</button>
+      <button class="navtab active" data-view="dashboard">Dashboard</button>
+      <button class="navtab" data-view="editor">Editor</button>
+      <button class="navtab" data-view="mobile">Mobile</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="presence avatars">
+      <span class="avatar u1" title="Morgan">M</span>
+      <span class="avatar u2" title="Jo">J</span>
+      <span class="avatar ai" title="Editor agent">✦</span>
+    </div>
+    <button class="topbar-btn"><span class="kbd">⌘K</span> Search</button>
+    <button class="topbar-btn primary">Share</button>
+  </div>
+
+  <!-- STAGE -->
+  <div class="stage">
+
+    <!-- ========== DASHBOARD ========== -->
+    <div class="view active" id="view-dashboard" data-screen-label="dashboard">
+      <aside class="side">
+        <button class="side-item active">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h10v10H3z"/><path d="M3 6h10"/></svg>
+          All documents <span class="count">24</span>
+        </button>
+        <button class="side-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3v10M3 8h10"/></svg>
+          Drafts <span class="count">6</span>
+        </button>
+        <button class="side-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5"/><path d="M8 5v3l2 2"/></svg>
+          Recent <span class="count">12</span>
+        </button>
+        <button class="side-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5l5-2 5 2v7l-5 2-5-2z"/></svg>
+          Archive
+        </button>
+        <div class="side-divider"></div>
+
+        <h5>Agents</h5>
+        <button class="side-item">
+          <span class="avatar sm ai" style="width:16px;height:16px;font-size:9px">✦</span>
+          Editor <span class="count">active</span>
+        </button>
+        <button class="side-item">
+          <span class="avatar sm ai" style="width:16px;height:16px;font-size:9px">✦</span>
+          Research <span class="count">idle</span>
+        </button>
+        <button class="side-item">
+          <span class="avatar sm ai" style="width:16px;height:16px;font-size:9px">✦</span>
+          Scribe
+        </button>
+
+        <div class="side-divider"></div>
+        <h5>Workspace</h5>
+        <button class="side-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="2.5"/><path d="M3 13c0-2.5 2.5-4 5-4s5 1.5 5 4"/></svg>
+          People
+        </button>
+        <button class="side-item">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 2v1.5M8 12.5V14M2 8h1.5M12.5 8H14"/></svg>
+          Settings
+        </button>
+      </aside>
+
+      <main class="dash-main">
+        <header class="dash-head">
+          <div>
+            <h1>All documents</h1>
+            <div class="muted">24 docs · last edited 4 minutes ago</div>
+          </div>
+          <div class="spacer"></div>
+          <div class="dash-filters">
+            <button class="dash-filter active">All</button>
+            <button class="dash-filter">Mine</button>
+            <button class="dash-filter">Shared</button>
+            <button class="dash-filter">With agents</button>
+          </div>
+          <button class="topbar-btn primary" id="newDocBtn">+ New</button>
+        </header>
+
+        <div class="dash-body">
+          <div class="doc-list">
+            <div class="doc-group">
+              <h6>Today</h6>
+              <div class="doc-row" data-open="brief">
+                <div class="icon">md</div>
+                <div class="doc-row-mid">
+                  <div class="title">Q3 project brief</div>
+                  <div class="meta">
+                    Morgan · 2 comments
+                    <span class="chip">draft</span>
+                  </div>
+                </div>
+                <div class="right">
+                  <span class="avatars"><span class="avatar u1 sm">M</span><span class="avatar u2 sm">J</span><span class="avatar ai sm">✦</span></span>
+                  <span class="time">4m</span>
+                </div>
+              </div>
+              <div class="doc-row">
+                <div class="icon">md</div>
+                <div class="doc-row-mid">
+                  <div class="title">Landing page copy v3</div>
+                  <div class="meta">Research agent added 4 sources</div>
+                </div>
+                <div class="right">
+                  <span class="avatars"><span class="avatar ai sm">✦</span></span>
+                  <span class="time">1h</span>
+                </div>
+              </div>
+              <div class="doc-row">
+                <div class="icon">md</div>
+                <div class="doc-row-mid">
+                  <div class="title">Weekly review notes</div>
+                  <div class="meta">Kai · just you</div>
+                </div>
+                <div class="right">
+                  <span class="avatars"><span class="avatar u3 sm">K</span></span>
+                  <span class="time">3h</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="doc-group">
+              <h6>Yesterday</h6>
+              <div class="doc-row">
+                <div class="icon">md</div>
+                <div class="doc-row-mid">
+                  <div class="title">Onboarding revamp — scope</div>
+                  <div class="meta">Editor agent proposed 3 edits</div>
+                </div>
+                <div class="right">
+                  <span class="avatars"><span class="avatar u2 sm">J</span><span class="avatar ai sm">✦</span></span>
+                  <span class="time">Tue</span>
+                </div>
+              </div>
+              <div class="doc-row">
+                <div class="icon">md</div>
+                <div class="doc-row-mid">
+                  <div class="title">Interview notes — Alma</div>
+                  <div class="meta">Scribe agent · transcript</div>
+                </div>
+                <div class="right">
+                  <span class="avatars"><span class="avatar ai sm">✦</span></span>
+                  <span class="time">Tue</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="doc-group">
+              <h6>Last week</h6>
+              <div class="doc-row">
+                <div class="icon">md</div>
+                <div class="doc-row-mid">
+                  <div class="title">API v2 migration plan</div>
+                  <div class="meta">4 collaborators</div>
+                </div>
+                <div class="right">
+                  <span class="avatars"><span class="avatar u1 sm">M</span><span class="avatar u2 sm">J</span><span class="avatar u3 sm">K</span></span>
+                  <span class="time">Apr 10</span>
+                </div>
+              </div>
+              <div class="doc-row">
+                <div class="icon">md</div>
+                <div class="doc-row-mid">
+                  <div class="title">Design review · checkout flow</div>
+                  <div class="meta">Closed · archived</div>
+                </div>
+                <div class="right">
+                  <span class="time">Apr 9</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="activity">
+            <h5>Activity</h5>
+            <div class="act-item">
+              <span class="avatar ai sm">✦</span>
+              <div class="body">
+                <div class="who">Editor agent</div>
+                <div class="what">rewrote <b>§ Goals</b> in "Q3 project brief" — 3 lines changed</div>
+                <div class="when">2 min ago</div>
+              </div>
+            </div>
+            <div class="act-item">
+              <span class="avatar u2 sm">J</span>
+              <div class="body">
+                <div class="who">Jo</div>
+                <div class="what">commented on "Q3 project brief" — <i>"is this vs last year?"</i></div>
+                <div class="when">14 min ago</div>
+              </div>
+            </div>
+            <div class="act-item">
+              <span class="avatar ai sm">✦</span>
+              <div class="body">
+                <div class="who">Research agent</div>
+                <div class="what">added <b>4 sources</b> to "Landing page copy v3"</div>
+                <div class="when">1 hour ago</div>
+              </div>
+            </div>
+            <div class="act-item">
+              <span class="avatar u1 sm">M</span>
+              <div class="body">
+                <div class="who">Morgan</div>
+                <div class="what">shared "Onboarding revamp — scope" with you</div>
+                <div class="when">Yesterday</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <!-- ========== EDITOR ========== -->
+    <div class="view" id="view-editor" data-screen-label="editor">
+      <div class="editor-wrap">
+        <div class="editor-topbar">
+          <button class="topbar-btn" id="backToDash">← All documents</button>
+          <div class="tb-divider"></div>
+          <div class="crumbs">Q3<span class="sep">/</span><b>Project brief</b></div>
+          <div class="doc-status">saved 4m ago</div>
+          <div style="flex:1"></div>
+          <div class="presence avatars">
+            <span class="avatar u1 sm">M</span>
+            <span class="avatar u2 sm">J</span>
+            <span class="avatar ai sm">✦</span>
+          </div>
+          <div class="tb-divider"></div>
+          <button class="topbar-btn"><span class="kbd">/</span> Insert</button>
+        </div>
+
+        <div class="editor-main">
+          <div class="editor-scroll">
+            <article class="doc" id="docRoot">
+              <h1>Q3 project brief</h1>
+              <div class="subtitle">
+                <span class="avatar u1 sm">M</span>
+                <span>Morgan Chen</span>
+                <span class="dot"></span>
+                <span>updated 4 minutes ago</span>
+                <span class="dot"></span>
+                <span class="draft-tag">draft</span>
+              </div>
+
+              <p>The team is shipping a focused set of improvements this quarter. This brief captures the <b>what</b> and <b>why</b>; the spec doc covers the <b>how</b>.</p>
+
+              <h2>Goals</h2>
+              <ul class="todo">
+                <li class="done"><span class="chk">✓</span><span>Align on metric definitions with data team</span></li>
+                <li><span class="chk"></span><span>Reduce churn <span class="cmt-anchor" data-thread="t1">by 15% by end of Q3</span></span></li>
+                <li><span class="chk"></span><span>Ship the <span class="cmt-anchor ai" data-thread="t2">onboarding revamp</span> by Aug 15<span class="cursor-flag" data-name="Jo"></span></span></li>
+                <li><span class="chk"></span><span>Run 12 qualitative interviews before lock</span></li>
+              </ul>
+
+              <h2>Non-goals</h2>
+              <p>We are explicitly <i>not</i> rebuilding the editor surface this quarter. See <code>roadmap-q4.md</code> for the broader surface rework.</p>
+
+              <h2>Success metrics</h2>
+              <ol>
+                <li>Week-4 retention ≥ 42% (baseline 36%)</li>
+                <li>First-run completion ≥ 78% (baseline 61%)</li>
+                <li>Agent-assisted sessions ≥ 3 per active user per week</li>
+              </ol>
+
+              <blockquote>"Agents shouldn't feel like a feature bolted on — they should feel like another teammate in the doc." — team principle, Mar kickoff</blockquote>
+
+              <h2>Risks &amp; unknowns</h2>
+              <p>Data pipeline for week-4 retention isn't in place yet; we're tracking a proxy from event logs. Research agent has flagged that the baseline may be stale (source: user panel Q1).</p>
+
+              <h3>Timeline</h3>
+              <ul>
+                <li><b>Wk 1–2</b> — scope lock, spec review</li>
+                <li><b>Wk 3–6</b> — build, with weekly check-ins</li>
+                <li><b>Wk 7</b> — internal dogfood</li>
+                <li><b>Wk 8–9</b> — staged rollout, 5% → 50% → 100%</li>
+              </ul>
+            </article>
+          </div>
+
+          <!-- Margin threads column -->
+          <aside class="margin">
+            <div class="margin-head">Threads <span class="count">2</span></div>
+
+            <div class="thread" data-thread="t1" id="threadT1">
+              <div class="anchor">by 15% by end of Q3</div>
+              <div class="msg">
+                <span class="avatar u2 sm">J</span>
+                <div class="body">
+                  <div class="who">Jo Nakamura<span class="tstamp">14m</span></div>
+                  <div class="text">Is this vs last year, or vs Q1 baseline?</div>
+                </div>
+              </div>
+              <div class="msg">
+                <span class="avatar ai sm">✦</span>
+                <div class="body">
+                  <div class="who">Research agent <span class="badge-ai">agent</span><span class="tstamp">12m</span></div>
+                  <div class="text">vs last year (22%). Q1 baseline was 19%. Want me to add a footnote?</div>
+                  <div class="actions">
+                    <button class="chip-accept">Sources (3)</button>
+                    <button class="chip-accept primary">Add footnote</button>
+                  </div>
+                </div>
+              </div>
+              <div class="reply-box"><span>Reply or</span><span class="kbd">@</span><span>to loop someone in</span></div>
+            </div>
+
+            <div class="thread ai" data-thread="t2">
+              <div class="anchor">onboarding revamp</div>
+              <div class="msg">
+                <span class="avatar ai sm">✦</span>
+                <div class="body">
+                  <div class="who">Editor agent <span class="badge-ai">agent</span><span class="tstamp">2m</span></div>
+                  <div class="text">This phrase is used 4 different ways across docs. Suggest linking to the canonical <code>onboarding-revamp-scope</code>.</div>
+                  <div class="actions">
+                    <button class="chip-accept">Dismiss</button>
+                    <button class="chip-accept primary">Apply link</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="margin-empty">
+              Select text to start a new thread, or press <span class="kbd">⌘</span><span class="kbd">⌥</span><span class="kbd">M</span> on a selection.
+            </div>
+          </aside>
+
+          <!-- Agent pair rail -->
+          <aside class="pair">
+            <div class="pair-head">
+              <span class="avatar ai">✦</span>
+              <div class="info">
+                <div class="name">Editor agent <span class="badge-ai">agent</span></div>
+                <div class="status"><span class="live-dot"></span>reading · 4 sources indexed</div>
+              </div>
+              <button class="icon-btn" title="History">↺</button>
+              <button class="icon-btn" title="Settings">⋯</button>
+            </div>
+
+            <div class="pair-scroll">
+              <div class="pair-msg user">
+                <div class="meta">YOU · 4M</div>
+                <div class="instruction">Tighten § Goals. Drop the vague one, make the metrics concrete.</div>
+              </div>
+
+              <div class="pair-msg agent">
+                <div class="meta">
+                  <span class="avatar ai sm" style="width:22px;height:22px;font-size:10px">✦</span>
+                  <span class="nm">Editor agent</span>
+                  <span class="tm">3M</span>
+                </div>
+                <div class="body">On it. I'll align wording with the spec doc while I'm there.</div>
+                <div class="proposal">
+                  <div class="phead">
+                    <span class="label">proposal</span>
+                    <span class="section">§ Goals</span>
+                    <span class="stat"><span class="add">+2</span><span class="rem">−4</span></span>
+                  </div>
+                  <div class="hunks">
+                    <div class="hunk">
+                      <div class="lines">
+<span class="d-rm">Reduce churn a lot this quarter</span>
+<span class="d-ad">Reduce churn by 15% by end of Q3</span>
+                      </div>
+                      <div class="hacts">
+                        <button class="hbtn reject" title="Reject hunk">✕</button>
+                        <button class="hbtn accept" title="Accept hunk">✓</button>
+                      </div>
+                    </div>
+                    <div class="hunk">
+                      <div class="lines">
+<span class="d-rm">Ship onboarding stuff</span>
+<span class="d-ad">Ship the onboarding revamp by Aug 15</span>
+                      </div>
+                      <div class="hacts">
+                        <button class="hbtn reject" title="Reject hunk">✕</button>
+                        <button class="hbtn accept" title="Accept hunk">✓</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pacts">
+                    <button>Review inline</button>
+                    <div class="spacer"></div>
+                    <button>Reject all</button>
+                    <button class="primary">Apply all</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pair-msg user">
+                <div class="meta">YOU · 1M</div>
+                <div class="instruction">Good. Pull in the week-4 retention number from the spec doc.</div>
+              </div>
+
+              <div class="pair-msg agent">
+                <div class="meta">
+                  <span class="avatar ai sm" style="width:22px;height:22px;font-size:10px">✦</span>
+                  <span class="nm">Editor agent</span>
+                  <span class="tm">JUST NOW</span>
+                </div>
+                <div class="body">Found it in <code>spec-q3.md</code> — 42% target, 36% baseline. Added to § Success metrics. <span class="check">✓</span></div>
+              </div>
+            </div>
+
+            <div class="pair-compose">
+              <div class="pair-input">
+                <span class="slash">/</span>
+                <span>Ask or instruct the agent…</span>
+                <div style="flex:1"></div>
+                <div class="send">↵</div>
+              </div>
+              <div class="pair-hints">
+                <span class="h"><span class="kbd">/</span>commands</span>
+                <span class="h"><span class="kbd">@</span>source</span>
+                <span class="h"><span class="kbd">⇧</span><span class="kbd">↵</span>newline</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MOBILE ========== -->
+    <div class="view" id="view-mobile" data-screen-label="mobile">
+      <div class="phones">
+        <div class="phone-col">
+          <div class="phone-label">Inbox</div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="statusbar"><span>9:41</span><span>●●● 􀫦 ▌</span></div>
+              <div class="pheader">
+                <span class="brand-mark" style="width:24px;height:24px;font-size:11px">m</span>
+                <div class="t">All documents</div>
+                <span class="avatar u1 sm">M</span>
+              </div>
+              <div class="pdoc">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px">
+                  <b style="font-size:11px;font-family:var(--font-mono);color:var(--ink-soft);letter-spacing:.1em;text-transform:uppercase">Today</b>
+                </div>
+                <div style="border:1px solid var(--rule);border-radius:10px;padding:10px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start">
+                  <div style="width:26px;height:26px;border-radius:5px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:var(--ink-soft);flex-shrink:0">md</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--font-ui);font-weight:600;font-size:13px;letter-spacing:-0.01em">Q3 project brief</div>
+                    <div style="font-family:var(--font-ui);font-size:10.5px;color:var(--ink-soft);margin-top:2px">Morgan · 2 comments</div>
+                  </div>
+                  <span class="avatars"><span class="avatar ai sm" style="width:14px;height:14px;font-size:7px">✦</span></span>
+                </div>
+                <div style="border:1px solid var(--rule);border-radius:10px;padding:10px;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start">
+                  <div style="width:26px;height:26px;border-radius:5px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:var(--ink-soft);flex-shrink:0">md</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--font-ui);font-weight:600;font-size:13px">Landing copy v3</div>
+                    <div style="font-family:var(--font-ui);font-size:10.5px;color:var(--ink-soft);margin-top:2px">✦ added 4 sources</div>
+                  </div>
+                </div>
+                <div style="border:1px solid var(--rule);border-radius:10px;padding:10px;display:flex;gap:8px;align-items:flex-start">
+                  <div style="width:26px;height:26px;border-radius:5px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:9px;color:var(--ink-soft);flex-shrink:0">md</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-family:var(--font-ui);font-weight:600;font-size:13px">Weekly notes</div>
+                    <div style="font-family:var(--font-ui);font-size:10.5px;color:var(--ink-soft);margin-top:2px">Just you</div>
+                  </div>
+                </div>
+              </div>
+              <div class="ptab">
+                <div class="t active"><div class="ic">▦</div>Docs</div>
+                <div class="t"><div class="ic">⟳</div>Activity</div>
+                <div class="t"><div class="ic">✦</div>Agents</div>
+                <div class="t"><div class="ic">⋯</div>More</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-col">
+          <div class="phone-label">Read · catch up</div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="statusbar"><span>9:41</span><span>●●● 􀫦 ▌</span></div>
+              <div class="pheader">
+                <div class="back">←</div>
+                <div class="t">Q3 project brief</div>
+                <span class="avatars"><span class="avatar u2 sm" style="width:18px;height:18px;font-size:9px">J</span><span class="avatar ai sm" style="width:18px;height:18px;font-size:9px">✦</span></span>
+              </div>
+              <div class="pnotify">
+                <span class="avatar ai" style="width:18px;height:18px;font-size:9px;flex-shrink:0">✦</span>
+                <span><b>Editor agent</b> · 3 edits to § Goals</span>
+                <span class="chev">→</span>
+              </div>
+              <div class="pdoc">
+                <h1>Q3 project brief</h1>
+                <div class="sub">Morgan · 4m ago · draft</div>
+                <p>The team is shipping a focused set of improvements this quarter. This brief captures the <b>what</b> and <b>why</b>.</p>
+
+                <h2>Goals</h2>
+                <p>Reduce churn <span class="cmt">by 15% by end of Q3</span>.</p>
+                <p>Ship the onboarding revamp by Aug 15.</p>
+
+                <h2>Success metrics</h2>
+                <p>Week-4 retention ≥ 42%; first-run completion ≥ 78%.</p>
+              </div>
+              <div class="ptab">
+                <div class="t active"><div class="ic">▦</div>Docs</div>
+                <div class="t"><div class="ic">⟳</div>Activity</div>
+                <div class="t"><div class="ic">✦</div>Agents</div>
+                <div class="t"><div class="ic">⋯</div>More</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-col">
+          <div class="phone-label">Comment on the go</div>
+          <div class="phone">
+            <div class="screen">
+              <div class="notch"></div>
+              <div class="statusbar"><span>9:41</span><span>●●● 􀫦 ▌</span></div>
+              <div class="pheader">
+                <div class="back">←</div>
+                <div class="t">Comments · Q3 brief</div>
+              </div>
+              <div class="pdoc">
+                <div style="background:var(--warn-soft);border-left:3px solid var(--warn);padding:8px 10px;border-radius:0 8px 8px 0;margin:8px 0;font-family:var(--font-doc);font-size:12px;font-style:italic;color:var(--ink-soft)">"by 15% by end of Q3"</div>
+
+                <div style="display:flex;gap:8px;margin:12px 0 6px">
+                  <span class="avatar u2 sm" style="width:22px;height:22px;font-size:10px">J</span>
+                  <div style="flex:1">
+                    <div style="font-family:var(--font-ui);font-weight:600;font-size:12px">Jo <span style="font-weight:400;color:var(--ink-muted);font-family:var(--font-mono);font-size:10px">14m</span></div>
+                    <div style="font-family:var(--font-ui);font-size:12.5px;color:var(--ink-2);margin-top:2px">Is this vs last year or Q1 baseline?</div>
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:8px;margin:12px 0 6px">
+                  <span class="avatar ai sm" style="width:22px;height:22px;font-size:10px">✦</span>
+                  <div style="flex:1">
+                    <div style="font-family:var(--font-ui);font-weight:600;font-size:12px">Research agent <span class="badge-ai" style="font-size:8px;padding:0 4px">agent</span></div>
+                    <div style="font-family:var(--font-ui);font-size:12.5px;color:var(--ink-2);margin-top:2px">vs last year (22%). Want me to add a footnote?</div>
+                    <div style="display:flex;gap:6px;margin-top:6px">
+                      <button style="font-family:var(--font-ui);font-size:10.5px;padding:3px 8px;border:1px solid var(--rule);border-radius:4px;background:var(--surface)">Dismiss</button>
+                      <button style="font-family:var(--font-ui);font-size:10.5px;padding:3px 8px;border:none;border-radius:4px;background:var(--ai);color:var(--surface)">+ Footnote</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="margin-top:18px;border:1px solid var(--rule);border-radius:10px;padding:8px 10px;font-family:var(--font-ui);font-size:11.5px;color:var(--ink-muted);display:flex;gap:6px;align-items:center">
+                  <span>Reply…</span>
+                  <div style="flex:1"></div>
+                  <span class="kbd" style="font-size:9px">@</span>
+                </div>
+              </div>
+              <div class="ptab">
+                <div class="t"><div class="ic">▦</div>Docs</div>
+                <div class="t active"><div class="ic">⟳</div>Activity</div>
+                <div class="t"><div class="ic">✦</div>Agents</div>
+                <div class="t"><div class="ic">⋯</div>More</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========== ONBOARDING ========== -->
+    <div class="view" id="view-onboarding" data-screen-label="onboarding">
+      <div class="ob-frame">
+        <div class="ob-head">
+          <div class="lights"><div class="l"></div><div class="l"></div><div class="l"></div></div>
+          <div class="addr">markdown-collab.app/welcome</div>
+          <div style="width:70px"></div>
+        </div>
+        <div class="ob-body">
+          <div class="ob-doc">
+            <h1>Welcome, Morgan 👋</h1>
+            <div class="intro-sub">
+              <span class="avatar ai sm">✦</span>
+              <span>Intro-agent is writing alongside you</span>
+            </div>
+            <p>You're in a real, live document right now. Anything you type saves — and I'll help you explore the basics as we go.</p>
+
+            <h2>Try it</h2>
+            <ul class="try" id="obList">
+              <li class="done"><span class="chk">✓</span><span>Read this first paragraph (nice, you did)</span></li>
+              <li data-step="1"><span class="chk"></span><span>Type <code>/</code> anywhere to insert a block</span></li>
+              <li data-step="2"><span class="chk"></span><span>Select a line and comment on it</span></li>
+              <li data-step="3"><span class="chk"></span><span>Ask me something — use the rail on the right</span></li>
+            </ul>
+
+            <div class="typing">
+              <span class="a"><span class="avatar ai sm">✦</span></span>
+              <div>
+                <b>Intro-agent</b> — I'll also suggest edits as you write. You can always accept, tweak, or ignore them.
+                <span class="typing-dots"><span></span><span></span><span></span></span>
+              </div>
+            </div>
+
+            <h2>What's different here</h2>
+            <p>Agents are teammates, not a side panel. They have names, cursors, and opinions. You can invite them into any doc — or ignore them and write solo.</p>
+
+            <div class="cta">
+              <button class="cta-btn ghost" id="obSkip">Skip the tour</button>
+              <button class="cta-btn" id="obStart">Open my first doc →</button>
+            </div>
+          </div>
+
+          <aside class="ob-side">
+            <div class="ob-card">
+              <h6>Your teammates</h6>
+              <div class="row"><span class="avatar ai sm">✦</span><b>Editor</b><span class="muted">· tightens prose</span></div>
+              <div class="row"><span class="avatar ai sm">✦</span><b>Research</b><span class="muted">· pulls sources</span></div>
+              <div class="row"><span class="avatar ai sm">✦</span><b>Scribe</b><span class="muted">· transcribes</span></div>
+            </div>
+            <div class="ob-card" style="background:var(--surface)">
+              <h6>Shortcuts</h6>
+              <div class="row"><span class="kbd">⌘K</span><span class="muted">Search everything</span></div>
+              <div class="row"><span class="kbd">/</span><span class="muted">Insert a block</span></div>
+              <div class="row"><span class="kbd">@</span><span class="muted">Mention or ask agent</span></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Tweaks -->
+<button class="tweak-tog" id="tweakTog">⚙ Tweaks</button>
+<div class="tweaks" id="tweaks">
+  <h4>Tweaks</h4>
+  <div class="row"><span>Theme</span>
+    <div class="swatches" id="swatches">
+      <div class="sw active" data-theme="cool" style="background:#ffffff"></div>
+      <div class="sw" data-theme="warm" style="background:#faf7f2"></div>
+      <div class="sw" data-theme="mono" style="background:#f5f5f5"></div>
+      <div class="sw" data-theme="dark" style="background:#0b1220"></div>
+    </div>
+  </div>
+  <div class="row"><span>Density</span>
+    <select id="density"><option value="normal">Normal</option><option value="compact">Compact</option><option value="cozy">Cozy</option></select>
+  </div>
+  <div class="row"><span>Sidebar</span>
+    <select id="sidebar"><option value="left">Left</option><option value="right">Right</option><option value="hidden">Hidden</option></select>
+  </div>
+  <div class="row"><span>Presence</span>
+    <input type="checkbox" id="presence" checked>
+  </div>
+</div>
+
+<script>
+  const viewsEl = document.querySelectorAll('.view');
+  const tabsEl = document.getElementById('tabs');
+  function setView(name){
+    document.querySelectorAll('.navtab').forEach(t => t.classList.toggle('active', t.dataset.view===name));
+    viewsEl.forEach(v => v.classList.toggle('active', v.id===`view-${name}`));
+    localStorage.setItem('mc_view', name);
+    try { window.parent.postMessage({slideIndexChanged: ['onboarding','dashboard','editor','mobile'].indexOf(name)},'*'); } catch{}
+  }
+  tabsEl.addEventListener('click', e => {
+    const b = e.target.closest('.navtab'); if(!b) return;
+    setView(b.dataset.view);
+  });
+  const initView = localStorage.getItem('mc_view') || 'dashboard';
+  setView(initView);
+
+  // doc-row → editor
+  document.querySelectorAll('.doc-row').forEach(r => r.addEventListener('click', () => setView('editor')));
+  document.getElementById('backToDash').addEventListener('click', () => setView('dashboard'));
+  document.getElementById('newDocBtn').addEventListener('click', () => setView('editor'));
+
+  // thread highlighting
+  document.querySelectorAll('.cmt-anchor').forEach(a => a.addEventListener('click', () => {
+    const id = a.dataset.thread;
+    document.querySelectorAll('.cmt-anchor').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.thread').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    document.querySelector(`.thread[data-thread="${id}"]`)?.classList.add('active');
+  }));
+  document.querySelectorAll('.thread').forEach(t => t.addEventListener('click', () => {
+    const id = t.dataset.thread;
+    document.querySelectorAll('.thread').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.cmt-anchor').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelector(`.cmt-anchor[data-thread="${id}"]`)?.classList.add('active');
+  }));
+
+  // onboarding checkbox list
+  document.querySelectorAll('#obList li[data-step]').forEach(li => {
+    li.addEventListener('click', () => li.classList.toggle('done'));
+  });
+  document.getElementById('obStart')?.addEventListener('click', () => setView('editor'));
+  document.getElementById('obSkip')?.addEventListener('click', () => setView('dashboard'));
+
+  // todo in editor
+  document.querySelectorAll('.doc .todo li').forEach(li => {
+    li.addEventListener('click', () => li.classList.toggle('done'));
+  });
+
+  // ============ TWEAKS ============
+  const T = Object.assign({}, window.__tweakDefaults, JSON.parse(localStorage.getItem('mc_tweaks')||'{}'));
+  function applyTweaks(){
+    document.body.dataset.theme = T.theme;
+    document.body.dataset.density = T.density;
+    document.body.dataset.sidebar = T.sidebar;
+    document.body.dataset.presence = T.presence ? 'on' : 'off';
+    document.querySelectorAll('#swatches .sw').forEach(s => s.classList.toggle('active', s.dataset.theme===T.theme));
+    document.getElementById('density').value = T.density;
+    document.getElementById('sidebar').value = T.sidebar;
+    document.getElementById('presence').checked = !!T.presence;
+    localStorage.setItem('mc_tweaks', JSON.stringify(T));
+  }
+  applyTweaks();
+
+  document.getElementById('swatches').addEventListener('click', e => {
+    const s = e.target.closest('.sw'); if(!s) return;
+    T.theme = s.dataset.theme; applyTweaks(); postEdit();
+  });
+  document.getElementById('density').addEventListener('change', e => { T.density = e.target.value; applyTweaks(); postEdit();});
+  document.getElementById('sidebar').addEventListener('change', e => { T.sidebar = e.target.value; applyTweaks(); postEdit();});
+  document.getElementById('presence').addEventListener('change', e => { T.presence = e.target.checked; applyTweaks(); postEdit();});
+
+  // Edit-mode protocol
+  const togBtn = document.getElementById('tweakTog');
+  const panel = document.getElementById('tweaks');
+  window.addEventListener('message', e => {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === '__activate_edit_mode'){ togBtn.classList.add('show'); }
+    if (e.data.type === '__deactivate_edit_mode'){ togBtn.classList.remove('show'); panel.classList.remove('open'); }
+  });
+  togBtn.addEventListener('click', () => panel.classList.toggle('open'));
+  function postEdit(){ try { window.parent.postMessage({type:'__edit_mode_set_keys', edits: T},'*'); } catch{} }
+  try { window.parent.postMessage({type:'__edit_mode_available'},'*'); } catch{}
+</script>
+
+</body>
+</html>

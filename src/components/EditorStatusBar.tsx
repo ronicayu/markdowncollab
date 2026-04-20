@@ -132,7 +132,7 @@ export default function EditorStatusBar({
   const [goalInputValue, setGoalInputValue] = useState("");
 
   return (
-    <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-gray-400 bg-[#FFFEF9]/80 backdrop-blur-sm border-t border-gray-100">
+    <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-[#a39e98] bg-[#ffffff]/80 backdrop-blur-sm border-t border-[rgba(0,0,0,0.1)]">
       <span>
         {saveStatus === "saving" ? (
           "Saving..."
@@ -241,7 +241,7 @@ export default function EditorStatusBar({
             </svg>
           </button>
           {rewriteMenuOpen && (
-            <div className="absolute bottom-7 left-0 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50 w-36">
+            <div className="absolute bottom-7 left-0 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg py-1 z-50 w-36">
               {[
                 { style: "shorter", label: "Make shorter" },
                 { style: "longer", label: "Make longer" },
@@ -275,7 +275,7 @@ export default function EditorStatusBar({
                       setRewriteLoading(false);
                     }
                   }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                  className="w-full text-left px-3 py-1.5 text-xs text-[#31302e] hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
                 >
                   {label}
                 </button>
@@ -296,7 +296,7 @@ export default function EditorStatusBar({
         className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
           spellcheckEnabled
             ? "text-blue-600 bg-blue-50 hover:bg-blue-100"
-            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            : "text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4]"
         }`}
         title={spellcheckEnabled ? "Disable spellcheck" : "Enable spellcheck"}
       >
@@ -310,8 +310,8 @@ export default function EditorStatusBar({
         onClick={() => onHeatmapChange(!heatmapEnabled)}
         className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
           heatmapEnabled
-            ? "text-orange-600 bg-orange-50 hover:bg-orange-100"
-            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            ? "text-[#dd5b00] bg-[#fbece0] hover:bg-[#fbece0]"
+            : "text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4]"
         }`}
         title={heatmapEnabled ? "Hide edit heatmap" : "Show edit heatmap"}
       >
@@ -329,8 +329,8 @@ export default function EditorStatusBar({
         }}
         className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
           typewriterMode
-            ? "text-amber-600 bg-amber-50 hover:bg-amber-100"
-            : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+            ? "text-[#dd5b00] bg-[#fbece0] hover:bg-[#fbece0]"
+            : "text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4]"
         }`}
         title={typewriterMode ? "Disable typewriter mode" : "Enable typewriter mode"}
       >
@@ -342,7 +342,7 @@ export default function EditorStatusBar({
       {/* Issue Tracker Settings */}
       <button
         onClick={onIssueSettingsOpen}
-        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4] transition-colors"
         title="Issue tracker link settings"
       >
         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -359,7 +359,7 @@ export default function EditorStatusBar({
               healthScore.color === "green"
                 ? "bg-green-100 text-green-700 hover:bg-green-200"
                 : healthScore.color === "amber"
-                ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                ? "bg-[#fbece0] text-[#dd5b00] hover:bg-[#fbece0]"
                 : "bg-red-100 text-red-700 hover:bg-red-200"
             }`}
             title="Document Health Score — click for details"
@@ -370,12 +370,12 @@ export default function EditorStatusBar({
             </svg>
           </button>
           {showHealthDetails && (
-            <div className="absolute bottom-7 left-1/2 -translate-x-1/2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50 text-xs text-gray-700">
+            <div className="absolute bottom-7 left-1/2 -translate-x-1/2 w-72 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg p-3 z-50 text-xs text-[#31302e]">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-gray-900">Health Score: {healthScore.score}/100</span>
+                <span className="font-semibold text-[#31302e]">Health Score: {healthScore.score}/100</span>
                 <button
                   onClick={(e) => { e.stopPropagation(); setShowHealthDetails(false); }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-[#a39e98] hover:text-[#615d59]"
                 >
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -415,7 +415,7 @@ export default function EditorStatusBar({
         </div>
       )}
       <span
-        className="cursor-pointer hover:text-gray-600 transition-colors relative"
+        className="cursor-pointer hover:text-[#615d59] transition-colors relative"
         onClick={() => {
           setGoalInputValue(wordGoal ? String(wordGoal) : "");
           setShowGoalInput(true);
@@ -425,14 +425,14 @@ export default function EditorStatusBar({
         {wordGoal ? (
           <span className="flex items-center gap-2">
             <span>{wordCount.words} / {wordGoal} words</span>
-            <span className="inline-flex items-center w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <span className="inline-flex items-center w-20 h-1.5 bg-[#dddddd] rounded-full overflow-hidden">
               <span
                 className={`h-full rounded-full transition-all ${
                   wordCount.words >= wordGoal
                     ? "bg-green-500"
                     : wordCount.words >= wordGoal * 0.5
-                    ? "bg-amber-400"
-                    : "bg-gray-400"
+                    ? "bg-[#dd5b00]"
+                    : "bg-[#a39e98]"
                 }`}
                 style={{ width: `${Math.min(100, (wordCount.words / wordGoal) * 100)}%` }}
               />
@@ -441,8 +441,8 @@ export default function EditorStatusBar({
               wordCount.words >= wordGoal
                 ? "text-green-600"
                 : wordCount.words >= wordGoal * 0.5
-                ? "text-amber-500"
-                : "text-gray-400"
+                ? "text-[#dd5b00]"
+                : "text-[#a39e98]"
             }`}>
               {Math.min(100, Math.round((wordCount.words / wordGoal) * 100))}%
             </span>
@@ -452,8 +452,8 @@ export default function EditorStatusBar({
         )}
       </span>
       {showGoalInput && (
-        <div className="absolute bottom-8 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50">
-          <p className="text-xs font-medium text-gray-700 mb-2">Set word count goal</p>
+        <div className="absolute bottom-8 right-4 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg p-3 z-50">
+          <p className="text-xs font-medium text-[#31302e] mb-2">Set word count goal</p>
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -476,7 +476,7 @@ export default function EditorStatusBar({
                   setShowGoalInput(false);
                 }
               }}
-              className="w-24 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-amber-400"
+              className="w-24 px-2 py-1 text-xs border border-[#dddddd] rounded focus:outline-none focus:ring-1 focus:ring-[rgba(221,91,0,0.5)]"
               autoFocus
             />
             <button
@@ -491,7 +491,7 @@ export default function EditorStatusBar({
                 }
                 setShowGoalInput(false);
               }}
-              className="px-2 py-1 text-xs bg-amber-500 text-white rounded hover:bg-amber-600"
+              className="px-2 py-1 text-xs bg-[#fbece0]0 text-white rounded hover:bg-[#dd5b00]"
             >
               Set
             </button>
@@ -502,7 +502,7 @@ export default function EditorStatusBar({
                   localStorage.removeItem(`wordGoal:${documentId}`);
                   setShowGoalInput(false);
                 }}
-                className="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded hover:bg-gray-300"
+                className="px-2 py-1 text-xs bg-[#dddddd] text-[#615d59] rounded hover:bg-[#dddddd]"
               >
                 Remove
               </button>

@@ -52,7 +52,7 @@ function InlineDateView(props: any) {
           }
         },
         className:
-          "border border-gray-300 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]",
+          "border border-gray-300 rounded px-1.5 py-0.5 text-sm focus:outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]",
         style: { fontSize: "inherit" },
       })
     );

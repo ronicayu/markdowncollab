@@ -910,7 +910,7 @@ export default function SearchBar({
             onChange={(e) => onQueryChange(e.target.value)}
             onKeyDown={handleSearchKeyDown}
             placeholder="Find..."
-            className="w-full h-8 pl-3 pr-16 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#B8692A] focus:border-[#B8692A]"
+            className="w-full h-8 pl-3 pr-16 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#0075de] focus:border-[#0075de]"
           />
           {matchDisplay && (
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">
@@ -925,7 +925,7 @@ export default function SearchBar({
           title="Case sensitive"
           className={`h-7 w-7 shrink-0 rounded flex items-center justify-center text-xs font-bold transition-colors ${
             caseSensitive
-              ? "bg-[#B8692A]/10 text-[#B8692A]"
+              ? "bg-[#0075de]/10 text-[#0075de]"
               : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           }`}
         >
@@ -975,7 +975,7 @@ export default function SearchBar({
             onChange={(e) => setReplaceValue(e.target.value)}
             onKeyDown={handleReplaceKeyDown}
             placeholder="Replace..."
-            className="flex-1 max-w-sm h-8 pl-3 pr-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#B8692A] focus:border-[#B8692A]"
+            className="flex-1 max-w-sm h-8 pl-3 pr-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#0075de] focus:border-[#0075de]"
           />
           <button
             onClick={() => onReplace(replaceValue)}

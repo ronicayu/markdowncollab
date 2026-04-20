@@ -530,11 +530,11 @@ export default function TemplatePicker({ open, onClose, onSelect }: TemplatePick
               <button
                 key={t.id}
                 onClick={() => onSelect(t.id)}
-                className="flex items-start gap-3 text-left bg-[#FFFEF9] rounded-lg px-4 py-3 border border-transparent hover:border-[#B8692A] hover:shadow-sm transition-all group"
+                className="flex items-start gap-3 text-left bg-[#ffffff] rounded-lg px-4 py-3 border border-transparent hover:border-[#0075de] hover:shadow-sm transition-all group"
               >
                 <span className="text-xl shrink-0 mt-0.5">{t.icon}</span>
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900 text-sm group-hover:text-[#B8692A] transition-colors">
+                  <p className="font-medium text-gray-900 text-sm group-hover:text-[#0075de] transition-colors">
                     {t.name}
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>

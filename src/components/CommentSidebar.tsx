@@ -166,10 +166,10 @@ export default function CommentSidebar({
 
   if (collapsed) {
     return (
-      <div className="shrink-0 border-l border-[#E8D8C0] bg-[#F5EBD8] p-2 flex flex-col items-center">
+      <div className="shrink-0 border-l border-[#eeeceb] bg-[#ffffff] p-2 flex flex-col items-center">
         <button
           onClick={() => setCollapsed(false)}
-          className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+          className="p-1.5 rounded-md text-[#a39e98] hover:text-[#615d59] hover:bg-[#eeeceb] transition-colors"
           title="Show comments"
           aria-label="Show comments"
         >
@@ -182,14 +182,14 @@ export default function CommentSidebar({
   }
 
   return (
-    <div className="w-72 shrink-0 overflow-y-auto border-l border-[#E8D8C0] bg-[#F5EBD8] p-3">
+    <div className="w-72 shrink-0 overflow-y-auto border-l border-[#eeeceb] bg-[#ffffff] p-3">
       <div className="flex items-center justify-between mb-3 gap-2">
         <div className="flex items-center gap-1.5 shrink-0">
-          <h2 className="text-sm font-semibold text-gray-700">Comments</h2>
+          <h2 className="text-sm font-semibold text-[#31302e]">Comments</h2>
           {!hasContent && !showInput && (
             <button
               onClick={() => setCollapsed(true)}
-              className="p-0.5 rounded text-gray-400 hover:text-gray-600"
+              className="p-0.5 rounded text-[#a39e98] hover:text-[#615d59]"
               title="Hide comments"
               aria-label="Hide comments"
             >
@@ -209,7 +209,7 @@ export default function CommentSidebar({
               closeForm();
             }
           }}
-          className="text-xs border border-[#D4A978] rounded-md px-1.5 py-1 bg-[#FFFEF9] text-gray-600 focus:outline-none focus:border-[#B8692A] cursor-pointer"
+          className="text-xs border border-[#dddddd] rounded-md px-1.5 py-1 bg-[#ffffff] text-[#615d59] focus:outline-none focus:border-[#0075de] cursor-pointer"
         >
           <option value="open">Open</option>
           <option value="resolved">Resolved</option>
@@ -218,7 +218,7 @@ export default function CommentSidebar({
         {(hasSelection || hasCursorInBlock) && filter !== "resolved" && (
           <button
             onClick={() => setShowInput(true)}
-            className="text-xs font-medium text-[#B8692A] hover:text-[#96541F] shrink-0"
+            className="text-xs font-medium text-[#0075de] hover:text-[#005bab] shrink-0"
           >
             {hasSelection ? "+ Comment" : "+ Block Comment"}
           </button>
@@ -227,8 +227,8 @@ export default function CommentSidebar({
 
       {/* New comment input */}
       {showInput && (
-        <div className="mb-3 rounded-lg border border-[#D4A978] bg-[#FFFEF9] p-3">
-          <p className="text-xs text-gray-500 mb-2">{hasSelection ? "Comment on selected text:" : "Comment on this block:"}</p>
+        <div className="mb-3 rounded-lg border border-[#dddddd] bg-[#ffffff] p-3">
+          <p className="text-xs text-[#615d59] mb-2">{hasSelection ? "Comment on selected text:" : "Comment on this block:"}</p>
           <div className="relative">
             <MentionAutocomplete
               users={mentionUsers}
@@ -266,21 +266,21 @@ export default function CommentSidebar({
                 }
               }}
               placeholder="Type your comment... Use @ to mention"
-              className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-[#B8692A]"
+              className="w-full text-sm border border-[rgba(0,0,0,0.1)] rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-[#0075de]"
               rows={2}
             />
           </div>
           <div className="flex justify-end gap-2 mt-2">
             <button
               onClick={closeForm}
-              className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+              className="text-xs text-[#615d59] hover:text-[#31302e] px-2 py-1"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!commentText.trim()}
-              className="text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] disabled:bg-gray-300 px-3 py-1 rounded-md"
+              className="text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] disabled:bg-[#dddddd] px-3 py-1 rounded-md"
             >
               Comment
             </button>
@@ -291,7 +291,7 @@ export default function CommentSidebar({
       {/* Suggestions */}
       {pendingSuggestions.length > 0 && (
         <div className="flex flex-col gap-2 mb-3">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <p className="text-xs font-medium text-[#615d59] uppercase tracking-wide">
             Suggestions ({pendingSuggestions.length})
           </p>
           {pendingSuggestions.map((s) => (
@@ -309,7 +309,7 @@ export default function CommentSidebar({
       {/* Comments */}
       {filteredComments.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <p className="text-xs font-medium text-[#615d59] uppercase tracking-wide">
             Comments ({filteredComments.length})
           </p>
           {filteredComments.map((c) => (
@@ -331,7 +331,7 @@ export default function CommentSidebar({
       {/* Revision Requests */}
       {revisionRequests && revisionRequests.length > 0 && (
         <div className="flex flex-col gap-2 mt-3">
-          <p className="text-xs font-medium text-orange-600 uppercase tracking-wide">
+          <p className="text-xs font-medium text-[#dd5b00] uppercase tracking-wide">
             Revision Requests ({revisionRequests.filter((r) =>
               filter === "open" ? r.status === "open" :
               filter === "resolved" ? r.status === "resolved" : true
@@ -360,13 +360,13 @@ export default function CommentSidebar({
           {!showRevisionInput ? (
             <button
               onClick={() => setShowRevisionInput(true)}
-              className="mt-3 w-full text-xs font-medium text-orange-600 hover:text-orange-700 border border-orange-200 rounded-md px-3 py-2 hover:bg-orange-50 transition-colors"
+              className="mt-3 w-full text-xs font-medium text-[#dd5b00] hover:text-[#dd5b00] border border-[rgba(221,91,0,0.3)] rounded-md px-3 py-2 hover:bg-[#fbece0] transition-colors"
             >
               Request Change
             </button>
           ) : (
-            <div className="mt-3 rounded-lg border border-orange-300 bg-[#FFFEF9] p-3">
-              <p className="text-xs text-gray-500 mb-2">Request a change on selected text:</p>
+            <div className="mt-3 rounded-lg border border-[rgba(221,91,0,0.4)] bg-[#ffffff] p-3">
+              <p className="text-xs text-[#615d59] mb-2">Request a change on selected text:</p>
               <textarea
                 autoFocus
                 aria-label="Revision request description"
@@ -380,7 +380,7 @@ export default function CommentSidebar({
                   }
                 }}
                 placeholder="Describe the requested change..."
-                className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-orange-400 mb-2"
+                className="w-full text-sm border border-[rgba(0,0,0,0.1)] rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-[#dd5b00] mb-2"
                 rows={2}
               />
               <input
@@ -388,7 +388,7 @@ export default function CommentSidebar({
                 value={revisionAssignee}
                 onChange={(e) => setRevisionAssignee(e.target.value)}
                 placeholder="Assignee name..."
-                className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:border-orange-400 mb-2"
+                className="w-full text-sm border border-[rgba(0,0,0,0.1)] rounded-md px-2.5 py-1.5 focus:outline-none focus:border-[#dd5b00] mb-2"
               />
               <div className="flex justify-end gap-2">
                 <button
@@ -397,7 +397,7 @@ export default function CommentSidebar({
                     setRevisionText("");
                     setRevisionAssignee("");
                   }}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+                  className="text-xs text-[#615d59] hover:text-[#31302e] px-2 py-1"
                 >
                   Cancel
                 </button>
@@ -411,7 +411,7 @@ export default function CommentSidebar({
                     }
                   }}
                   disabled={!revisionText.trim() || !revisionAssignee.trim()}
-                  className="text-xs font-medium text-white bg-orange-600 hover:bg-orange-700 disabled:bg-gray-300 px-3 py-1 rounded-md"
+                  className="text-xs font-medium text-white bg-[#dd5b00] hover:bg-[#b14800] disabled:bg-[#dddddd] px-3 py-1 rounded-md"
                 >
                   Request
                 </button>
@@ -426,7 +426,7 @@ export default function CommentSidebar({
           filter === "open" ? r.status === "open" :
           filter === "resolved" ? r.status === "resolved" : true
         ).length === 0) && (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-[#a39e98]">
           {filter === "resolved"
             ? "No resolved items yet."
             : hasSelection

@@ -51,29 +51,45 @@ function SignInContent() {
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[#F2E8D5]">
+    <div className="flex h-screen items-center justify-center bg-white">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mb-3 text-2xl font-bold text-gray-900">MarkdownCollab</div>
-          <p className="text-sm text-gray-500">Sign in to collaborate on documents</p>
+          <div className="mb-3 text-2xl font-bold" style={{ color: "var(--ink)", letterSpacing: "-0.25px" }}>MarkdownCollab</div>
+          <p className="text-[15px]" style={{ color: "var(--ink-soft)" }}>Sign in to collaborate on documents</p>
         </div>
 
-        <div className="rounded-2xl bg-white p-8 shadow-sm border border-amber-100">
+        <div
+          className="rounded-xl bg-white p-8"
+          style={{
+            border: "1px solid var(--rule)",
+            boxShadow:
+              "rgba(0,0,0,0.04) 0 4px 18px, rgba(0,0,0,0.027) 0 2.025px 7.84688px, rgba(0,0,0,0.02) 0 0.8px 2.925px, rgba(0,0,0,0.01) 0 0.175px 1.04062px",
+          }}
+        >
           {/* Tab switcher */}
-          <div className="mb-6 flex rounded-lg bg-gray-100 p-1">
+          <div
+            className="mb-6 flex rounded p-1"
+            style={{ background: "rgba(0,0,0,0.05)" }}
+          >
             <button
               onClick={() => { setTab("signin"); setError(""); }}
-              className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
-                tab === "signin" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
+              className="flex-1 rounded py-1.5 text-[15px] font-semibold transition-colors"
+              style={
+                tab === "signin"
+                  ? { background: "#ffffff", color: "var(--ink)", boxShadow: "rgba(0,0,0,0.04) 0 1px 3px" }
+                  : { background: "transparent", color: "var(--ink-soft)" }
+              }
             >
               Sign in
             </button>
             <button
               onClick={() => { setTab("register"); setError(""); }}
-              className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
-                tab === "register" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
+              className="flex-1 rounded py-1.5 text-[15px] font-semibold transition-colors"
+              style={
+                tab === "register"
+                  ? { background: "#ffffff", color: "var(--ink)", boxShadow: "rgba(0,0,0,0.04) 0 1px 3px" }
+                  : { background: "transparent", color: "var(--ink-soft)" }
+              }
             >
               Register
             </button>
@@ -88,7 +104,16 @@ function SignInContent() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+                className="w-full rounded bg-white px-3 py-2.5 text-[15px] outline-none"
+                style={{ border: "1px solid var(--input-border)", color: "var(--ink-2)" }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "var(--accent-focus)";
+                  e.currentTarget.style.boxShadow = "0 0 0 1px var(--accent-focus)";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "var(--input-border)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
               />
             )}
             <input
@@ -97,7 +122,16 @@ function SignInContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              className="w-full rounded bg-white px-3 py-2.5 text-[15px] outline-none"
+              style={{ border: "1px solid var(--input-border)", color: "var(--ink-2)" }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--accent-focus)";
+                e.currentTarget.style.boxShadow = "0 0 0 1px var(--accent-focus)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--input-border)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
             <input
               type="password"
@@ -106,13 +140,25 @@ function SignInContent() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              className="w-full rounded bg-white px-3 py-2.5 text-[15px] outline-none"
+              style={{ border: "1px solid var(--input-border)", color: "var(--ink-2)" }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "var(--accent-focus)";
+                e.currentTarget.style.boxShadow = "0 0 0 1px var(--accent-focus)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "var(--input-border)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
-            {error && <p className="text-xs text-red-500">{error}</p>}
+            {error && <p className="text-xs" style={{ color: "#dd5b00" }}>{error}</p>}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-[#B8692A] py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#96541F] disabled:opacity-50"
+              className="w-full rounded py-2.5 text-[15px] font-semibold text-white transition-colors disabled:opacity-50"
+              style={{ background: "var(--accent)" }}
+              onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = "var(--accent-hover)"; }}
+              onMouseLeave={(e) => { if (!loading) e.currentTarget.style.background = "var(--accent)"; }}
             >
               {loading ? "…" : tab === "register" ? "Create account" : "Sign in"}
             </button>
@@ -120,15 +166,18 @@ function SignInContent() {
 
           {/* Divider */}
           <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-gray-100" />
-            <span className="text-xs text-gray-400">or</span>
-            <div className="h-px flex-1 bg-gray-100" />
+            <div className="h-px flex-1" style={{ background: "var(--rule)" }} />
+            <span className="text-xs" style={{ color: "var(--ink-muted)" }}>or</span>
+            <div className="h-px flex-1" style={{ background: "var(--rule)" }} />
           </div>
 
           {/* Google */}
           <button
             onClick={() => signIn("google", { callbackUrl })}
-            className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="flex w-full items-center justify-center gap-3 rounded bg-white px-4 py-2.5 text-[15px] font-semibold transition-colors"
+            style={{ border: "1px solid var(--input-border)", color: "var(--ink)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--surface-2)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#ffffff"; }}
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -140,9 +189,9 @@ function SignInContent() {
           </button>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-400">
+        <p className="mt-6 text-center text-xs" style={{ color: "var(--ink-muted)" }}>
           Or{" "}
-          <a href={callbackUrl} className="text-[#B8692A] hover:underline">
+          <a href={callbackUrl} className="hover:underline" style={{ color: "var(--accent)" }}>
             continue as guest
           </a>
         </p>

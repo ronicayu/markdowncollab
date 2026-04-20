@@ -115,7 +115,7 @@ export default function CursorChat({ provider, userName }: CursorChatProps) {
           {bubbles.map((b) => (
             <div
               key={`${b.clientId}-${b.timestamp}`}
-              className="flex items-start gap-2 bg-white rounded-xl shadow-lg border border-gray-200 px-3 py-2 animate-in slide-in-from-right"
+              className="flex items-start gap-2 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] px-3 py-2 animate-in slide-in-from-right"
             >
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5"
@@ -124,8 +124,8 @@ export default function CursorChat({ provider, userName }: CursorChatProps) {
                 {b.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-medium text-gray-500">{b.name}</p>
-                <p className="text-sm text-gray-900">{b.message}</p>
+                <p className="text-[10px] font-medium text-[#615d59]">{b.name}</p>
+                <p className="text-sm text-[#31302e]">{b.message}</p>
               </div>
             </div>
           ))}
@@ -138,7 +138,7 @@ export default function CursorChat({ provider, userName }: CursorChatProps) {
           setShowInput((v) => !v);
           if (!showInput) setTimeout(() => inputRef.current?.focus(), 50);
         }}
-        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4] transition-colors"
         title="Send a cursor chat message (press `` twice)"
       >
         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -149,7 +149,7 @@ export default function CursorChat({ provider, userName }: CursorChatProps) {
 
       {/* Chat input popover */}
       {showInput && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 flex items-center gap-2 w-64">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg p-2 z-50 flex items-center gap-2 w-64">
           <input
             ref={inputRef}
             type="text"
@@ -160,13 +160,13 @@ export default function CursorChat({ provider, userName }: CursorChatProps) {
               if (e.key === "Escape") { setShowInput(false); setMessage(""); }
             }}
             placeholder="Type a message..."
-            className="flex-1 text-sm bg-transparent outline-none placeholder:text-gray-400"
+            className="flex-1 text-sm bg-transparent outline-none placeholder:text-[#a39e98]"
             maxLength={100}
           />
           <button
             onClick={sendMessage}
             disabled={!message.trim()}
-            className="text-xs px-2 py-1 bg-amber-500 text-white rounded hover:bg-amber-600 disabled:opacity-40 transition-colors"
+            className="text-xs px-2 py-1 bg-[#fbece0]0 text-white rounded hover:bg-[#dd5b00] disabled:opacity-40 transition-colors"
           >
             Send
           </button>

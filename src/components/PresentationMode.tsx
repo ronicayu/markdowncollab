@@ -72,7 +72,7 @@ export default function PresentationMode({ content, onExit }: PresentationModePr
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-[#111110] flex flex-col items-center justify-center cursor-pointer select-none"
+      className="fixed inset-0 z-[100] bg-[#31302e] flex flex-col items-center justify-center cursor-pointer select-none"
       onClick={handleClick}
     >
       {/* Exit button */}
@@ -99,8 +99,8 @@ export default function PresentationMode({ content, onExit }: PresentationModePr
         <div
           className="prose prose-invert prose-lg md:prose-xl max-w-none
             prose-headings:text-white prose-p:text-white/90 prose-li:text-white/90
-            prose-a:text-amber-400 prose-strong:text-white prose-code:text-amber-300
-            prose-blockquote:border-amber-500 prose-blockquote:text-white/70
+            prose-a:text-[#dd5b00] prose-strong:text-white prose-code:text-[#dd5b00]
+            prose-blockquote:border-[#dd5b00] prose-blockquote:text-white/70
             prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10"
           dangerouslySetInnerHTML={{ __html: slides[currentSlide] }}
         />

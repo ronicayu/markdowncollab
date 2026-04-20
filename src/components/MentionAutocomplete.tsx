@@ -69,7 +69,7 @@ export default function MentionAutocomplete({
   return (
     <div
       ref={listRef}
-      className="absolute bottom-full left-0 mb-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto"
+      className="absolute bottom-full left-0 mb-1 w-full bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg z-50 py-1 max-h-48 overflow-y-auto"
     >
       {filtered.map((user, index) => (
         <button
@@ -81,8 +81,8 @@ export default function MentionAutocomplete({
           }}
           className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 transition-colors ${
             index === selectedIndex
-              ? "bg-amber-50 text-amber-900"
-              : "text-gray-700 hover:bg-gray-50"
+              ? "bg-[#fbece0] text-[#31302e]"
+              : "text-[#31302e] hover:bg-[#f6f5f4]"
           }`}
         >
           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-xs font-semibold text-white shrink-0">
