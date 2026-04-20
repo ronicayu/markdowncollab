@@ -16,7 +16,6 @@ export const DEFAULT_KEYBINDINGS: KeybindingMap = {
   underline: "Mod+U",
   "inline-code": "Mod+E",
   strikethrough: "Mod+Shift+X",
-  highlight: "Mod+Shift+H",
   link: "Mod+K",
   "heading-1": "Mod+Alt+1",
   "heading-2": "Mod+Alt+2",

@@ -23,9 +23,6 @@ interface BulkActionsBarProps {
   merging: boolean;
   showBulkTagPopover: boolean;
   bulkMoveOpen: boolean;
-  bulkShareOpen: boolean;
-  bulkShareEmail: string;
-  bulkShareRole: "viewer" | "editor";
   allTags: Tag[];
   docTags: Record<string, Tag[]>;
   folders: Folder[];
@@ -36,13 +33,9 @@ interface BulkActionsBarProps {
   onBulkAddTag: (tagId: string) => void;
   onBulkRemoveTag: (tagId: string) => void;
   onBulkMoveToFolder: (folderId: string | null) => void;
-  onBulkShare: () => void;
   onMergeDocuments: () => void;
   onSetShowBulkTagPopover: (v: boolean) => void;
   onSetBulkMoveOpen: (v: boolean) => void;
-  onSetBulkShareOpen: (v: boolean) => void;
-  onSetBulkShareEmail: (v: string) => void;
-  onSetBulkShareRole: (v: "viewer" | "editor") => void;
   onSetNewTagName: (v: string) => void;
   onSetNewTagColor: (v: string) => void;
   onSetAllTags: React.Dispatch<React.SetStateAction<Tag[]>>;
@@ -57,9 +50,6 @@ export default function BulkActionsBar({
   merging,
   showBulkTagPopover,
   bulkMoveOpen,
-  bulkShareOpen,
-  bulkShareEmail,
-  bulkShareRole,
   allTags,
   docTags,
   folders,
@@ -70,20 +60,16 @@ export default function BulkActionsBar({
   onBulkAddTag,
   onBulkRemoveTag,
   onBulkMoveToFolder,
-  onBulkShare,
   onMergeDocuments,
   onSetShowBulkTagPopover,
   onSetBulkMoveOpen,
-  onSetBulkShareOpen,
-  onSetBulkShareEmail,
-  onSetBulkShareRole,
   onSetNewTagName,
   onSetNewTagColor,
   onSetAllTags,
   onCancel,
 }: BulkActionsBarProps) {
   return (
-    <div className="relative flex items-center gap-3 bg-[#111110] text-white rounded-xl px-4 py-3 mb-2">
+    <div className="relative flex items-center gap-3 bg-[#31302e] text-white rounded-xl px-4 py-3 mb-2">
       <span className="text-sm">{selectedCount} selected</span>
       <button
         onClick={onBulkDelete}
@@ -101,18 +87,18 @@ export default function BulkActionsBar({
       </button>
       {showBulkTagPopover && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+          className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-[rgba(0,0,0,0.1)] p-3 w-56"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-700">Tag {selectedCount} documents</p>
-            <button onClick={() => onSetShowBulkTagPopover(false)} className="text-gray-400 hover:text-gray-600 text-xs">
+            <p className="text-xs font-semibold text-[#31302e]">Tag {selectedCount} documents</p>
+            <button onClick={() => onSetShowBulkTagPopover(false)} className="text-[#a39e98] hover:text-[#615d59] text-xs">
               x
             </button>
           </div>
           <div className="space-y-1 max-h-40 overflow-y-auto mb-2">
             {allTags.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-2">No tags yet</p>
+              <p className="text-xs text-[#a39e98] text-center py-2">No tags yet</p>
             ) : (
               allTags.map((tag) => {
                 const allHave = [...selected].every((docId) =>
@@ -126,13 +112,13 @@ export default function BulkActionsBar({
                     key={tag.id}
                     onClick={() => allHave ? onBulkRemoveTag(tag.id) : onBulkAddTag(tag.id)}
                     className={`w-full text-left flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors ${
-                      allHave ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                      allHave ? "bg-[#f6f5f4] font-medium" : "hover:bg-[#f6f5f4]"
                     }`}
                   >
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
-                    <span className="truncate text-gray-700">{tag.name}</span>
-                    {allHave && <span className="ml-auto text-xs text-gray-400">&#10003;</span>}
-                    {!allHave && someHave && <span className="ml-auto text-xs text-gray-400">&#8212;</span>}
+                    <span className="truncate text-[#31302e]">{tag.name}</span>
+                    {allHave && <span className="ml-auto text-xs text-[#a39e98]">&#10003;</span>}
+                    {!allHave && someHave && <span className="ml-auto text-xs text-[#a39e98]">&#8212;</span>}
                   </button>
                 );
               })
@@ -167,12 +153,12 @@ export default function BulkActionsBar({
                 value={newTagName}
                 onChange={(e) => onSetNewTagName(e.target.value)}
                 placeholder="New tag..."
-                className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A]"
+                className="flex-1 min-w-0 rounded border border-[rgba(0,0,0,0.1)] px-2 py-1 text-xs text-[#31302e] outline-none focus:border-[#0075de]"
               />
               <button
                 type="submit"
                 disabled={!newTagName.trim()}
-                className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+                className="px-2 py-1 rounded bg-[#0075de] text-white text-xs font-medium disabled:opacity-40"
               >
                 Add
               </button>
@@ -184,7 +170,7 @@ export default function BulkActionsBar({
                     key={c.value}
                     type="button"
                     onClick={() => onSetNewTagColor(c.value)}
-                    className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-gray-800 scale-110" : "border-transparent hover:border-gray-300"}`}
+                    className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-[#31302e] scale-110" : "border-transparent hover:border-[#dddddd]"}`}
                     style={{ backgroundColor: c.value }}
                     title={c.label}
                   />
@@ -196,7 +182,7 @@ export default function BulkActionsBar({
       )}
       <a
         href={`/api/documents/export?ids=${[...selected].join(",")}`}
-        className="text-sm font-medium text-amber-400 hover:text-amber-300"
+        className="text-sm font-medium text-[#dd5b00] hover:text-[#dd5b00]"
       >
         Export ZIP
       </a>
@@ -208,17 +194,17 @@ export default function BulkActionsBar({
       </button>
       {bulkMoveOpen && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+          className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-[rgba(0,0,0,0.1)] p-3 w-56"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-700">Move {selectedCount} docs to folder</p>
-            <button onClick={() => onSetBulkMoveOpen(false)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
+            <p className="text-xs font-semibold text-[#31302e]">Move {selectedCount} docs to folder</p>
+            <button onClick={() => onSetBulkMoveOpen(false)} className="text-[#a39e98] hover:text-[#615d59] text-xs">x</button>
           </div>
           <div className="space-y-1 max-h-40 overflow-y-auto">
             <button
               onClick={() => onBulkMoveToFolder(null)}
-              className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 hover:bg-gray-50"
+              className="w-full text-left px-2 py-1 rounded text-sm text-[#31302e] hover:bg-[#f6f5f4]"
             >
               No folder (root)
             </button>
@@ -226,51 +212,12 @@ export default function BulkActionsBar({
               <button
                 key={f.id}
                 onClick={() => onBulkMoveToFolder(f.id)}
-                className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 hover:bg-gray-50"
+                className="w-full text-left px-2 py-1 rounded text-sm text-[#31302e] hover:bg-[#f6f5f4]"
               >
                 {f.name}
               </button>
             ))}
           </div>
-        </div>
-      )}
-      <button
-        onClick={() => onSetBulkShareOpen(!bulkShareOpen)}
-        className="text-sm font-medium text-pink-400 hover:text-pink-300"
-      >
-        Share
-      </button>
-      {bulkShareOpen && (
-        <div
-          className="absolute left-0 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-64"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-700">Share {selectedCount} docs</p>
-            <button onClick={() => onSetBulkShareOpen(false)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
-          </div>
-          <input
-            type="email"
-            value={bulkShareEmail}
-            onChange={(e) => onSetBulkShareEmail(e.target.value)}
-            placeholder="Email address"
-            className="w-full rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A] mb-2"
-          />
-          <select
-            value={bulkShareRole}
-            onChange={(e) => onSetBulkShareRole(e.target.value as "viewer" | "editor")}
-            className="w-full rounded border border-gray-200 px-2 py-1 text-xs text-gray-700 outline-none focus:border-[#B8692A] mb-2"
-          >
-            <option value="viewer">Viewer</option>
-            <option value="editor">Editor</option>
-          </select>
-          <button
-            onClick={onBulkShare}
-            disabled={!bulkShareEmail.trim()}
-            className="w-full px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
-          >
-            Share
-          </button>
         </div>
       )}
       {selectedCount === 2 && (
@@ -280,12 +227,6 @@ export default function BulkActionsBar({
             className="text-sm font-medium text-blue-400 hover:text-blue-300"
           >
             Compare
-          </a>
-          <a
-            href={`/split?left=${[...selected][0]}&right=${[...selected][1]}`}
-            className="text-sm font-medium text-teal-400 hover:text-teal-300"
-          >
-            Split View
           </a>
           <button
             onClick={onMergeDocuments}

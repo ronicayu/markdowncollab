@@ -10,100 +10,6 @@ interface LinkedDoc {
   title: string;
 }
 
-interface SnippetItem {
-  id: string;
-  title: string;
-  content: string;
-}
-
-function SnippetDropdown({
-  position,
-  onSelect,
-  onClose,
-}: {
-  position: { top: number; left: number };
-  onSelect: (snippet: SnippetItem) => void;
-  onClose: () => void;
-}) {
-  const [snippets, setSnippets] = useState<SnippetItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedIndex, setSelectedIndex] = useState(0);
-
-  useEffect(() => {
-    fetch("/api/snippets")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: SnippetItem[]) => {
-        setSnippets(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setSelectedIndex((i) => Math.min(i + 1, snippets.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setSelectedIndex((i) => Math.max(i - 1, 0));
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        if (snippets[selectedIndex]) onSelect(snippets[selectedIndex]);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [snippets, selectedIndex, onSelect, onClose]);
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: position.top + 4,
-        left: position.left,
-        zIndex: 1001,
-      }}
-      className="w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden"
-      onMouseDown={(e) => e.preventDefault()}
-    >
-      <div className="px-3 py-2 border-b border-gray-100">
-        <p className="text-xs font-medium text-gray-500">Your Snippets</p>
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {loading ? (
-          <p className="text-xs text-gray-400 px-3 py-3 text-center">Loading...</p>
-        ) : snippets.length === 0 ? (
-          <p className="text-xs text-gray-400 px-3 py-3 text-center">No snippets saved yet</p>
-        ) : (
-          snippets.map((s, i) => (
-            <button
-              key={s.id}
-              data-selected={i === selectedIndex ? "true" : "false"}
-              onMouseEnter={() => setSelectedIndex(i)}
-              onClick={() => onSelect(s)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                i === selectedIndex ? "bg-amber-50" : "hover:bg-gray-50"
-              }`}
-            >
-              <span className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 shrink-0">
-                S
-              </span>
-              <div className="min-w-0">
-                <span className="truncate text-gray-900 block">{s.title}</span>
-                <span className="truncate text-xs text-gray-400 block">{s.content.slice(0, 50)}</span>
-              </div>
-            </button>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
 function DocSearchDropdown({
   position,
   onSelect,
@@ -171,24 +77,24 @@ function DocSearchDropdown({
         left: position.left,
         zIndex: 1001,
       }}
-      className="w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden"
+      className="w-72 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 overflow-hidden"
       onMouseDown={(e) => e.preventDefault()}
     >
-      <div className="px-3 py-2 border-b border-gray-100">
+      <div className="px-3 py-2 border-b border-[rgba(0,0,0,0.1)]">
         <input
           ref={inputRef}
           type="text"
           placeholder="Search documents..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full text-sm bg-transparent outline-none placeholder:text-gray-400"
+          className="w-full text-sm bg-transparent outline-none placeholder:text-[#a39e98]"
         />
       </div>
       <div className="max-h-48 overflow-y-auto">
         {loading ? (
-          <p className="text-xs text-gray-400 px-3 py-3 text-center">Loading...</p>
+          <p className="text-xs text-[#a39e98] px-3 py-3 text-center">Loading...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-xs text-gray-400 px-3 py-3 text-center">No documents found</p>
+          <p className="text-xs text-[#a39e98] px-3 py-3 text-center">No documents found</p>
         ) : (
           filtered.map((doc, i) => (
             <button
@@ -197,13 +103,13 @@ function DocSearchDropdown({
               onMouseEnter={() => setSelectedIndex(i)}
               onClick={() => onSelect(doc)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                i === selectedIndex ? "bg-amber-50" : "hover:bg-gray-50"
+                i === selectedIndex ? "bg-[#fbece0]" : "hover:bg-[#f6f5f4]"
               }`}
             >
-              <span className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center text-xs text-gray-500 shrink-0">
+              <span className="w-5 h-5 rounded bg-[#f6f5f4] flex items-center justify-center text-xs text-[#615d59] shrink-0">
                 #
               </span>
-              <span className="truncate text-gray-900">{doc.title}</span>
+              <span className="truncate text-[#31302e]">{doc.title}</span>
             </button>
           ))
         )}
@@ -665,17 +571,6 @@ const COMMANDS: Command[] = [
     },
   },
   {
-    id: "snippet",
-    label: "Snippet",
-    description: "Insert a saved snippet",
-    icon: "\u{1F4CB}",
-    keywords: ["snippet", "template", "reuse", "saved"],
-    hasSubmenu: true,
-    action: () => {
-      // Action is handled by the submenu; this is a no-op placeholder
-    },
-  },
-  {
     id: "poll",
     label: "Poll",
     description: "Create a live poll for voting",
@@ -726,7 +621,7 @@ const COMMANDS: Command[] = [
         .focus()
         .insertContent({
           type: "progressBlock",
-          attrs: { label, value, color: "#B8692A" },
+          attrs: { label, value, color: "#0075de" },
         })
         .run();
     },
@@ -765,189 +660,6 @@ const COMMANDS: Command[] = [
   },
 ];
 
-interface CustomCommandItem {
-  id: string;
-  name: string;
-  description: string;
-  content: string;
-}
-
-function CustomCommandManager({
-  position,
-  onClose,
-}: {
-  position: { top: number; left: number };
-  onClose: () => void;
-}) {
-  const [commands, setCommands] = useState<CustomCommandItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const fetchCommands = useCallback(() => {
-    fetch("/api/commands")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: CustomCommandItem[]) => {
-        setCommands(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchCommands();
-  }, [fetchCommands]);
-
-  async function handleSave() {
-    if (!name.trim() || !content.trim()) return;
-    setSaving(true);
-    try {
-      if (editingId) {
-        // Delete old, create new (simple approach)
-        await fetch("/api/commands", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: editingId }),
-        });
-      }
-      await fetch("/api/commands", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), content: content.trim() }),
-      });
-      setName("");
-      setDescription("");
-      setContent("");
-      setEditingId(null);
-      fetchCommands();
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    await fetch("/api/commands", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    fetchCommands();
-  }
-
-  function startEdit(cmd: CustomCommandItem) {
-    setEditingId(cmd.id);
-    setName(cmd.name);
-    setDescription(cmd.description);
-    setContent(cmd.content);
-  }
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [onClose]);
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: Math.min(position.top + 4, window.innerHeight - 420),
-        left: position.left,
-        zIndex: 1001,
-      }}
-      className="w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden"
-      onMouseDown={(e) => e.preventDefault()}
-    >
-      <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
-        <p className="text-xs font-medium text-gray-500">Manage Custom Commands</p>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {loading ? (
-          <p className="text-xs text-gray-400 px-3 py-3 text-center">Loading...</p>
-        ) : commands.length === 0 ? (
-          <p className="text-xs text-gray-400 px-3 py-3 text-center">No custom commands yet</p>
-        ) : (
-          commands.map((cmd) => (
-            <div
-              key={cmd.id}
-              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 group"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate">/{cmd.name}</p>
-                <p className="text-xs text-gray-400 truncate">{cmd.description || cmd.content.slice(0, 40)}</p>
-              </div>
-              <button
-                onClick={() => startEdit(cmd)}
-                className="text-gray-300 hover:text-blue-500 text-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(cmd.id)}
-                className="text-gray-300 hover:text-red-500 text-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                Del
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-      <div className="border-t border-gray-100 px-3 py-2 space-y-1.5">
-        <p className="text-[10px] font-medium text-gray-400 uppercase">
-          {editingId ? "Edit command" : "New command"}
-        </p>
-        <input
-          type="text"
-          placeholder="Name (e.g. signature)"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
-        />
-        <input
-          type="text"
-          placeholder="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
-        />
-        <textarea
-          placeholder="Content to insert..."
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={3}
-          className="w-full rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A] resize-none"
-        />
-        <div className="flex gap-1.5">
-          <button
-            onClick={handleSave}
-            disabled={saving || !name.trim() || !content.trim()}
-            className="px-3 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
-          >
-            {saving ? "Saving..." : editingId ? "Update" : "Create"}
-          </button>
-          {editingId && (
-            <button
-              onClick={() => { setEditingId(null); setName(""); setDescription(""); setContent(""); }}
-              className="px-3 py-1 rounded border border-gray-200 text-gray-500 text-xs font-medium"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 interface SlashCommandMenuProps {
   editor: Editor;
   query: string;
@@ -965,46 +677,10 @@ export default function SlashCommandMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const [usageCounts] = useState(() => getUsageCounts());
   const [showDocSearch, setShowDocSearch] = useState(false);
-  const [showSnippetMenu, setShowSnippetMenu] = useState(false);
-  const [showCommandManager, setShowCommandManager] = useState(false);
-  const [customCommands, setCustomCommands] = useState<CustomCommandItem[]>([]);
   // Saved position for inserting after slash cleanup
   const slashCleanupRef = useRef<{ from: number; to: number } | null>(null);
 
-  // Fetch custom commands on mount
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/commands", { signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: CustomCommandItem[]) => setCustomCommands(data))
-      .catch((err) => {
-        if (err.name !== "AbortError") console.error("Failed to fetch custom commands:", err);
-      });
-    return () => controller.abort();
-  }, []);
-
-  // Convert custom commands to Command format
-  const customCommandItems: Command[] = useMemo(
-    () =>
-      customCommands.map((cc) => ({
-        id: `custom-${cc.id}`,
-        label: cc.name,
-        description: cc.description || "Custom command",
-        icon: "\u2726",
-        keywords: [cc.name.toLowerCase(), "custom"],
-        action: (ed: Editor) => {
-          ed.chain().focus().insertContent(cc.content).run();
-        },
-      })),
-    [customCommands]
-  );
-
-  const allBuiltInAndCustom = useMemo(
-    () => [...COMMANDS, ...customCommandItems],
-    [customCommandItems]
-  );
-
-  const filtered = allBuiltInAndCustom.filter((cmd) => {
+  const filtered = COMMANDS.filter((cmd) => {
     if (!query) return true;
     const q = query.toLowerCase();
     return (
@@ -1069,15 +745,6 @@ export default function SlashCommandMenu({
     return () => window.removeEventListener("keydown", handleKeyDown, true);
   }, [allItems, selectedIndex, onClose]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSnippetSelect = useCallback(
-    (snippet: SnippetItem) => {
-      editor.chain().focus().insertContent(snippet.content).run();
-      setShowSnippetMenu(false);
-      onClose();
-    },
-    [editor, onClose]
-  );
-
   const handleDocSelect = useCallback(
     (doc: LinkedDoc) => {
       // Insert [[Title]] as a link pointing to /doc/{id}
@@ -1128,33 +795,8 @@ export default function SlashCommandMenu({
       return;
     }
 
-    // For snippet, open the snippet submenu instead of closing
-    if (cmd.id === "snippet") {
-      setShowSnippetMenu(true);
-      return;
-    }
-
     cmd.action(editor);
     onClose();
-  }
-
-  if (showCommandManager) {
-    return (
-      <CustomCommandManager
-        position={position}
-        onClose={() => { setShowCommandManager(false); onClose(); }}
-      />
-    );
-  }
-
-  if (showSnippetMenu) {
-    return (
-      <SnippetDropdown
-        position={position}
-        onSelect={handleSnippetSelect}
-        onClose={() => { setShowSnippetMenu(false); onClose(); }}
-      />
-    );
   }
 
   if (showDocSearch) {
@@ -1192,7 +834,7 @@ export default function SlashCommandMenu({
     return (
       <>
         {label.slice(0, idx)}
-        <span className="text-[#B8692A] font-semibold">{label.slice(idx, idx + q.length)}</span>
+        <span className="text-[#0075de] font-semibold">{label.slice(idx, idx + q.length)}</span>
         {label.slice(idx + q.length)}
       </>
     );
@@ -1222,31 +864,31 @@ export default function SlashCommandMenu({
       role="listbox"
       aria-label="Slash commands"
       aria-activedescendant={allItems[selectedIndex] ? `slash-cmd-${allItems[selectedIndex].id}` : undefined}
-      className="w-72 bg-white rounded-xl shadow-lg border border-gray-100 py-1 overflow-hidden flex flex-col max-h-80"
+      className="w-72 bg-white rounded-xl shadow-lg border border-[rgba(0,0,0,0.1)] py-1 overflow-hidden flex flex-col max-h-80"
       onMouseDown={(e) => e.preventDefault()} // prevent editor blur
     >
       {/* Search input */}
-      <div className="px-3 pt-2 pb-1.5 border-b border-gray-100 shrink-0">
+      <div className="px-3 pt-2 pb-1.5 border-b border-[rgba(0,0,0,0.1)] shrink-0">
         <input
           ref={searchInputRef}
           type="text"
           placeholder="Search commands..."
           value={query}
           readOnly
-          className="w-full text-sm bg-gray-50 rounded-md px-2.5 py-1.5 outline-none placeholder:text-gray-400 text-gray-700 border border-gray-200 focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]/20"
+          className="w-full text-sm bg-[#f6f5f4] rounded-md px-2.5 py-1.5 outline-none placeholder:text-[#a39e98] text-[#31302e] border border-[rgba(0,0,0,0.1)] focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]/20"
         />
       </div>
       <div className="overflow-y-auto flex-1">
       {allItems.length === 0 && (
         <div className="px-3 py-6 text-center">
-          <p className="text-xs text-gray-400">No commands found</p>
-          <p className="text-[10px] text-gray-300 mt-1">Try a different search term</p>
+          <p className="text-xs text-[#a39e98]">No commands found</p>
+          <p className="text-[10px] text-[#a39e98] mt-1">Try a different search term</p>
         </div>
       )}
       {displayItems.favorites.length > 0 && (
         <>
           <div className="px-3 pt-1.5 pb-0.5">
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Frequently used</p>
+            <p className="text-[10px] font-medium text-[#a39e98] uppercase tracking-wide">Frequently used</p>
           </div>
           {displayItems.favorites.map((cmd, i) => {
             const globalIdx = i;
@@ -1261,28 +903,28 @@ export default function SlashCommandMenu({
                 onClick={() => runCommand(cmd)}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
                   globalIdx === selectedIndex
-                    ? "bg-amber-50"
-                    : "hover:bg-gray-50"
+                    ? "bg-[#fbece0]"
+                    : "hover:bg-[#f6f5f4]"
                 }`}
               >
-                <span className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+                <span className="w-8 h-8 rounded-md bg-[#f6f5f4] flex items-center justify-center text-xs font-bold text-[#615d59] shrink-0">
                   {cmd.icon}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900">{highlightMatch(cmd.label, query)}</p>
+                    <p className="text-sm font-medium text-[#31302e]">{highlightMatch(cmd.label, query)}</p>
                     {SHORTCUT_HINTS[cmd.id] && (
-                      <span className="text-[9px] font-mono text-gray-300 bg-gray-50 px-1 py-0.5 rounded shrink-0 ml-1">{SHORTCUT_HINTS[cmd.id]}</span>
+                      <span className="text-[9px] font-mono text-[#a39e98] bg-[#f6f5f4] px-1 py-0.5 rounded shrink-0 ml-1">{SHORTCUT_HINTS[cmd.id]}</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
+                  <p className="text-xs text-[#a39e98] truncate">{cmd.description}</p>
                 </div>
               </button>
             );
           })}
-          <div className="mx-3 my-1 border-t border-gray-100" />
+          <div className="mx-3 my-1 border-t border-[rgba(0,0,0,0.1)]" />
           <div className="px-3 pt-0.5 pb-0.5">
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">All commands</p>
+            <p className="text-[10px] font-medium text-[#a39e98] uppercase tracking-wide">All commands</p>
           </div>
         </>
       )}
@@ -1300,40 +942,30 @@ export default function SlashCommandMenu({
             onClick={() => runCommand(cmd)}
             className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
               globalIdx === selectedIndex
-                ? "bg-amber-50"
-                : "hover:bg-gray-50"
+                ? "bg-[#fbece0]"
+                : "hover:bg-[#f6f5f4]"
             }`}
           >
-            <span className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${isCustom ? "bg-purple-100 text-purple-600" : "bg-gray-100 text-gray-600"}`}>
+            <span className={`w-8 h-8 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${isCustom ? "bg-purple-100 text-purple-600" : "bg-[#f6f5f4] text-[#615d59]"}`}>
               {cmd.icon}
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium text-gray-900">{highlightMatch(cmd.label, query)}</p>
+                  <p className="text-sm font-medium text-[#31302e]">{highlightMatch(cmd.label, query)}</p>
                   {isCustom && (
                     <span className="ml-auto text-[10px] px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">custom</span>
                   )}
                 </div>
                 {SHORTCUT_HINTS[cmd.id] && (
-                  <span className="text-[9px] font-mono text-gray-300 bg-gray-50 px-1 py-0.5 rounded shrink-0 ml-1">{SHORTCUT_HINTS[cmd.id]}</span>
+                  <span className="text-[9px] font-mono text-[#a39e98] bg-[#f6f5f4] px-1 py-0.5 rounded shrink-0 ml-1">{SHORTCUT_HINTS[cmd.id]}</span>
                 )}
               </div>
-              <p className="text-xs text-gray-400 truncate">{cmd.description}</p>
+              <p className="text-xs text-[#a39e98] truncate">{cmd.description}</p>
             </div>
           </button>
         );
       })}
-      </div>
-      {/* Manage custom commands link */}
-      <div className="border-t border-gray-100 shrink-0">
-        <button
-          onClick={() => setShowCommandManager(true)}
-          className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs text-gray-400 hover:text-[#B8692A] hover:bg-gray-50 transition-colors"
-        >
-          <span className="w-4 h-4 flex items-center justify-center text-[10px]">+</span>
-          Manage custom commands...
-        </button>
       </div>
     </div>
   );

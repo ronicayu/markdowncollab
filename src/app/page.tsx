@@ -137,19 +137,11 @@ export default function Home() {
   const [searchDateTo, setSearchDateTo] = useState("");
   const [showSearchFilters, setShowSearchFilters] = useState(false);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
-  const [dueReminders, setDueReminders] = useState<{ id: string; documentId: string; remindAt: string; message: string; docTitle: string }[]>([]);
-  const [docRatings, setDocRatings] = useState<Record<string, number>>({});
   const [showBulkTagPopover, setShowBulkTagPopover] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
-  const [docReactions, setDocReactions] = useState<Record<string, Array<{ emoji: string; count: number; userIds: string[] }>>>({});
-  const [reactionPickerDocId, setReactionPickerDocId] = useState<string | null>(null);
   const [bulkTagging, setBulkTagging] = useState(false);
   const [merging, setMerging] = useState(false);
   const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
-  const [bulkShareOpen, setBulkShareOpen] = useState(false);
-  const [bulkShareEmail, setBulkShareEmail] = useState("");
-  const [bulkShareRole, setBulkShareRole] = useState<"viewer" | "editor">("viewer");
-  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   // Hydrate localStorage-backed state on the client to avoid SSR mismatch
@@ -167,28 +159,6 @@ export default function Home() {
       .then((fetchedDocs: Doc[]) => {
         if (!fetchedDocs || !Array.isArray(fetchedDocs)) return;
         setDocs(fetchedDocs);
-        // Fetch ratings for all documents
-        fetchedDocs.forEach((doc) => {
-          fetch(`/api/documents/${doc.id}/ratings`)
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => {
-              if (data?.average) {
-                setDocRatings((prev) => ({ ...prev, [doc.id]: data.average }));
-              }
-            })
-            .catch(() => {});
-        });
-        // Fetch reactions for all documents
-        fetchedDocs.forEach((doc) => {
-          fetch(`/api/documents/${doc.id}/reactions`)
-            .then((r) => (r.ok ? r.json() : []))
-            .then((reactions: Array<{ emoji: string; count: number; userIds: string[] }>) => {
-              if (reactions.length > 0) {
-                setDocReactions((prev) => ({ ...prev, [doc.id]: reactions }));
-              }
-            })
-            .catch(() => {});
-        });
         // Fetch tags for all documents
         fetchedDocs.forEach((doc) => {
           fetch(`/api/documents/${doc.id}/tags`)
@@ -210,23 +180,6 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  // Check for due reminders on mount
-  useEffect(() => {
-    if (!session) return;
-    fetch("/api/reminders")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((reminders: { id: string; documentId: string; remindAt: string; message: string }[]) => {
-        const now = new Date();
-        const due = reminders.filter((r) => new Date(r.remindAt) <= now);
-        due.forEach((rem) => {
-          const docTitle = docs.find((d) => d.id === rem.documentId)?.title || "a document";
-          setDueReminders((prev) => [...prev, { ...rem, docTitle }]);
-        });
-      })
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
-
   // Fetch folders
   useEffect(() => {
     if (!session) return;
@@ -235,30 +188,6 @@ export default function Home() {
       .then((data: Folder[]) => { if (Array.isArray(data)) setFolders(data); })
       .catch(() => {});
   }, [session]);
-
-  // Fetch pinned document IDs
-  useEffect(() => {
-    if (!session) return;
-    fetch("/api/pins")
-      .then((r) => r.ok ? r.json() : [])
-      .then((pins: { documentId: string }[]) => {
-        setPinnedIds(new Set(pins.map((p) => p.documentId)));
-      })
-      .catch(() => {});
-  }, [session]);
-
-  async function togglePin(docId: string, e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    const res = await fetch(`/api/documents/${docId}/pin`, { method: "POST" });
-    if (!res.ok) return;
-    const { pinned } = await res.json();
-    setPinnedIds((prev) => {
-      const next = new Set(prev);
-      if (pinned) next.add(docId); else next.delete(docId);
-      return next;
-    });
-  }
 
   async function createFolder() {
     const name = newFolderName.trim();
@@ -488,12 +417,6 @@ export default function Home() {
     } else {
       result = [...result].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
     }
-    // Pinned documents float to top
-    result = [...result].sort((a, b) => {
-      const ap = pinnedIds.has(a.id) ? 1 : 0;
-      const bp = pinnedIds.has(b.id) ? 1 : 0;
-      return bp - ap;
-    });
     // Starred documents float to top (before the sort order within each group)
     if (activeTab !== "starred") {
       result = [...result].sort((a, b) => {
@@ -606,24 +529,6 @@ export default function Home() {
     setDocs((prev) => prev.map((d) => d.id === docId ? { ...d, title: trimmed } : d));
   }
 
-  async function toggleReaction(docId: string, emoji: string) {
-    try {
-      const res = await fetch(`/api/documents/${docId}/reactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emoji }),
-      });
-      if (res.ok) {
-        // Refetch reactions for this doc
-        const reactionsRes = await fetch(`/api/documents/${docId}/reactions`);
-        if (reactionsRes.ok) {
-          const reactions = await reactionsRes.json();
-          setDocReactions((prev) => ({ ...prev, [docId]: reactions }));
-        }
-      }
-    } catch {}
-  }
-
   function duplicateDoc(doc: Doc) {
     setDuplicateDialogDoc(doc);
   }
@@ -714,19 +619,6 @@ export default function Home() {
     setBulkMoveOpen(false);
   }
 
-  async function bulkShare() {
-    if (!bulkShareEmail.trim()) return;
-    const ids = [...selected];
-    await fetch("/api/documents/bulk/share", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ documentIds: ids, email: bulkShareEmail, role: bulkShareRole }),
-    });
-    setBulkShareEmail("");
-    setBulkShareRole("viewer");
-    setBulkShareOpen(false);
-  }
-
   async function mergeDocuments() {
     if (selected.size !== 2) return;
     const ids = [...selected];
@@ -773,11 +665,12 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-[#F2E8D5]">
-      {/* Dark sidebar — desktop only */}
-      <aside className="hidden md:flex w-56 flex-col bg-[#111110] text-white shrink-0">
-        <div className="px-5 py-5 border-b border-white/10">
-          <span className="text-base font-bold tracking-tight">MarkdownCollab</span>
+    <div className="flex h-screen bg-[#ffffff]">
+      {/* Light sidebar — paper palette */}
+      <aside className="hidden md:flex w-56 flex-col bg-white text-[#31302e] shrink-0 border-r border-[#eeeceb]">
+        <div className="px-5 py-5 border-b border-[#eeeceb] flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-[5px] bg-[#31302e] text-white text-[12px] font-semibold [font-family:var(--font-mono)]">m</span>
+          <span className="text-sm font-semibold tracking-tight">markdown-collab</span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           {(
@@ -794,8 +687,8 @@ export default function Home() {
               onClick={() => { setActiveTab(tab); if (tab === "all") setCurrentFolderId(null); }}
               className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors ${
                 activeTab === tab && !(tab === "all" && currentFolderId)
-                  ? "bg-white/10 text-white font-medium"
-                  : "text-white/50 hover:text-white hover:bg-white/5"
+                  ? "bg-[#f6f5f4] text-[#31302e] font-medium"
+                  : "text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4]"
               }`}
             >
               {tab === "starred" && (
@@ -810,10 +703,10 @@ export default function Home() {
               )}
               {label}
               {tab === "all" && docs.length > 0 && (
-                <span className="ml-1.5 text-xs text-white/30">{docs.length}</span>
+                <span className="ml-1.5 text-xs text-[#a39e98] [font-family:var(--font-mono)]">{docs.length}</span>
               )}
               {tab === "starred" && docs.filter((d) => d.starred).length > 0 && (
-                <span className="ml-1.5 text-xs text-white/30">{docs.filter((d) => d.starred).length}</span>
+                <span className="ml-1.5 text-xs text-[#a39e98] [font-family:var(--font-mono)]">{docs.filter((d) => d.starred).length}</span>
               )}
             </button>
           ))}
@@ -822,34 +715,27 @@ export default function Home() {
         <div className="px-3 pb-1">
           <Link
             href="/stats"
-            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4] transition-colors"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
             </svg>
             Statistics
           </Link>
-          <Link
-            href="/board"
-            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
-            </svg>
-            Board
-          </Link>
-          <Link
-            href="/graph"
-            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-            </svg>
-            Graph
-          </Link>
+          {process.env.NEXT_PUBLIC_ENABLE_GRAPH_VIEW === "true" && (
+            <Link
+              href="/graph"
+              className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4] transition-colors"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+              Graph
+            </Link>
+          )}
           <Link
             href="/search-replace"
-            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-md text-sm text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4] transition-colors"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
@@ -859,12 +745,12 @@ export default function Home() {
         </div>
         {/* Folders section */}
         {session && (
-          <div className="px-3 py-3 border-t border-white/10">
+          <div className="px-3 py-3 border-t border-[#eeeceb]">
             <div className="flex items-center justify-between mb-2 px-3">
-              <p className="text-xs text-white/30 uppercase tracking-wider">Folders</p>
+              <p className="text-xs text-[#a39e98] [font-family:var(--font-mono)] uppercase tracking-wider">Folders</p>
               <button
                 onClick={() => { setShowNewFolder(true); setNewFolderName(""); }}
-                className="text-white/30 hover:text-white transition-colors"
+                className="text-[#a39e98] [font-family:var(--font-mono)] hover:text-[#31302e] transition-colors"
                 title="New folder"
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -883,13 +769,13 @@ export default function Home() {
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
                   placeholder="Folder name..."
-                  className="flex-1 min-w-0 rounded border border-white/20 bg-white/5 px-2 py-1 text-xs text-white outline-none focus:border-white/40"
+                  className="flex-1 min-w-0 rounded border border-[#dddddd] bg-[#ffffff] px-2 py-1 text-xs text-[#31302e] outline-none focus:border-[#097fe8]"
                   onKeyDown={(e) => { if (e.key === "Escape") setShowNewFolder(false); }}
                 />
                 <button
                   type="submit"
                   disabled={!newFolderName.trim()}
-                  className="px-2 py-1 rounded bg-white/10 text-white text-xs font-medium disabled:opacity-40 hover:bg-white/20"
+                  className="px-2 py-1 rounded bg-[#f6f5f4] text-[#31302e] text-xs font-medium disabled:opacity-40 hover:bg-[#dddddd]"
                 >
                   Add
                 </button>
@@ -902,10 +788,10 @@ export default function Home() {
                     <div
                       className={`group/folder flex items-center gap-1 w-full text-left rounded-md text-sm transition-colors ${
                         dragOverFolderId === folder.id
-                          ? "bg-amber-500/20 text-white ring-1 ring-amber-400/50"
+                          ? "bg-[#fbece0] text-[#31302e] ring-1 ring-[rgba(221,91,0,0.5)]/50"
                           : currentFolderId === folder.id
-                          ? "bg-white/10 text-white font-medium"
-                          : "text-white/50 hover:text-white hover:bg-white/5"
+                          ? "bg-[#f6f5f4] text-[#31302e] font-medium"
+                          : "text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4]"
                       }`}
                       style={{ paddingLeft: `${0.75 + depth * 0.75}rem` }}
                       onDragOver={(e) => {
@@ -951,7 +837,7 @@ export default function Home() {
                             if (e.key === "Enter") renameFolder(folder.id);
                             if (e.key === "Escape") setRenamingFolderId(null);
                           }}
-                          className="flex-1 min-w-0 rounded bg-white/10 px-1 py-0.5 text-xs text-white outline-none"
+                          className="flex-1 min-w-0 rounded bg-[#ffffff] px-1 py-0.5 text-xs text-[#31302e] outline-none"
                         />
                       ) : (
                         <button
@@ -971,7 +857,7 @@ export default function Home() {
                       )}
                       <button
                         onClick={() => deleteFolder(folder.id)}
-                        className="p-1 shrink-0 opacity-0 group-hover/folder:opacity-100 text-white/30 hover:text-red-400 transition-all"
+                        className="p-1 shrink-0 opacity-0 group-hover/folder:opacity-100 text-[#a39e98] [font-family:var(--font-mono)] hover:text-red-400 transition-all"
                         title="Delete folder"
                       >
                         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -989,13 +875,13 @@ export default function Home() {
           </div>
         )}
         {allTags.length > 0 && (
-          <div className="px-3 py-3 border-t border-white/10">
-            <p className="text-xs text-white/30 uppercase tracking-wider mb-2 px-3">Tags</p>
+          <div className="px-3 py-3 border-t border-[#eeeceb]">
+            <p className="text-xs text-[#a39e98] [font-family:var(--font-mono)] uppercase tracking-wider mb-2 px-3">Tags</p>
             <div className="space-y-0.5">
               <button
                 onClick={() => setTagFilterId(null)}
                 className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors ${
-                  !tagFilterId ? "bg-white/10 text-white font-medium" : "text-white/50 hover:text-white hover:bg-white/5"
+                  !tagFilterId ? "bg-[#f6f5f4] text-[#31302e] font-medium" : "text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4]"
                 }`}
               >
                 All tags
@@ -1005,7 +891,7 @@ export default function Home() {
                   key={tag.id}
                   onClick={() => setTagFilterId(tagFilterId === tag.id ? null : tag.id)}
                   className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors flex items-center gap-2 ${
-                    tagFilterId === tag.id ? "bg-white/10 text-white font-medium" : "text-white/50 hover:text-white hover:bg-white/5"
+                    tagFilterId === tag.id ? "bg-[#f6f5f4] text-[#31302e] font-medium" : "text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4]"
                   }`}
                 >
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
@@ -1015,10 +901,10 @@ export default function Home() {
             </div>
           </div>
         )}
-        <div className="px-3 py-2 border-t border-white/10">
+        <div className="px-3 py-2 border-t border-[#eeeceb]">
           <a
             href="/api/documents/export?all=true"
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4] transition-colors"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1026,20 +912,20 @@ export default function Home() {
             Export all (ZIP)
           </a>
         </div>
-        <div className="px-4 py-4 border-t border-white/10">
+        <div className="px-4 py-4 border-t border-[#eeeceb]">
           {session ? (
             <div className="flex items-center gap-2">
               {session.user?.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={session.user.image} alt="" className="h-7 w-7 rounded-full shrink-0" />
               ) : (
-                <div className="h-7 w-7 rounded-full bg-[#B8692A] flex items-center justify-center text-xs font-bold shrink-0">
+                <div className="h-7 w-7 rounded-full bg-[#0075de] flex items-center justify-center text-xs font-bold shrink-0">
                   {session.user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "?"}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-white truncate">{session.user?.name}</p>
-                <button onClick={() => signOut()} className="text-xs text-white/40 hover:text-white/70 transition-colors">
+                <p className="text-xs font-medium text-[#31302e] truncate">{session.user?.name}</p>
+                <button onClick={() => signOut()} className="text-xs text-[#a39e98] hover:text-[#31302e] transition-colors">
                   Sign out
                 </button>
               </div>
@@ -1047,7 +933,7 @@ export default function Home() {
           ) : (
             <button
               onClick={() => signIn()}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md border border-[#dddddd] text-sm text-[#31302e] hover:text-[#31302e] hover:border-[#a39e98] transition-colors"
             >
               Sign in
             </button>
@@ -1058,9 +944,12 @@ export default function Home() {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header — small screens only */}
-        <div className="md:hidden bg-[#111110] text-white shrink-0">
+        <div className="md:hidden bg-white text-[#31302e] shrink-0 border-b border-[#eeeceb]">
           <div className="flex items-center justify-between px-4 py-3">
-            <span className="text-base font-bold tracking-tight">MarkdownCollab</span>
+            <span className="text-base font-semibold tracking-tight flex items-center gap-2">
+              <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-[5px] bg-[#31302e] text-white text-[12px] font-semibold [font-family:var(--font-mono)]">m</span>
+              markdown-collab
+            </span>
             {session ? (
               <div className="flex items-center gap-2">
                 <NotificationBell />
@@ -1068,18 +957,18 @@ export default function Home() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={session.user.image} alt="" className="h-7 w-7 rounded-full shrink-0" />
                 ) : (
-                  <div className="h-7 w-7 rounded-full bg-[#B8692A] flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="h-7 w-7 rounded-full bg-[#0075de] flex items-center justify-center text-xs font-bold shrink-0">
                     {session.user?.name?.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2) ?? "?"}
                   </div>
                 )}
-                <button onClick={() => signOut()} className="text-xs text-white/50 hover:text-white/70 transition-colors">
+                <button onClick={() => signOut()} className="text-xs text-[#615d59] hover:text-[#31302e] transition-colors">
                   Sign out
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => signIn()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#dddddd] text-sm text-[#31302e] hover:text-[#31302e] hover:border-[#a39e98] transition-colors"
               >
                 Sign in
               </button>
@@ -1101,8 +990,8 @@ export default function Home() {
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 text-center px-2 py-2 rounded-md text-sm transition-colors ${
                   activeTab === tab
-                    ? "bg-white/10 text-white font-medium"
-                    : "text-white/50 hover:text-white hover:bg-white/5"
+                    ? "bg-[#f6f5f4] text-[#31302e] font-medium"
+                    : "text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4]"
                 }`}
               >
                 {label}
@@ -1111,50 +1000,20 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Due reminders banner */}
-        {dueReminders.length > 0 && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2 flex flex-col gap-1">
-            {dueReminders.map((rem) => (
-              <div key={rem.id} className="flex items-center justify-between gap-2 text-sm">
-                <div className="flex items-center gap-2 text-amber-800">
-                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>
-                    Reminder: {rem.message || "Check this document"} &mdash;{" "}
-                    <Link href={`/doc/${rem.documentId}`} className="font-medium underline hover:text-amber-900">
-                      {rem.docTitle}
-                    </Link>
-                  </span>
-                </div>
-                <button
-                  onClick={() => {
-                    fetch(`/api/reminders?id=${rem.id}`, { method: "DELETE" });
-                    setDueReminders((prev) => prev.filter((r) => r.id !== rem.id));
-                  }}
-                  className="text-amber-600 hover:text-amber-800 text-xs font-medium shrink-0"
-                >
-                  Dismiss
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Top bar */}
-        <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#F2E8D5] border-b border-black/8 shrink-0">
+        <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#ffffff] border-b border-black/8 shrink-0">
           <div className="shrink-0">
             {activeTab === "all" && currentFolderId ? (
               <nav className="flex items-center gap-1 text-sm">
                 {getBreadcrumbs().map((crumb, i, arr) => (
                   <span key={crumb.id ?? "root"} className="flex items-center gap-1">
-                    {i > 0 && <span className="text-gray-400">/</span>}
+                    {i > 0 && <span className="text-[#a39e98]">/</span>}
                     {i === arr.length - 1 ? (
-                      <span className="font-semibold text-gray-900">{crumb.name}</span>
+                      <span className="font-semibold text-[#31302e]">{crumb.name}</span>
                     ) : (
                       <button
                         onClick={() => setCurrentFolderId(crumb.id)}
-                        className="text-gray-500 hover:text-gray-900 transition-colors"
+                        className="text-[#615d59] hover:text-[#31302e] transition-colors"
                       >
                         {crumb.name}
                       </button>
@@ -1163,7 +1022,7 @@ export default function Home() {
                 ))}
               </nav>
             ) : (
-              <h1 className="text-lg font-semibold text-gray-900">{headingLabel[activeTab]}</h1>
+              <h1 className="text-lg font-semibold text-[#31302e]">{headingLabel[activeTab]}</h1>
             )}
           </div>
           <SearchBar
@@ -1202,7 +1061,7 @@ export default function Home() {
           <button
             onClick={() => importInputRef.current?.click()}
             disabled={importing}
-            className="flex items-center gap-2 border border-[#B8692A]/30 text-[#B8692A] hover:bg-amber-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 border border-[#0075de]/30 text-[#0075de] hover:bg-[#f2f9ff] px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {importing ? (
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -1219,7 +1078,7 @@ export default function Home() {
           <button
             onClick={() => setShowTemplatePicker(true)}
             disabled={creating}
-            className="flex items-center gap-2 bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 bg-[#0075de] hover:bg-[#005bab] text-white px-4 py-2 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {creating ? (
               <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -1255,9 +1114,9 @@ export default function Home() {
         <main className="flex-1 overflow-y-auto px-6 py-6">
           {/* Full-text search results overlay */}
           {searchResults !== null ? (
-            <div className="space-y-2 max-w-3xl">
+            <div className="space-y-0.5 max-w-4xl">
               {searchLoading ? (
-                <div className="flex items-center gap-2 text-gray-400 text-sm py-8 justify-center">
+                <div className="flex items-center gap-2 text-[#a39e98] text-sm py-8 justify-center">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -1265,36 +1124,36 @@ export default function Home() {
                   Searching...
                 </div>
               ) : searchResults.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <div className="flex flex-col items-center justify-center py-16 text-[#a39e98]">
                   <span className="text-4xl mb-3">&#128269;</span>
                   <p className="text-sm">No results for &ldquo;{search}&rdquo;. Try a different search term.</p>
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-gray-400 mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{search}&rdquo;</p>
+                  <p className="text-xs text-[#a39e98] mb-2">{searchResults.length} result{searchResults.length !== 1 ? "s" : ""} for &ldquo;{search}&rdquo;</p>
                   {searchResults.map((result) => (
                     <Link
                       key={result.id}
                       href={`/doc/${result.id}`}
-                      className="block bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
+                      className="block bg-[#ffffff] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-[rgba(221,91,0,0.3)] transition-all"
                     >
-                      <p className="font-medium text-gray-900">{result.title || "Untitled"}</p>
+                      <p className="font-medium text-[#31302e]">{result.title || "Untitled"}</p>
                       {result.snippet && (
                         <p
-                          className="text-xs text-gray-500 mt-1 line-clamp-2"
+                          className="text-xs text-[#615d59] mt-1 line-clamp-2"
                           dangerouslySetInnerHTML={{ __html: result.snippet }}
                         />
                       )}
-                      <span className="text-xs text-gray-400 mt-1 block">{formatDate(result.updatedAt)}</span>
+                      <span className="text-xs text-[#a39e98] mt-1 block">{formatDate(result.updatedAt)}</span>
                     </Link>
                   ))}
                 </>
               )}
             </div>
           ) : activeTab === "trash" ? (
-            <div className="space-y-2 max-w-3xl">
+            <div className="space-y-0.5 max-w-4xl">
               {trashLoading ? (
-                <div className="flex items-center gap-2 text-gray-400 text-sm py-8 justify-center">
+                <div className="flex items-center gap-2 text-[#a39e98] text-sm py-8 justify-center">
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -1302,7 +1161,7 @@ export default function Home() {
                   Loading...
                 </div>
               ) : trashDocs.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <div className="flex flex-col items-center justify-center py-16 text-[#a39e98]">
                   <span className="text-4xl mb-3">&#128465;</span>
                   <p className="text-sm">Trash is empty.</p>
                 </div>
@@ -1312,17 +1171,17 @@ export default function Home() {
                     ? Math.floor((Date.now() - new Date(doc.deletedAt).getTime()) / 86400000)
                     : 0;
                   return (
-                    <div key={doc.id} className="flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 border border-transparent">
+                    <div key={doc.id} className="flex items-center justify-between bg-[#ffffff] rounded-xl px-5 py-4 border border-transparent">
                       <div className="min-w-0">
-                        <p className="font-medium text-gray-500 truncate">{doc.title || "Untitled"}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="font-medium text-[#615d59] truncate">{doc.title || "Untitled"}</p>
+                        <p className="text-xs text-[#a39e98]">
                           Deleted {deletedDaysAgo === 0 ? "today" : deletedDaysAgo === 1 ? "yesterday" : `${deletedDaysAgo}d ago`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 ml-4">
                         <button
                           onClick={() => restoreDoc(doc)}
-                          className="px-3 py-1.5 text-xs font-medium text-[#B8692A] border border-[#B8692A]/30 rounded-lg hover:bg-amber-50 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-[#0075de] border border-[#0075de]/30 rounded hover:bg-[#f2f9ff] transition-colors"
                         >
                           Restore
                         </button>
@@ -1341,17 +1200,17 @@ export default function Home() {
           ) : loading ? (
             <div className="space-y-3 p-4 max-w-3xl">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="animate-pulse flex items-center gap-3 p-3 rounded-lg bg-gray-100">
-                  <div className="w-4 h-4 bg-gray-200 rounded" />
+                <div key={i} className="animate-pulse flex items-center gap-3 p-3 rounded-lg bg-[#f6f5f4]">
+                  <div className="w-4 h-4 bg-[#dddddd] rounded" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 rounded w-1/4" />
+                    <div className="h-4 bg-[#dddddd] rounded w-3/4" />
+                    <div className="h-3 bg-[#dddddd] rounded w-1/4" />
                   </div>
                 </div>
               ))}
             </div>
           ) : filteredDocs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-16 text-[#a39e98]">
               {search.trim() ? (
                 <>
                   <span className="text-4xl mb-3">&#128269;</span>
@@ -1378,7 +1237,7 @@ export default function Home() {
                   <p className="text-sm mb-4">No documents yet.</p>
                   <button
                     onClick={() => setShowTemplatePicker(true)}
-                    className="bg-[#B8692A] hover:bg-[#96541F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    className="bg-[#0075de] hover:bg-[#005bab] text-white px-4 py-2 rounded text-sm font-medium transition-colors"
                   >
                     Create your first document
                   </button>
@@ -1387,7 +1246,7 @@ export default function Home() {
             </div>
           ) : (
             <div
-              className="space-y-2 max-w-3xl"
+              className="space-y-0.5 max-w-4xl"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "ArrowDown") {
@@ -1413,9 +1272,6 @@ export default function Home() {
                   merging={merging}
                   showBulkTagPopover={showBulkTagPopover}
                   bulkMoveOpen={bulkMoveOpen}
-                  bulkShareOpen={bulkShareOpen}
-                  bulkShareEmail={bulkShareEmail}
-                  bulkShareRole={bulkShareRole}
                   allTags={allTags}
                   docTags={docTags}
                   folders={folders}
@@ -1426,31 +1282,52 @@ export default function Home() {
                   onBulkAddTag={bulkAddTag}
                   onBulkRemoveTag={bulkRemoveTag}
                   onBulkMoveToFolder={bulkMoveToFolder}
-                  onBulkShare={bulkShare}
                   onMergeDocuments={mergeDocuments}
                   onSetShowBulkTagPopover={setShowBulkTagPopover}
                   onSetBulkMoveOpen={setBulkMoveOpen}
-                  onSetBulkShareOpen={setBulkShareOpen}
-                  onSetBulkShareEmail={setBulkShareEmail}
-                  onSetBulkShareRole={setBulkShareRole}
                   onSetNewTagName={setNewTagName}
                   onSetNewTagColor={setNewTagColor}
                   onSetAllTags={setAllTags}
-                  onCancel={() => { setSelected(new Set()); setShowBulkTagPopover(false); setBulkMoveOpen(false); setBulkShareOpen(false); }}
+                  onCancel={() => { setSelected(new Set()); setShowBulkTagPopover(false); setBulkMoveOpen(false); }}
                 />
               )}
-              {filteredDocs.map((doc, index) => (
-                <DocumentRow
-                  key={doc.id}
-                  doc={doc}
-                  index={index}
-                  focusedIndex={focusedIndex}
+              {(() => {
+                const now = new Date();
+                const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x.getTime(); };
+                const today = startOfDay(now);
+                const yesterday = today - 86400000;
+                const weekAgo = today - 7 * 86400000;
+                const buckets: Record<string, { docs: Doc[]; firstIndex: number }> = {
+                  Today: { docs: [], firstIndex: -1 },
+                  Yesterday: { docs: [], firstIndex: -1 },
+                  "Last week": { docs: [], firstIndex: -1 },
+                  Older: { docs: [], firstIndex: -1 },
+                };
+                filteredDocs.forEach((d, i) => {
+                  const t = startOfDay(new Date(d.updatedAt));
+                  const key = t >= today ? "Today" : t >= yesterday ? "Yesterday" : t >= weekAgo ? "Last week" : "Older";
+                  if (buckets[key].firstIndex < 0) buckets[key].firstIndex = i;
+                  buckets[key].docs.push(d);
+                });
+                return (Object.keys(buckets) as (keyof typeof buckets)[])
+                  .filter((k) => buckets[k].docs.length > 0)
+                  .map((label) => (
+                    <div key={label} className="mt-5 first:mt-1">
+                      <h6 className="text-[10.5px] font-medium tracking-[0.1em] uppercase text-[#a39e98] [font-family:var(--font-mono)] mb-2 ml-3">
+                        {label}
+                      </h6>
+                      {buckets[label].docs.map((doc, bucketIdx) => {
+                        const index = buckets[label].firstIndex + bucketIdx;
+                        return (
+                          <DocumentRow
+                            key={doc.id}
+                            doc={doc}
+                            index={index}
+                            focusedIndex={focusedIndex}
                   formatDate={formatDate}
                   selected={selected.has(doc.id)}
                   onToggleSelect={toggleSelect}
                   onToggleStar={toggleStar}
-                  onTogglePin={togglePin}
-                  pinnedIds={pinnedIds}
                   editingId={editingId}
                   editTitle={editTitle}
                   onSetEditingId={setEditingId}
@@ -1458,11 +1335,6 @@ export default function Home() {
                   onCommitRename={commitRename}
                   docTags={docTags[doc.id] || []}
                   onRemoveTagFromDoc={removeTagFromDoc}
-                  docReactions={docReactions[doc.id] || []}
-                  onToggleReaction={toggleReaction}
-                  reactionPickerDocId={reactionPickerDocId}
-                  onSetReactionPickerDocId={setReactionPickerDocId}
-                  docRating={docRatings[doc.id]}
                   deletingId={deletingId}
                   onConfirmDelete={setConfirmDelete}
                   onDuplicateDoc={duplicateDoc}
@@ -1482,8 +1354,12 @@ export default function Home() {
                   analyticsData={analyticsData}
                   onSetAnalyticsData={setAnalyticsData}
                   onSetAnalyticsLoading={setAnalyticsLoading}
-                />
-              ))}
+                        />
+                        );
+                      })}
+                    </div>
+                  ));
+              })()}
             </div>
           )}
         </main>
@@ -1515,14 +1391,14 @@ export default function Home() {
             className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Move to trash?</h3>
-            <p className="text-xs text-gray-500 mb-4">
+            <h3 className="text-sm font-semibold text-[#31302e] mb-1">Move to trash?</h3>
+            <p className="text-xs text-[#615d59] mb-4">
               &ldquo;{confirmDelete.title || "Untitled"}&rdquo; will be moved to trash. You can restore it later.
             </p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium"
+                className="px-3 py-1.5 text-sm text-[#615d59] hover:text-[#31302e] font-medium"
               >
                 Cancel
               </button>
@@ -1547,14 +1423,14 @@ export default function Home() {
             className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Permanently delete?</h3>
-            <p className="text-xs text-gray-500 mb-4">
+            <h3 className="text-sm font-semibold text-[#31302e] mb-1">Permanently delete?</h3>
+            <p className="text-xs text-[#615d59] mb-4">
               &ldquo;{confirmPermanentDelete.title || "Untitled"}&rdquo; will be permanently deleted. This cannot be undone.
             </p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setConfirmPermanentDelete(null)}
-                className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 font-medium"
+                className="px-3 py-1.5 text-sm text-[#615d59] hover:text-[#31302e] font-medium"
               >
                 Cancel
               </button>

@@ -30,8 +30,6 @@ interface DocumentRowProps {
   selected: boolean;
   onToggleSelect: (id: string) => void;
   onToggleStar: (docId: string, e: React.MouseEvent) => void;
-  onTogglePin: (docId: string, e: React.MouseEvent) => void;
-  pinnedIds: Set<string>;
   editingId: string | null;
   editTitle: string;
   onSetEditingId: (id: string | null) => void;
@@ -39,11 +37,6 @@ interface DocumentRowProps {
   onCommitRename: (docId: string) => void;
   docTags: Tag[];
   onRemoveTagFromDoc: (docId: string, tagId: string) => void;
-  docReactions: Array<{ emoji: string; count: number; userIds: string[] }>;
-  onToggleReaction: (docId: string, emoji: string) => void;
-  reactionPickerDocId: string | null;
-  onSetReactionPickerDocId: (id: string | null) => void;
-  docRating: number | undefined;
   deletingId: string | null;
   onConfirmDelete: (doc: Doc) => void;
   onDuplicateDoc: (doc: Doc) => void;
@@ -79,8 +72,6 @@ export default function DocumentRow({
   selected,
   onToggleSelect,
   onToggleStar,
-  onTogglePin,
-  pinnedIds,
   editingId,
   editTitle,
   onSetEditingId,
@@ -88,11 +79,6 @@ export default function DocumentRow({
   onCommitRename,
   docTags,
   onRemoveTagFromDoc,
-  docReactions,
-  onToggleReaction,
-  reactionPickerDocId,
-  onSetReactionPickerDocId,
-  docRating,
   deletingId,
   onConfirmDelete,
   onDuplicateDoc,
@@ -120,20 +106,20 @@ export default function DocumentRow({
         e.dataTransfer.setData("text/plain", doc.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className={`relative group flex items-center gap-2 ${focusedIndex === index ? "ring-2 ring-[#B8692A] rounded-xl" : ""}`}
+      className={`relative group flex items-center gap-2 ${focusedIndex === index ? "ring-2 ring-[#0075de] rounded-xl" : ""}`}
     >
       <input
         type="checkbox"
         checked={selected}
         onChange={() => onToggleSelect(doc.id)}
-        className="shrink-0 h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A] md:opacity-0 md:group-hover:opacity-100 transition-opacity checked:!opacity-100 cursor-pointer"
+        className="shrink-0 h-4 w-4 rounded border-[#dddddd] text-[#0075de] focus:ring-[#0075de] md:opacity-0 md:group-hover:opacity-100 transition-opacity checked:!opacity-100 cursor-pointer"
       />
       <button
         onClick={(e) => onToggleStar(doc.id, e)}
         className={`shrink-0 p-0.5 rounded transition-colors ${
           doc.starred
-            ? "text-amber-500"
-            : "text-gray-300 hover:text-amber-400 md:opacity-0 md:group-hover:opacity-100"
+            ? "text-[#dd5b00]"
+            : "text-[#a39e98] hover:text-[#dd5b00] md:opacity-0 md:group-hover:opacity-100"
         }`}
         title={doc.starred ? "Unstar document" : "Star document"}
       >
@@ -141,25 +127,12 @@ export default function DocumentRow({
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
       </button>
-      <button
-        onClick={(e) => onTogglePin(doc.id, e)}
-        className={`shrink-0 p-0.5 rounded transition-colors ${
-          pinnedIds.has(doc.id)
-            ? "text-[#B8692A]"
-            : "text-gray-300 hover:text-[#B8692A] md:opacity-0 md:group-hover:opacity-100"
-        }`}
-        title={pinnedIds.has(doc.id) ? "Unpin document" : "Pin document"}
-      >
-        <svg className="h-4 w-4" fill={pinnedIds.has(doc.id) ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16 3l-4 4-4-4M12 7v10m-5 4h10" />
-        </svg>
-      </button>
       <Link
         href={`/doc/${doc.id}`}
-        className="flex-1 flex items-center justify-between bg-[#FFFEF9] rounded-xl px-5 py-4 hover:shadow-sm border border-transparent hover:border-amber-200 transition-all"
+        className="flex-1 flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-[#f6f5f4] border border-transparent transition-colors"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-1 h-8 rounded-full bg-[#B8692A] md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0" />
+          <div className="w-[34px] h-[34px] rounded-md bg-[#f6f5f4] flex items-center justify-center [font-family:var(--font-mono)] text-[11px] text-[#615d59] font-medium shrink-0">md</div>
           <div className="min-w-0">
             {editingId === doc.id ? (
               <input
@@ -172,12 +145,12 @@ export default function DocumentRow({
                   if (e.key === "Escape") onSetEditingId(null);
                 }}
                 onClick={(e) => e.preventDefault()}
-                className="font-medium text-gray-900 bg-white border border-[#B8692A] rounded px-1.5 py-0.5 outline-none w-full"
+                className="font-medium text-[#31302e] bg-white border border-[#0075de] rounded px-1.5 py-0.5 outline-none w-full"
               />
             ) : (
               <>
               <p
-                className="font-medium text-gray-900 truncate"
+                className="font-medium text-[#31302e] truncate"
                 onDoubleClick={(e) => {
                   e.preventDefault();
                   onSetEditingId(doc.id);
@@ -190,7 +163,7 @@ export default function DocumentRow({
                 <span className={`inline-flex items-center ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
                   doc.role === "editor"
                     ? "bg-blue-50 text-blue-600"
-                    : "bg-gray-100 text-gray-500"
+                    : "bg-[#f6f5f4] text-[#615d59]"
                 }`}>
                   {doc.role === "editor" ? "Editor" : "Viewer"}
                 </span>
@@ -199,7 +172,7 @@ export default function DocumentRow({
                 <span className={`inline-flex items-center ml-2 px-1.5 py-0.5 rounded text-xs font-medium ${
                   doc.status === "approved"
                     ? "bg-green-50 text-green-700"
-                    : "bg-amber-50 text-amber-700"
+                    : "bg-[#fbece0] text-[#dd5b00]"
                 }`}>
                   {doc.status === "approved" ? "Approved" : "In Review"}
                 </span>
@@ -223,70 +196,23 @@ export default function DocumentRow({
                   ))}
                 </div>
               )}
-              {/* Quick Reactions */}
-              <div className="flex items-center gap-1 mt-1 flex-wrap">
-                {(docReactions || []).map((r) => (
-                  <button
-                    key={r.emoji}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleReaction(doc.id, r.emoji); }}
-                    className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs bg-gray-100 hover:bg-gray-200 transition-colors"
-                    title={`${r.count} reaction${r.count > 1 ? "s" : ""}`}
-                  >
-                    <span>{r.emoji}</span>
-                    <span className="text-gray-500 text-[10px]">{r.count}</span>
-                  </button>
-                ))}
-                <div className="relative">
-                  <button
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSetReactionPickerDocId(reactionPickerDocId === doc.id ? null : doc.id); }}
-                    className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Add reaction"
-                  >
-                    +
-                  </button>
-                  {reactionPickerDocId === doc.id && (
-                    <div
-                      className="absolute left-0 bottom-full mb-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-1.5 flex gap-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {["\u{1F44D}", "\u{2764}\u{FE0F}", "\u{1F680}", "\u{1F389}", "\u{1F440}", "\u{1F4AF}"].map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={(e) => { e.preventDefault(); onToggleReaction(doc.id, emoji); onSetReactionPickerDocId(null); }}
-                          className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-base transition-colors"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
               </>
             )}
           </div>
         </div>
-        {docRating !== undefined && docRating > 0 && (
-          <span className="flex items-center gap-0.5 text-xs text-amber-500 shrink-0 ml-2" title={`Rating: ${docRating}/5`}>
-            <svg className="h-3 w-3" fill="#F59E0B" viewBox="0 0 24 24" stroke="none">
-              <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-            </svg>
-            {docRating}
-          </span>
-        )}
-        <span className="flex items-center gap-2 text-xs text-gray-400 shrink-0 ml-4 mr-16">
+        <span className="flex items-center gap-2 text-xs text-[#a39e98] shrink-0 ml-4 mr-16">
           {formatDate(doc.updatedAt)}
         </span>
       </Link>
       {/* Tag popover */}
       {tagPopoverDocId === doc.id && (
         <div
-          className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+          className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-[rgba(0,0,0,0.1)] p-3 w-56"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-700">Add tag</p>
-            <button onClick={() => onSetTagPopoverDocId(null)} className="text-gray-400 hover:text-gray-600 text-xs">
+            <p className="text-xs font-semibold text-[#31302e]">Add tag</p>
+            <button onClick={() => onSetTagPopoverDocId(null)} className="text-[#a39e98] hover:text-[#615d59] text-xs">
               x
             </button>
           </div>
@@ -298,12 +224,12 @@ export default function DocumentRow({
                   key={tag.id}
                   onClick={() => isApplied ? onRemoveTagFromDoc(doc.id, tag.id) : onAddTagToDoc(doc.id, tag.id)}
                   className={`w-full text-left flex items-center gap-2 px-2 py-1 rounded text-sm transition-colors ${
-                    isApplied ? "bg-gray-100 font-medium" : "hover:bg-gray-50"
+                    isApplied ? "bg-[#f6f5f4] font-medium" : "hover:bg-[#f6f5f4]"
                   }`}
                 >
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
-                  <span className="truncate text-gray-700">{tag.name}</span>
-                  {isApplied && <span className="ml-auto text-xs text-gray-400">&#10003;</span>}
+                  <span className="truncate text-[#31302e]">{tag.name}</span>
+                  {isApplied && <span className="ml-auto text-xs text-[#a39e98]">&#10003;</span>}
                 </button>
               );
             })}
@@ -318,12 +244,12 @@ export default function DocumentRow({
                 value={newTagName}
                 onChange={(e) => onSetNewTagName(e.target.value)}
                 placeholder="New tag..."
-                className="flex-1 min-w-0 rounded border border-gray-200 px-2 py-1 text-xs outline-none focus:border-[#B8692A]"
+                className="flex-1 min-w-0 rounded border border-[rgba(0,0,0,0.1)] px-2 py-1 text-xs outline-none focus:border-[#0075de]"
               />
               <button
                 type="submit"
                 disabled={!newTagName.trim()}
-                className="px-2 py-1 rounded bg-[#B8692A] text-white text-xs font-medium disabled:opacity-40"
+                className="px-2 py-1 rounded bg-[#0075de] text-white text-xs font-medium disabled:opacity-40"
               >
                 Add
               </button>
@@ -335,7 +261,7 @@ export default function DocumentRow({
                     key={c.value}
                     type="button"
                     onClick={() => onSetNewTagColor(c.value)}
-                    className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-gray-800 scale-110" : "border-transparent hover:border-gray-300"}`}
+                    className={`w-5 h-5 rounded-full border-2 transition-all ${newTagColor === c.value ? "border-[#31302e] scale-110" : "border-transparent hover:border-[#dddddd]"}`}
                     style={{ backgroundColor: c.value }}
                     title={c.label}
                   />
@@ -348,19 +274,19 @@ export default function DocumentRow({
       {/* Analytics popover */}
       {analyticsDocId === doc.id && analyticsData && (
         <div
-          className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3 w-56"
+          className="absolute right-3 top-full mt-1 z-50 bg-white rounded-lg shadow-xl border border-[rgba(0,0,0,0.1)] p-3 w-56"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-700">Analytics</p>
-            <button onClick={() => onSetAnalyticsDocId(null)} className="text-gray-400 hover:text-gray-600 text-xs">x</button>
+            <p className="text-xs font-semibold text-[#31302e]">Analytics</p>
+            <button onClick={() => onSetAnalyticsDocId(null)} className="text-[#a39e98] hover:text-[#615d59] text-xs">x</button>
           </div>
-          <div className="space-y-1.5 text-xs text-gray-600">
-            <div className="flex justify-between"><span>Views</span><span className="font-medium text-gray-900">{analyticsData.viewCount}</span></div>
-            <div className="flex justify-between"><span>Activity events</span><span className="font-medium text-gray-900">{analyticsData.editCount}</span></div>
-            <div className="flex justify-between"><span>Collaborators</span><span className="font-medium text-gray-900">{analyticsData.collaboratorCount}</span></div>
-            <div className="flex justify-between"><span>Created</span><span className="font-medium text-gray-900">{formatDate(analyticsData.createdAt)}</span></div>
-            <div className="flex justify-between"><span>Last edited</span><span className="font-medium text-gray-900">{formatDate(analyticsData.lastEditedAt)}</span></div>
+          <div className="space-y-1.5 text-xs text-[#615d59]">
+            <div className="flex justify-between"><span>Views</span><span className="font-medium text-[#31302e]">{analyticsData.viewCount}</span></div>
+            <div className="flex justify-between"><span>Activity events</span><span className="font-medium text-[#31302e]">{analyticsData.editCount}</span></div>
+            <div className="flex justify-between"><span>Collaborators</span><span className="font-medium text-[#31302e]">{analyticsData.collaboratorCount}</span></div>
+            <div className="flex justify-between"><span>Created</span><span className="font-medium text-[#31302e]">{formatDate(analyticsData.createdAt)}</span></div>
+            <div className="flex justify-between"><span>Last edited</span><span className="font-medium text-[#31302e]">{formatDate(analyticsData.lastEditedAt)}</span></div>
           </div>
         </div>
       )}
@@ -382,7 +308,7 @@ export default function DocumentRow({
               .catch(() => {})
               .finally(() => onSetAnalyticsLoading(false));
           }}
-          className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+          className="p-1.5 rounded-md text-[#a39e98] hover:text-[#0075de] hover:bg-[#fbece0]"
           title="View analytics"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -391,7 +317,7 @@ export default function DocumentRow({
         </button>
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSetTagPopoverDocId(tagPopoverDocId === doc.id ? null : doc.id); onSetNewTagName(""); }}
-          className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+          className="p-1.5 rounded-md text-[#a39e98] hover:text-[#0075de] hover:bg-[#fbece0]"
           title="Manage tags"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -400,7 +326,7 @@ export default function DocumentRow({
         </button>
         <button
           onClick={(e) => { e.preventDefault(); onForkDoc(doc); }}
-          className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+          className="p-1.5 rounded-md text-[#a39e98] hover:text-[#0075de] hover:bg-[#fbece0]"
           title="Fork document"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -409,7 +335,7 @@ export default function DocumentRow({
         </button>
         <button
           onClick={(e) => { e.preventDefault(); onDuplicateDoc(doc); }}
-          className="p-1.5 rounded-md text-gray-300 hover:text-[#B8692A] hover:bg-amber-50"
+          className="p-1.5 rounded-md text-[#a39e98] hover:text-[#0075de] hover:bg-[#fbece0]"
           title="Duplicate document"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -419,7 +345,7 @@ export default function DocumentRow({
         <button
           onClick={(e) => { e.preventDefault(); onConfirmDelete(doc); }}
           disabled={deletingId === doc.id}
-          className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
+          className="p-1.5 rounded-md text-[#a39e98] hover:text-red-500 hover:bg-red-50 disabled:opacity-30"
           title="Delete document"
         >
           {deletingId === doc.id ? (

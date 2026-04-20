@@ -37,7 +37,6 @@ export async function POST(
       templateId: true,
       folderId: true,
       coverImage: true,
-      fontFamily: true,
     },
   });
   if (!original) {
@@ -54,7 +53,6 @@ export async function POST(
       templateId: original.templateId,
       folderId: folderId || original.folderId,
       coverImage: original.coverImage,
-      fontFamily: original.fontFamily,
     },
   });
 

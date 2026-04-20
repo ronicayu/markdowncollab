@@ -1,26 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { Editor } from "@tiptap/core";
-import EmojiPicker from "./EmojiPicker";
-import {
-  addPersonalHighlight,
-  removePersonalHighlight,
-  HIGHLIGHT_COLORS,
-  personalHighlightPluginKey,
-} from "@/extensions/personal-highlight";
-import {
-  loadMacros,
-  saveMacro,
-  deleteMacro,
-  loadMacrosFromApi,
-  saveMacroToApi,
-  deleteMacroFromApi,
-  recordedKeyFromEvent,
-  replayMacro,
-  type RecordedKey,
-  type Macro,
-} from "@/lib/macros";
 import ToolbarSettings, { getHiddenSections, type ToolbarSectionId } from "./ToolbarSettings";
 
 interface ToolbarProps {
@@ -45,59 +26,23 @@ function formatShortcut(shortcut: string, mac: boolean): string {
     .replace(/Shift/g, mac ? "\u21E7" : "Shift");
 }
 
-const COLOR_SWATCHES = [
-  { name: "Red", hex: "#dc2626" },
-  { name: "Orange", hex: "#ea580c" },
-  { name: "Amber", hex: "#d97706" },
-  { name: "Green", hex: "#16a34a" },
-  { name: "Teal", hex: "#0d9488" },
-  { name: "Blue", hex: "#2563eb" },
-  { name: "Indigo", hex: "#4f46e5" },
-  { name: "Purple", hex: "#9333ea" },
-  { name: "Pink", hex: "#db2777" },
-  { name: "Gray", hex: "#6b7280" },
-  { name: "Brown", hex: "#92400e" },
-  { name: "Black", hex: "#000000" },
-];
-
 export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps) {
   const [isMac, setIsMac] = useState(false);
-  const [showEmoji, setShowEmoji] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
   const [autoNumbering, setAutoNumbering] = useState(false);
-  const [showSnippetSave, setShowSnippetSave] = useState(false);
-  const [snippetTitle, setSnippetTitle] = useState("");
-  const [showHighlightPicker, setShowHighlightPicker] = useState(false);
-  const colorBtnRef = useRef<HTMLDivElement>(null);
-  const emojiBtnRef = useRef<HTMLButtonElement>(null);
-  const snippetBtnRef = useRef<HTMLDivElement>(null);
-  const highlightBtnRef = useRef<HTMLDivElement>(null);
-  const [macroRecording, setMacroRecording] = useState(false);
-  const macroKeysRef = useRef<RecordedKey[]>([]);
-  const [macros, setMacros] = useState<Macro[]>([]);
-  const [showMacroMenu, setShowMacroMenu] = useState(false);
-  const [macroPlaying, setMacroPlaying] = useState(false);
-  const [showMacroName, setShowMacroName] = useState(false);
-  const [macroName, setMacroName] = useState("");
-  const macroBtnRef = useRef<HTMLDivElement>(null);
   const [hiddenSections, setHiddenSections] = useState<Set<ToolbarSectionId>>(new Set());
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
-    setMacros(loadMacros());
-    loadMacrosFromApi().then((m) => setMacros(m));
     setHiddenSections(getHiddenSections());
   }, []);
 
-  // Load auto-numbering preference from localStorage
   useEffect(() => {
     const docId = window.location.pathname.split("/doc/")[1]?.split("/")[0] || "";
     if (!docId) return;
     const stored = localStorage.getItem(`autoNumber:${docId}`);
     if (stored === "true") {
       setAutoNumbering(true);
-      // Apply class to editor container
       const editorEl = document.querySelector(".ProseMirror");
       if (editorEl) editorEl.classList.add("auto-number-headings");
     }
@@ -120,137 +65,16 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
     }
   }
 
-  // Macro recording: capture keydown events on editor DOM
-  useEffect(() => {
-    if (!macroRecording || !editor) return;
-    const editorEl = editor.view.dom;
-    const handler = (e: Event) => {
-      const ke = e as KeyboardEvent;
-      macroKeysRef.current.push(recordedKeyFromEvent(ke));
-    };
-    editorEl.addEventListener("keydown", handler);
-    return () => editorEl.removeEventListener("keydown", handler);
-  }, [macroRecording, editor]);
-
-  function startMacroRecording() {
-    macroKeysRef.current = [];
-    setMacroRecording(true);
-  }
-
-  function stopMacroRecording() {
-    setMacroRecording(false);
-    if (macroKeysRef.current.length === 0) return;
-    setShowMacroName(true);
-  }
-
-  function saveMacroWithName() {
-    const name = macroName.trim() || `Macro ${macros.length + 1}`;
-    const macro: Macro = {
-      name,
-      keys: [...macroKeysRef.current],
-      createdAt: new Date().toISOString(),
-    };
-    saveMacro(macro);
-    saveMacroToApi(macro).then(() => loadMacrosFromApi().then((m) => setMacros(m)));
-    setMacroName("");
-    setShowMacroName(false);
-  }
-
-  async function playMacroByName(name: string) {
-    if (!editor || macroPlaying) return;
-    const macro = macros.find((m) => m.name === name);
-    if (!macro) return;
-    setMacroPlaying(true);
-    setShowMacroMenu(false);
-    editor.commands.focus();
-    await replayMacro(editor.view.dom, macro.keys);
-    setMacroPlaying(false);
-  }
-
-  function handleDeleteMacro(name: string) {
-    deleteMacro(name);
-    deleteMacroFromApi(name).then(() => loadMacrosFromApi().then((m) => setMacros(m)));
-  }
-
-  // Close macro menu on outside click
-  useEffect(() => {
-    if (!showMacroMenu) return;
-    function handleClick(e: MouseEvent) {
-      if (macroBtnRef.current && !macroBtnRef.current.contains(e.target as Node)) {
-        setShowMacroMenu(false);
-      }
-    }
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [showMacroMenu]);
-
-  // Close highlight picker on outside click
-  useEffect(() => {
-    if (!showHighlightPicker) return;
-    function handleClick(e: MouseEvent) {
-      if (highlightBtnRef.current && !highlightBtnRef.current.contains(e.target as Node)) {
-        setShowHighlightPicker(false);
-      }
-    }
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [showHighlightPicker]);
-
-  // Close snippet save on outside click
-  useEffect(() => {
-    if (!showSnippetSave) return;
-    function handleClick(e: MouseEvent) {
-      if (snippetBtnRef.current && !snippetBtnRef.current.contains(e.target as Node)) {
-        setShowSnippetSave(false);
-        setSnippetTitle("");
-      }
-    }
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [showSnippetSave]);
-
-  async function handleSaveSnippet() {
-    if (!editor || !snippetTitle.trim()) return;
-    const { from, to } = editor.state.selection;
-    if (from === to) return;
-    const selectedText = editor.state.doc.textBetween(from, to, "\n");
-    try {
-      const res = await fetch("/api/snippets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: snippetTitle.trim(), content: selectedText }),
-      });
-      if (res.ok) {
-        setShowSnippetSave(false);
-        setSnippetTitle("");
-      }
-    } catch {
-      // silently fail
-    }
-  }
-
-  // Close color picker on outside click
-  useEffect(() => {
-    if (!showColorPicker) return;
-    function handleClick(e: MouseEvent) {
-      if (colorBtnRef.current && !colorBtnRef.current.contains(e.target as Node)) {
-        setShowColorPicker(false);
-      }
-    }
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [showColorPicker]);
-
   const sectionForLabel: Record<string, ToolbarSectionId> = {
     "Bold": "formatting", "Italic": "formatting", "Underline": "formatting",
     "Strikethrough": "formatting", "Superscript": "formatting", "Subscript": "formatting",
-    "Highlight": "formatting", "Text color": "formatting", "Link": "formatting", "Inline code": "formatting",
+    "Link": "formatting", "Inline code": "formatting",
     "Heading 1": "headings", "Heading 2": "headings", "Heading 3": "headings",
     "Align left": "alignment", "Align center": "alignment", "Align right": "alignment",
     "Bullet list": "lists", "Ordered list": "lists", "Task list": "lists",
     "Outdent": "lists", "Indent": "lists",
     "Blockquote": "blocks", "Code block": "blocks", "Mermaid diagram": "blocks",
-    "Emoji": "blocks", "Horizontal rule": "blocks", "Table": "blocks",
+    "Horizontal rule": "blocks", "Table": "blocks",
     "Undo": "history", "Redo": "history",
     "Find & Replace": "search",
   };
@@ -310,32 +134,6 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       icon: <span className="text-xs font-bold">x<sub className="text-[9px]">2</sub></span>,
       action: () => editor.chain().focus().toggleSubscript().run(),
       isActive: () => editor.isActive("subscript"),
-    },
-    {
-      label: "Highlight",
-      shortcut: "Mod+Shift+H",
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          <path strokeLinecap="round" d="M3 21h18" stroke="currentColor" strokeWidth={2.5} style={{ color: '#facc15' }} />
-        </svg>
-      ),
-      action: () => editor.chain().focus().toggleHighlight().run(),
-      isActive: () => editor.isActive("highlight"),
-    },
-    {
-      label: "Text color",
-      icon: (
-        <span className="relative text-sm font-bold leading-none">
-          A
-          <span
-            className="absolute bottom-0 left-0.5 right-0.5 h-[3px] rounded-sm"
-            style={{ backgroundColor: editor.getAttributes("textStyle").color || "#000000" }}
-          />
-        </span>
-      ),
-      action: () => setShowColorPicker((v) => !v),
-      isActive: () => showColorPicker,
     },
     {
       label: "Link",
@@ -511,7 +309,6 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       label: "Mermaid diagram",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
-          {/* Simplified flowchart icon */}
           <rect x="8" y="2" width="8" height="4" rx="1" />
           <rect x="2" y="17" width="7" height="4" rx="1" />
           <rect x="15" y="17" width="7" height="4" rx="1" />
@@ -519,15 +316,8 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
         </svg>
       ),
       action: () => {
-        // Insert a fresh mermaid code block node with starter content.
-        // We can't use setCodeBlock().insertContent() because setCodeBlock
-        // wraps the current paragraph (including its text), and insertContent
-        // then appends onto that existing text, producing garbled syntax.
-        // Instead, insert the complete node at the current position so the
-        // existing paragraph is not disturbed.
         const { state } = editor;
         const { $from } = state.selection;
-        // If already inside a mermaid block, do nothing.
         if ($from.parent.type.name === "codeBlock" && $from.parent.attrs.language === "mermaid") return;
         editor
           .chain()
@@ -541,19 +331,6 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
       },
       isActive: () => editor.isActive("codeBlock", { language: "mermaid" }),
       separator: true,
-    },
-    {
-      label: "Emoji",
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-          <circle cx="12" cy="12" r="10" />
-          <path strokeLinecap="round" d="M8 14s1.5 2 4 2 4-2 4-2" />
-          <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
-          <circle cx="15" cy="9" r="1" fill="currentColor" stroke="none" />
-        </svg>
-      ),
-      action: () => setShowEmoji((v) => !v),
-      isActive: () => showEmoji,
     },
     {
       label: "Horizontal rule",
@@ -612,7 +389,6 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
         </svg>
       ),
       action: () => {
-        // Dispatch synthetic Cmd+F to trigger the global handler in Editor
         document.dispatchEvent(new KeyboardEvent("keydown", { key: "f", metaKey: true, bubbles: true }));
       },
       isActive: () => false,
@@ -629,7 +405,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
     <div className="sticky top-0 z-10 border-b bg-[var(--toolbar-bg)] border-[var(--toolbar-border)] relative hidden md:block" role="toolbar" aria-label="Text formatting">
     <div className="flex items-center gap-0.5 overflow-x-auto px-3 py-1.5 scrollbar-none">
       {visibleButtons.map((btn, i) => (
-        <div key={btn.label} className="flex items-center" ref={btn.label === "Text color" ? colorBtnRef : undefined}>
+        <div key={btn.label} className="flex items-center">
           {btn.separator && i > 0 && (
             <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
           )}
@@ -646,38 +422,8 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
           >
             {btn.icon}
           </button>
-          {/* Color picker dropdown */}
-          {btn.label === "Text color" && showColorPicker && (
-            <div role="group" aria-label="Text color picker" className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-48">
-              <div className="grid grid-cols-6 gap-1.5 mb-2">
-                {COLOR_SWATCHES.map((swatch) => (
-                  <button
-                    key={swatch.hex}
-                    title={swatch.name}
-                    aria-label={`Set text color to ${swatch.name}`}
-                    onClick={() => {
-                      editor.chain().focus().setColor(swatch.hex).run();
-                      setShowColorPicker(false);
-                    }}
-                    className="h-6 w-6 rounded-full border border-gray-200 hover:scale-110 transition-transform"
-                    style={{ backgroundColor: swatch.hex }}
-                  />
-                ))}
-              </div>
-              <button
-                onClick={() => {
-                  editor.chain().focus().unsetColor().run();
-                  setShowColorPicker(false);
-                }}
-                className="w-full text-xs text-center py-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
-              >
-                Default
-              </button>
-            </div>
-          )}
         </div>
       ))}
-      {/* Auto-number headings toggle */}
       {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
       {!hiddenSections.has("advanced") && (
       <button
@@ -694,192 +440,6 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
         <span className="text-xs font-bold tracking-tight">#</span>
       </button>
       )}
-      {/* Save as snippet */}
-      {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
-      {!hiddenSections.has("advanced") && <div className="relative" ref={snippetBtnRef}>
-        <button
-          onClick={() => {
-            if (!editor) return;
-            const { from, to } = editor.state.selection;
-            if (from === to) return;
-            setShowSnippetSave((v) => !v);
-          }}
-          title="Save selection as snippet"
-          aria-label="Save selection as snippet"
-          className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition-colors"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        </button>
-        {showSnippetSave && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-56">
-            <p className="text-xs font-medium text-gray-700 mb-2">Save as Snippet</p>
-            <input
-              type="text"
-              placeholder="Snippet name..."
-              value={snippetTitle}
-              onChange={(e) => setSnippetTitle(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleSaveSnippet(); }}
-              className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 mb-2 outline-none focus:border-blue-400"
-              autoFocus
-            />
-            <button
-              onClick={handleSaveSnippet}
-              disabled={!snippetTitle.trim()}
-              className="w-full text-xs font-medium text-white bg-[#B8692A] rounded py-1.5 hover:bg-[#96541F] disabled:opacity-40 transition-colors"
-            >
-              Save
-            </button>
-          </div>
-        )}
-      </div>}
-      {/* Personal highlight */}
-      {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
-      {!hiddenSections.has("advanced") && <div className="relative" ref={highlightBtnRef}>
-        <button
-          onClick={() => {
-            if (!editor) return;
-            const { from, to } = editor.state.selection;
-            if (from === to) return;
-            setShowHighlightPicker((v) => !v);
-          }}
-          title="Personal highlight (local only)"
-          aria-label="Personal highlight"
-          className={`h-9 w-9 shrink-0 rounded-md flex items-center justify-center transition-colors ${
-            showHighlightPicker
-              ? "bg-[var(--accent)]/10 text-[var(--accent)]"
-              : "text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)]"
-          }`}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-        </button>
-        {showHighlightPicker && (
-          <div role="group" aria-label="Personal highlight color picker" className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-40">
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide px-1 mb-1.5">Personal Highlight</p>
-            <div className="flex gap-1.5 mb-2 px-1">
-              {HIGHLIGHT_COLORS.map((c) => (
-                <button
-                  key={c.color}
-                  title={c.name}
-                  aria-label={`Highlight with ${c.name}`}
-                  onClick={() => {
-                    if (!editor) return;
-                    const { from, to } = editor.state.selection;
-                    if (from === to) return;
-                    addPersonalHighlight(editor.view, from, to, c.color);
-                    setShowHighlightPicker(false);
-                  }}
-                  className="h-6 w-6 rounded-full border border-gray-200 hover:scale-110 transition-transform"
-                  style={{ backgroundColor: c.bg }}
-                />
-              ))}
-            </div>
-            <button
-              onClick={() => {
-                if (!editor) return;
-                const { from, to } = editor.state.selection;
-                if (from !== to) {
-                  removePersonalHighlight(editor.view, from, to);
-                }
-                setShowHighlightPicker(false);
-              }}
-              className="w-full text-xs text-center py-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
-            >
-              Remove
-            </button>
-          </div>
-        )}
-      </div>}
-      {/* Macro record/play */}
-      {!hiddenSections.has("advanced") && <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />}
-      {!hiddenSections.has("advanced") && <div className="relative flex items-center gap-0.5" ref={macroBtnRef}>
-        {!macroRecording ? (
-          <button
-            onClick={startMacroRecording}
-            title="Record macro"
-            aria-label="Record macro"
-            className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition-colors"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-              <circle cx="12" cy="12" r="6" fill="currentColor" className="text-red-500" />
-            </svg>
-          </button>
-        ) : (
-          <button
-            onClick={stopMacroRecording}
-            title="Stop recording"
-            aria-label="Stop recording macro"
-            className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-red-500 bg-red-50 animate-pulse transition-colors"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-              <rect x="6" y="6" width="12" height="12" rx="1" />
-            </svg>
-          </button>
-        )}
-        {macros.length > 0 && (
-          <button
-            onClick={() => setShowMacroMenu((v) => !v)}
-            disabled={macroPlaying}
-            title="Play macro"
-            aria-label="Play macro"
-            aria-expanded={showMacroMenu}
-            className="h-9 w-9 shrink-0 rounded-md flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-hover-bg)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-40"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-            </svg>
-          </button>
-        )}
-        {showMacroMenu && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-48">
-            <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide px-1 mb-1.5">Macros</p>
-            {macros.map((m) => (
-              <div key={m.name} className="flex items-center gap-1">
-                <button
-                  onClick={() => playMacroByName(m.name)}
-                  className="flex-1 text-left text-sm text-gray-700 hover:bg-gray-100 rounded px-2 py-1 truncate"
-                >
-                  {m.name}
-                </button>
-                <button
-                  onClick={() => handleDeleteMacro(m.name)}
-                  className="text-gray-400 hover:text-red-500 p-0.5"
-                  title="Delete macro"
-                  aria-label={`Delete macro ${m.name}`}
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-3.5 w-3.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        {showMacroName && (
-          <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-56">
-            <p className="text-xs font-medium text-gray-700 mb-2">Name this macro</p>
-            <input
-              type="text"
-              placeholder="Macro name..."
-              value={macroName}
-              onChange={(e) => setMacroName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") saveMacroWithName(); }}
-              className="w-full text-sm border border-gray-200 rounded px-2 py-1.5 mb-2 outline-none focus:border-blue-400"
-              autoFocus
-            />
-            <button
-              onClick={saveMacroWithName}
-              className="w-full text-xs font-medium text-white bg-[#B8692A] rounded py-1.5 hover:bg-[#96541F] transition-colors"
-            >
-              Save
-            </button>
-          </div>
-        )}
-      </div>}
-      {/* Separator before help button */}
       {!hiddenSections.has("advanced") && (
       <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
       )}
@@ -897,7 +457,6 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
         </svg>
       </button>
       )}
-      {/* Toolbar settings gear icon */}
       <div className="w-px h-5 bg-[var(--toolbar-border)] mx-1.5" />
       <div className="relative">
         <button
@@ -922,20 +481,7 @@ export default function Toolbar({ editor, onToggleShortcutsHelp }: ToolbarProps)
         />
       </div>
     </div>
-    {/* Scroll fade hint for mobile */}
     <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--toolbar-bg)] to-transparent pointer-events-none" />
-    {/* Emoji picker popover */}
-    {showEmoji && (
-      <div className="absolute top-full left-0 mt-1 z-50">
-        <EmojiPicker
-          onSelect={(emoji) => {
-            editor.chain().focus().insertContent(emoji).run();
-            setShowEmoji(false);
-          }}
-          onClose={() => setShowEmoji(false)}
-        />
-      </div>
-    )}
     </div>
   );
 }

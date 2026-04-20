@@ -18,12 +18,9 @@ model Document {
   status     String             @default("draft")
   approvedBy String?
   approvedAt DateTime?
-  lockedBy   String?
-  lockedAt   DateTime?
   forkedFrom  String?
   password    String?
   coverImage  String?
-  fontFamily  String?
   maxVersions Int             @default(50)
   publishAt   DateTime?
   expiresAt   DateTime?
@@ -156,90 +153,11 @@ model Webhook {
   @@index([ownerId])
 }
 
-model Reminder {
-  id         String   @id @default(uuid())
-  documentId String
-  userId     String
-  remindAt   DateTime
-  message    String
-  dismissed  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-
-  @@index([userId, dismissed, remindAt])
-}
-
-model Snippet {
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  ownerId   String
-  createdAt DateTime @default(now())
-
-  @@index([ownerId])
-}
-
-model CustomCommand {
-  id          String   @id @default(uuid())
-  name        String
-  description String   @default("")
-  content     String
-  ownerId     String
-  createdAt   DateTime @default(now())
-
-  @@index([ownerId])
-}
-
-model Rating {
-  id         String   @id @default(uuid())
-  documentId String
-  userId     String
-  score      Int
-  comment    String?
-  createdAt  DateTime @default(now())
-
-  @@unique([documentId, userId])
-  @@index([documentId])
-}
-
-model DocumentReaction {
-  id         String   @id @default(uuid())
-  documentId String
-  userId     String
-  emoji      String
-  createdAt  DateTime @default(now())
-
-  @@unique([documentId, userId, emoji])
-  @@index([documentId])
-}
-
-model Macro {
-  id         String   @id @default(uuid())
-  name       String
-  steps      String
-  ownerId    String
-  documentId String?
-  createdAt  DateTime @default(now())
-
-  @@unique([ownerId, name])
-  @@index([ownerId])
-  @@index([documentId])
-}
-
 model UserPreference {
   id                String  @id @default(uuid())
   userId            String  @unique
   digestFrequency   String  @default("none")
   keyboardOverrides String?
-}
-
-model DocumentPin {
-  id         String   @id @default(uuid())
-  documentId String
-  userId     String
-  pinnedAt   DateTime @default(now())
-
-  @@unique([documentId, userId])
-  @@index([userId, pinnedAt])
 }
 
 model DocumentSearchIndex {
