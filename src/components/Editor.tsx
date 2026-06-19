@@ -7,6 +7,8 @@ import Collaboration from "@tiptap/extension-collaboration";
 import { RemoteCursors } from "@/extensions/remote-cursors";
 import { getUserColor } from "@/lib/cursor-utils";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
+import { SuggestModeExtension, setSuggestModeEnabled } from "@/extensions/suggest-mode";
+import type { EditorMode } from "@/lib/editor-mode";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { Markdown } from "tiptap-markdown";
 import Image from "@tiptap/extension-image";
@@ -64,6 +66,7 @@ interface EditorProps {
   onEditorReady?: (editor: TiptapEditor) => void;
   activeCommentId?: string | null;
   editable?: boolean;
+  mode?: EditorMode;
   initialContent?: string | null;
   onToggleShortcutsHelp?: () => void;
   templateId?: string;
@@ -78,6 +81,7 @@ export default function Editor({
   onEditorReady,
   activeCommentId,
   editable = true,
+  mode,
   initialContent,
   onToggleShortcutsHelp,
   templateId,
@@ -276,8 +280,11 @@ export default function Editor({
     };
   }, [handleScroll]);
 
+  const effectiveEditable = mode ? mode !== "view" : editable;
+  const initialSuggestEnabled = mode === "suggest";
+
   const editor = useEditor({
-    editable,
+    editable: effectiveEditable,
     extensions: [
       StarterKit.configure({
         undoRedo: false,
@@ -304,6 +311,13 @@ export default function Editor({
         placeholder: "Start typing, or press / for commands...",
       }),
       SuggestionMark,
+      SuggestModeExtension.configure({
+        initialEnabled: initialSuggestEnabled,
+        authorName: userName,
+        authorType: "human",
+        documentId,
+        ydoc,
+      }),
       CommentMark,
       SearchReplace,
       Collaboration.configure({
@@ -863,9 +877,17 @@ export default function Editor({
 
   useEffect(() => {
     if (editor) {
-      editor.setEditable(editable);
+      editor.setEditable(effectiveEditable);
     }
-  }, [editor, editable]);
+  }, [editor, effectiveEditable]);
+
+  useEffect(() => {
+    if (!editor || mode === undefined) return;
+    setSuggestModeEnabled(
+      editor as unknown as { view: { state: unknown; dispatch: (tr: unknown) => void } },
+      mode === "suggest",
+    );
+  }, [editor, mode]);
 
   useEffect(() => {
     if (editor && onEditorReady) {
@@ -1067,7 +1089,7 @@ export default function Editor({
           onClick={() => {
             scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="fixed bottom-20 right-6 z-40 flex items-center justify-center w-9 h-9 rounded-full bg-[#ffffff] text-[#31302e] border border-[rgba(0,0,0,0.1)] shadow-md hover:bg-[#f6f5f4] transition-all opacity-80 hover:opacity-100"
+          className="fixed bottom-20 right-6 z-40 hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-[#ffffff] text-[#31302e] border border-[rgba(0,0,0,0.1)] shadow-md hover:bg-[#f6f5f4] transition-all opacity-80 hover:opacity-100"
           title="Scroll to top"
           aria-label="Scroll to top"
         >

@@ -33,7 +33,6 @@ import AIChatSidebar from "@/components/AIChatSidebar";
 import ExpirationDialog from "@/components/ExpirationDialog";
 
 import DocumentMetadata from "@/components/DocumentMetadata";
-import TabBar, { trackTab } from "@/components/TabBar";
 import {
   getSuggestions,
   getComments,
@@ -49,6 +48,7 @@ import {
 import { toast } from "@/lib/toast";
 import { getUserColor } from "@/lib/cursor-utils";
 import type { Suggestion, Comment, RevisionRequest } from "@/types";
+import { useEditorMode } from "@/hooks/useEditorMode";
 
 const ADJECTIVES = [
   "Swift",
@@ -221,13 +221,29 @@ export default function DocumentPage({
     setUserName(session?.user?.name ?? getUserName());
   }, [session]);
 
-  // Read template content from sessionStorage (set by document list page)
+  // Seed an empty document with initial content stashed in sessionStorage by the
+  // home page: either a template, or the contents of an imported file. Both flow
+  // through the Editor's `initialContent` prop, which injects them once when the
+  // Yjs doc is still empty. The Markdown extension's setContent parses markdown
+  // ("markdown" format) and HTML ("html" format from docx/html imports) alike.
   useEffect(() => {
-    const key = `template:${id}`;
-    const content = sessionStorage.getItem(key);
-    if (content) {
-      sessionStorage.removeItem(key);
-      setTemplateContent(content);
+    const templateKey = `template:${id}`;
+    const template = sessionStorage.getItem(templateKey);
+    if (template) {
+      sessionStorage.removeItem(templateKey);
+      setTemplateContent(template);
+      return;
+    }
+    const importKey = `import:${id}`;
+    const imported = sessionStorage.getItem(importKey);
+    if (imported) {
+      sessionStorage.removeItem(importKey);
+      try {
+        const { content } = JSON.parse(imported) as { format: string; content: string };
+        if (content) setTemplateContent(content);
+      } catch {
+        // Ignore a malformed payload — the doc just opens empty.
+      }
     }
   }, [id]);
 
@@ -301,7 +317,6 @@ export default function DocumentPage({
         }
         // Track recent document open for the RecentDocs widget
         trackDocumentOpen(id, doc?.title || id);
-        trackTab(id, doc?.title || "Untitled");
         if (typeof window !== "undefined") window.dispatchEvent(new Event("recentDocsUpdated"));
         // Fetch forked-from document info if applicable
         if (doc?.forkedFrom) {
@@ -428,7 +443,6 @@ export default function DocumentPage({
   const handleTitleChange = useCallback(
     async (newTitle: string) => {
       setDocTitle(newTitle);
-      trackTab(id, newTitle);
       try {
         await fetch(`/api/documents/${id}`, {
           method: "PUT",
@@ -1084,6 +1098,8 @@ export default function DocumentPage({
 
   // Mobile sidebar collapse & swipe gestures
   const isMobile = useMediaQuery(768);
+  const { mode: editorMode, setMode: setEditorMode, allowed: allowedEditorModes } =
+    useEditorMode({ docId: id, userRole, isMobile });
   const [showOutline, setShowOutline] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
@@ -1340,7 +1356,7 @@ export default function DocumentPage({
         collaborators={collaborators}
         connected={connected}
         onInviteAgent={handleInviteAgent}
-        onTitleChange={userRole === "viewer" ? undefined : handleTitleChange}
+        onTitleChange={editorMode === "view" ? undefined : handleTitleChange}
         agentLoading={agentLoading}
         userRole={userRole}
         onToggleVersionHistory={toggleVersionHistory}
@@ -1368,7 +1384,10 @@ export default function DocumentPage({
         agentTone={agentTone}
         onAgentToneChange={setAgentTone}
         publishAt={publishAt}
-        onSchedulePublish={userRole !== "viewer" ? handleSchedulePublish : undefined}
+        onSchedulePublish={editorMode === "view" ? undefined : handleSchedulePublish}
+        editorMode={editorMode}
+        onEditorModeChange={setEditorMode}
+        allowedEditorModes={allowedEditorModes}
         onShowMetadata={() => setMetadataOpen(true)}
       />}
       {zenMode && (
@@ -1385,9 +1404,8 @@ export default function DocumentPage({
           </button>
         </div>
       )}
-      {!focusMode && !zenMode && <TabBar />}
-      {userRole !== "viewer" && !focusMode && !zenMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
-      {userRole !== "viewer" && !focusMode && !zenMode && <MobileToolbar editor={editor} />}
+      {editorMode !== "view" && !focusMode && !zenMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      {editorMode !== "view" && !focusMode && !zenMode && <MobileToolbar editor={editor} />}
       {/* Cover Image Banner */}
       {!focusMode && !zenMode && (
         <div className="relative group shrink-0">
@@ -1395,7 +1413,7 @@ export default function DocumentPage({
           {coverImage ? (
             <div className="relative w-full" style={{ maxHeight: 200 }}>
               <img src={coverImage} alt="Document cover" className="w-full object-cover" style={{ maxHeight: 200 }} />
-              {userRole !== "viewer" && (
+              {editorMode !== "view" && (
                 <button
                   onClick={handleRemoveCover}
                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs px-2 py-1 rounded hover:bg-black/80"
@@ -1403,7 +1421,7 @@ export default function DocumentPage({
                   Remove cover
                 </button>
               )}
-              {userRole !== "viewer" && (
+              {editorMode !== "view" && (
                 <button
                   onClick={() => coverInputRef.current?.click()}
                   className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs px-2 py-1 rounded hover:bg-black/80"
@@ -1413,7 +1431,7 @@ export default function DocumentPage({
               )}
             </div>
           ) : (
-            userRole !== "viewer" && (
+            editorMode !== "view" && (
               <button
                 onClick={() => coverInputRef.current?.click()}
                 className="w-full py-2 text-xs text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4] opacity-0 group-hover:opacity-100 transition-all text-center"
@@ -1487,7 +1505,7 @@ export default function DocumentPage({
                     provider={provider}
                     onEditorReady={handleEditorReady}
                     activeCommentId={activeCommentId}
-                    editable={userRole !== "viewer"}
+                    mode={editorMode}
                     initialContent={templateContent}
                     onToggleShortcutsHelp={toggleShortcutsHelp}
                     autoCompleteEnabled={autoCompleteEnabled}
@@ -1592,7 +1610,7 @@ export default function DocumentPage({
       {hasSelection && (
         <button
           onClick={openMobileComment}
-          className="md:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#0075de] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#005bab] active:bg-[#005bab]"
+          className="md:hidden fixed bottom-24 right-4 z-40 flex items-center gap-2 bg-[#0075de] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#005bab] active:bg-[#005bab]"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />

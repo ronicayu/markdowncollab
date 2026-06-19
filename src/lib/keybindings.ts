@@ -36,6 +36,7 @@ export const DEFAULT_KEYBINDINGS: KeybindingMap = {
   redo: "Mod+Shift+Z",
   "command-palette": "Mod+P",
   "shortcuts-help": "Mod+/",
+  cycleEditorMode: "Mod+Shift+M",
 };
 
 function getOverrides(): KeybindingMap {

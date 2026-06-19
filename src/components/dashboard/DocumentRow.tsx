@@ -178,7 +178,7 @@ export default function DocumentRow({
                 </span>
               )}
               {docTags.length > 0 && (
-                <div className="flex items-center gap-1 mt-1 flex-wrap">
+                <div className="hidden md:flex items-center gap-1 mt-1 flex-wrap">
                   {docTags.map((tag) => (
                     <span
                       key={tag.id}
@@ -200,7 +200,7 @@ export default function DocumentRow({
             )}
           </div>
         </div>
-        <span className="flex items-center gap-2 text-xs text-[#a39e98] shrink-0 ml-4 mr-16">
+        <span className="flex items-center gap-2 text-xs text-[#a39e98] shrink-0 ml-2 md:ml-4 md:mr-16">
           {formatDate(doc.updatedAt)}
         </span>
       </Link>
@@ -290,8 +290,8 @@ export default function DocumentRow({
           </div>
         </div>
       )}
-      {/* Analytics + Tag + Duplicate + Delete buttons — appear on hover */}
-      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+      {/* Analytics + Tag + Duplicate + Delete buttons — appear on hover (desktop only) */}
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         <button
           onClick={(e) => {
             e.preventDefault();

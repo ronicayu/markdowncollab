@@ -118,7 +118,7 @@ export default function FloatingCommentButton({
         transform: "translateY(-100%)",
         pointerEvents: "auto",
       }}
-      className="animate-fade-in"
+      className="animate-fade-in hidden md:block"
     >
       <button
         onMouseDown={(e) => {

@@ -1463,6 +1463,6 @@ aside > div > div[class*="rounded"][class*="border"] {
 /* Ensure content area has bottom padding on mobile for the fixed toolbar */
 @media (max-width: 767px) {
   .ProseMirror {
-    padding-bottom: 60px;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
   }
 }

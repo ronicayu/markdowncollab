@@ -14,6 +14,7 @@ import BulkActionsBar from "@/components/dashboard/BulkActionsBar";
 import SearchBar, { SearchFiltersRow } from "@/components/dashboard/SearchBar";
 import { useTranslation } from "@/lib/i18n";
 import { templates, extractCustomVariables } from "@/lib/templates";
+import { isFileSystemAccessSupported, openLocalMarkdown, setPendingLocalFile } from "@/lib/local-file";
 
 interface Tag {
   id: string;
@@ -489,6 +490,22 @@ export default function Home() {
     setPendingTemplateId(null);
     setPendingTemplateVars([]);
     setPendingTemplateName("");
+  }
+
+  async function handleOpenLocal() {
+    // Open a markdown file straight from disk (no upload, no DB) — distinct from
+    // Import. Pick here so the file dialog opens on the user's click gesture, then
+    // hand the result to the /local editor.
+    if (isFileSystemAccessSupported()) {
+      try {
+        const file = await openLocalMarkdown();
+        if (!file) return; // user cancelled the picker
+        setPendingLocalFile(file);
+      } catch {
+        // fall through — /local offers its own Open button as a fallback
+      }
+    }
+    router.push("/local");
   }
 
   async function handleImportMarkdown(e: ChangeEvent<HTMLInputElement>) {
@@ -998,10 +1015,55 @@ export default function Home() {
               </button>
             ))}
           </div>
+          {/* Mobile search + create toolbar */}
+          <div className="flex items-center gap-2 px-3 pb-3">
+            <div className="relative flex-1 min-w-0">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#a39e98] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <circle cx="11" cy="11" r="7" />
+                <path strokeLinecap="round" d="M21 21l-4.35-4.35" />
+              </svg>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search documents..."
+                className="w-full h-10 pl-9 pr-3 rounded-lg border border-[#dddddd] text-sm bg-white placeholder:text-[#a39e98] focus:outline-none focus:border-[#0075de]"
+              />
+            </div>
+            <button
+              onClick={handleOpenLocal}
+              aria-label="Open file from disk"
+              className="h-10 w-10 shrink-0 rounded-lg border border-[#dddddd] text-[#31302e] flex items-center justify-center active:bg-[#f6f5f4]"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => importInputRef.current?.click()}
+              disabled={importing}
+              aria-label="Import document"
+              className="h-10 w-10 shrink-0 rounded-lg border border-[#0075de]/30 text-[#0075de] flex items-center justify-center active:bg-[#f2f9ff] disabled:opacity-50"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setShowTemplatePicker(true)}
+              disabled={creating}
+              aria-label="New document"
+              className="h-10 w-10 shrink-0 rounded-lg bg-[#0075de] text-white flex items-center justify-center active:bg-[#005bab] disabled:opacity-50"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        {/* Top bar */}
-        <header className="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#ffffff] border-b border-black/8 shrink-0">
+        {/* Top bar (desktop only — mobile uses the header above) */}
+        <header className="hidden md:flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-[#ffffff] border-b border-black/8 shrink-0">
           <div className="shrink-0">
             {activeTab === "all" && currentFolderId ? (
               <nav className="flex items-center gap-1 text-sm">
@@ -1058,6 +1120,16 @@ export default function Home() {
             className="hidden"
             onChange={handleImportMarkdown}
           />
+          <button
+            onClick={handleOpenLocal}
+            className="flex items-center gap-2 border border-[#dddddd] text-[#31302e] hover:border-[#a39e98] px-4 py-2 rounded text-sm font-medium transition-colors"
+            title="Open a markdown file from disk"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+            </svg>
+            <span className="hidden sm:inline">Open file</span>
+          </button>
           <button
             onClick={() => importInputRef.current?.click()}
             disabled={importing}
@@ -1181,15 +1253,24 @@ export default function Home() {
                       <div className="flex items-center gap-2 shrink-0 ml-4">
                         <button
                           onClick={() => restoreDoc(doc)}
-                          className="px-3 py-1.5 text-xs font-medium text-[#0075de] border border-[#0075de]/30 rounded hover:bg-[#f2f9ff] transition-colors"
+                          aria-label="Restore"
+                          className="h-9 md:h-auto px-2 md:px-3 py-1.5 text-xs font-medium text-[#0075de] border border-[#0075de]/30 rounded hover:bg-[#f2f9ff] transition-colors flex items-center gap-1"
                         >
-                          Restore
+                          <svg className="h-4 w-4 md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a5 5 0 015 5v0a5 5 0 01-5 5H9" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7 6l-4 4 4 4" />
+                          </svg>
+                          <span className="hidden md:inline">Restore</span>
                         </button>
                         <button
                           onClick={() => setConfirmPermanentDelete(doc)}
-                          className="px-3 py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                          aria-label="Delete permanently"
+                          className="h-9 md:h-auto px-2 md:px-3 py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-1"
                         >
-                          Delete permanently
+                          <svg className="h-4 w-4 md:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" />
+                          </svg>
+                          <span className="hidden md:inline">Delete permanently</span>
                         </button>
                       </div>
                     </div>

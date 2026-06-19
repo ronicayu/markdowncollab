@@ -4,6 +4,13 @@ Collaborative markdown editor where both human users and AI agents are first-cla
 
 Path alias: `@/*` → `./src/*`
 
+## Design
+
+Notion-inspired system documented in [DESIGN.md](./DESIGN.md). Warm neutrals
+(`#f6f5f4`, `#31302e`, `#615d59`, `#a39e98`), whisper borders `rgba(0,0,0,0.1)`,
+Notion Blue `#0075de` as singular accent. Use these before introducing any
+new palette values.
+
 ## Commands
 
 ```bash
@@ -13,6 +20,8 @@ npm run test         # Vitest unit tests
 npm run test:e2e     # Playwright e2e tests
 npm run test:all     # Unit + e2e
 npm run lint         # ESLint
+npx prisma migrate dev      # Apply + generate after schema change
+npx prisma migrate reset -f # Nuke dev.db and re-seed
 ```
 
 ## Architecture
@@ -39,3 +48,16 @@ Required in `.env`:
 - **WS_URL must match server mode**: Combined server (`npm run dev`) → `ws://localhost:3000/ws`. Standalone WS server → `ws://localhost:1234`.
 - **Gitignore trap**: `documents/` in .gitignore catches `src/app/api/documents/` — use `git add -f` for new files there.
 - **Turbopack cache**: Stale HTTP methods after route changes need `.next/` cleared. Default export strict checking requires namespace imports.
+- **Dev service worker caches chunks**: `/sw.js` (cache key `mc-shell-v2`) serves stale `/_next/static/chunks/*.js` across dev restarts. If an edit doesn't appear in the browser, unregister SW + clear caches before blaming compile:
+  ```js
+  const regs = await navigator.serviceWorker.getRegistrations();
+  for (const r of regs) await r.unregister();
+  for (const k of await caches.keys()) await caches.delete(k);
+  location.reload();
+  ```
+- **Dark-mode leaks onto mobile surfaces**: `.dark` class applied on `prefers-color-scheme: dark` flips `--surface`/`--toolbar-bg` to dark. Home mobile header is hardcoded white, so editor `TopBar` / `MobileToolbar` must also hardcode `bg-white` + `border-black/10` on mobile for visual consistency.
+
+## UAT
+
+- External UAT URL: `http://100.109.228.117:3000/` (Tailscale); Playwright MCP uses `localhost:3000`.
+- iPhone viewport: `390 × 844`. Desktop regression: `1280 × 800`.

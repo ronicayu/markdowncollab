@@ -105,6 +105,7 @@ export default function EditorStatusBar({
     // Build a single ProseMirror transaction to avoid position drift
     // between mark + insert operations during concurrent edits.
     const { tr, schema } = editor.state;
+    tr.setMeta("aiSuggestion", true);
     const markTypeSchema = schema.marks.suggestionMark;
 
     if (mode === "replace") {
@@ -132,7 +133,7 @@ export default function EditorStatusBar({
   const [goalInputValue, setGoalInputValue] = useState("");
 
   return (
-    <div className="sticky bottom-0 flex justify-between items-center px-4 py-1.5 text-xs text-[#a39e98] bg-[#ffffff]/80 backdrop-blur-sm border-t border-[rgba(0,0,0,0.1)]">
+    <div className="sticky bottom-0 hidden md:flex justify-between items-center px-4 py-1.5 text-xs text-[#a39e98] bg-[#ffffff]/80 backdrop-blur-sm border-t border-[rgba(0,0,0,0.1)]">
       <span>
         {saveStatus === "saving" ? (
           "Saving..."

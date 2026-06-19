@@ -5,6 +5,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import ShareDialog from "@/components/ShareDialog";
 import { useTranslation, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 import { toast } from "@/lib/toast";
+import type { EditorMode } from "@/lib/editor-mode";
 
 export interface Collaborator {
   name: string;
@@ -48,6 +49,83 @@ interface TopBarProps {
   publishAt?: string | null;
   onSchedulePublish?: (dateTime: string | null) => void;
   onShowMetadata?: () => void;
+  editorMode?: EditorMode;
+  onEditorModeChange?: (mode: EditorMode) => void;
+  allowedEditorModes?: EditorMode[];
+}
+
+const MODE_META: Record<EditorMode, { label: string; title: string; path: string }> = {
+  edit: {
+    label: "Edit",
+    title: "Edit — your changes apply directly",
+    path: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125",
+  },
+  suggest: {
+    label: "Suggest",
+    title: "Suggest — your changes become tracked proposals",
+    path: "M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z",
+  },
+  view: {
+    label: "View",
+    title: "View — read-only",
+    path: "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  },
+};
+
+function ModeSwitcher({
+  mode,
+  onChange,
+  allowed,
+}: {
+  mode: EditorMode;
+  onChange: (m: EditorMode) => void;
+  allowed: EditorMode[];
+}) {
+  const modes: EditorMode[] = ["edit", "suggest", "view"];
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Editor mode"
+      className="inline-flex items-center rounded-full p-0.5 shrink-0"
+      style={{ background: "rgba(0,0,0,0.04)" }}
+    >
+      {modes.map((m) => {
+        const meta = MODE_META[m];
+        const isActive = mode === m;
+        const isAllowed = allowed.includes(m);
+        const title = isAllowed
+          ? meta.title
+          : `${meta.label} — not available for your role`;
+        return (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={isActive}
+            aria-label={meta.label}
+            disabled={!isAllowed}
+            onClick={() => isAllowed && onChange(m)}
+            title={title}
+            data-mode={m}
+            data-active={isActive ? "true" : "false"}
+            className="inline-flex items-center gap-1 h-7 px-2 rounded-full transition-colors disabled:cursor-not-allowed"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              background: isActive ? "#0075de" : "transparent",
+              color: isActive ? "#ffffff" : isAllowed ? "var(--ink-soft)" : "var(--ink-muted)",
+              opacity: isAllowed ? 1 : 0.45,
+            }}
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d={meta.path} />
+            </svg>
+            <span className="hidden sm:inline">{meta.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function TopBar({
@@ -81,6 +159,9 @@ export default function TopBar({
   publishAt,
   onSchedulePublish,
   onShowMetadata,
+  editorMode,
+  onEditorModeChange,
+  allowedEditorModes,
 }: TopBarProps) {
   const { data: session } = useSession();
   const { t, locale, setLocale } = useTranslation();
@@ -173,7 +254,7 @@ export default function TopBar({
   }
 
   return (
-    <div data-topbar className="flex items-center justify-between px-3 py-2 md:px-4 shrink-0" style={{ background: "var(--surface)", borderBottom: "1px solid var(--rule)" }}>
+    <div data-topbar className="flex items-center justify-between px-3 py-2 md:px-4 shrink-0 bg-white md:bg-[var(--surface)] border-b border-black/10 md:border-[var(--rule)]">
       {/* Left: breadcrumb + title */}
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <a
@@ -230,10 +311,12 @@ export default function TopBar({
             {connected ? t("status.connected") : t("status.connecting")}
           </span>
         </div>
-        {userRole === "viewer" && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full" style={{ fontSize: 12, fontWeight: 600, background: "var(--accent-soft)", color: "var(--accent-on-soft)" }}>
-            View only
-          </span>
+        {editorMode && onEditorModeChange && allowedEditorModes && (
+          <ModeSwitcher
+            mode={editorMode}
+            onChange={onEditorModeChange}
+            allowed={allowedEditorModes}
+          />
         )}
         {documentStatus && documentStatus !== "draft" && (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full" style={{
