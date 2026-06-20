@@ -2,82 +2,170 @@
 @plugin "@tailwindcss/typography";
 
 :root {
+  /* Notion palette — warm neutrals with subtle yellow undertone */
   --background: #ffffff;
-  --foreground: #171717;
-  --page-bg: #F2E8D5;
-  --sidebar-bg: #111110;
+  --foreground: rgba(0,0,0,0.95);
+  --page-bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f6f5f4;        /* warm white (alt section bg) */
+  --ink: rgba(0,0,0,0.95);     /* primary text / headings */
+  --ink-2: rgba(0,0,0,0.9);    /* reading text */
+  --ink-soft: #615d59;         /* secondary text */
+  --ink-muted: #a39e98;         /* tertiary, placeholder, timestamps */
+  --warm-dark: #31302e;         /* dark surface accent */
+  --rule: rgba(0,0,0,0.1);     /* whisper border */
+  --rule-2: rgba(0,0,0,0.16);
+
+  /* Chrome */
+  --sidebar-bg: #ffffff;
   --toolbar-bg: #ffffff;
-  --toolbar-border: #e5e7eb;
-  --topbar-bg: #111110;
+  --toolbar-border: rgba(0,0,0,0.1);
+  --topbar-bg: #ffffff;
   --card-bg: #ffffff;
-  --card-border: rgba(0,0,0,0.08);
-  --card-hover-bg: #f9fafb;
-  --input-bg: rgba(255,255,255,0.6);
-  --input-border: rgba(0,0,0,0.1);
-  --accent: #B8692A;
-  --accent-hover: #96541F;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-muted: #9ca3af;
-  --editor-bg: #FFFEF9;
-  --code-bg: #f8f9fa;
-  --code-border: #e5e7eb;
-  --blockquote-border: #d1d5db;
-  --blockquote-text: #6b7280;
-  --hr-color: #e5e7eb;
-  --comment-bg: #FEF3C7;
-  --comment-border: #F59E0B;
-  --link-color: #2563eb;
-  --link-hover: #1d4ed8;
+  --card-border: rgba(0,0,0,0.1);
+  --card-hover-bg: #f6f5f4;
+  --input-bg: #ffffff;
+  --input-border: #dddddd;
+
+  /* Semantic — Notion Blue for ALL user actions + links */
+  --accent: #0075de;            /* Notion Blue */
+  --accent-hover: #005bab;      /* Active Blue */
+  --accent-soft: #f2f9ff;       /* Badge Blue Bg */
+  --accent-focus: #097fe8;      /* Focus Blue */
+  --accent-on-soft: #097fe8;    /* Badge text */
+  --navy: #213183;              /* Deep brand navy */
+
+  /* Agent accent kept as teal per prototype, matched to DESIGN.md teal */
+  --ai: #2a9d99;
+  --ai-hover: #207d79;
+  --ai-soft: #e0f2f1;
+
+  --ok: #1aae39;                /* Notion Green */
+  --ok-soft: #e6f7eb;
+  --warn: #dd5b00;              /* Notion Orange */
+  --warn-soft: #fbece0;
+
+  /* Decorative accents (not chrome) */
+  --pink: #ff64c8;
+  --purple: #391c57;
+  --brown: #523410;
+
+  --text-primary: rgba(0,0,0,0.95);
+  --text-secondary: #615d59;
+  --text-muted: #a39e98;
+
+  --editor-bg: #ffffff;
+  --code-bg: #f6f5f4;
+  --code-border: rgba(0,0,0,0.1);
+  --blockquote-border: rgba(0,0,0,0.16);
+  --blockquote-text: #615d59;
+  --hr-color: rgba(0,0,0,0.1);
+  --comment-bg: #fef3c7;
+  --comment-border: #dd5b00;
+  --link-color: #0075de;
+  --link-hover: #005bab;
   --dialog-bg: #ffffff;
   --dialog-overlay: rgba(0,0,0,0.4);
   --scroll-fade: from-white;
+
+  /* Shadows — multi-layer whisper stack (max opacity 0.05) */
+  --shadow-card: rgba(0,0,0,0.04) 0 4px 18px, rgba(0,0,0,0.027) 0 2.025px 7.84688px, rgba(0,0,0,0.02) 0 0.8px 2.925px, rgba(0,0,0,0.01) 0 0.175px 1.04062px;
+  --shadow-deep: rgba(0,0,0,0.01) 0 1px 3px, rgba(0,0,0,0.02) 0 3px 7px, rgba(0,0,0,0.02) 0 7px 15px, rgba(0,0,0,0.04) 0 14px 28px, rgba(0,0,0,0.05) 0 23px 52px;
+
+  /* Radii (Notion-inspired) */
+  --radius-btn: 4px;
+  --radius-input: 4px;
+  --radius-card: 12px;
+  --radius-hero: 16px;
+  --radius-pill: 9999px;
 }
 
 .dark {
-  --background: #1a1a2e;
-  --foreground: #e0e0e0;
-  --page-bg: #16162a;
-  --sidebar-bg: #0f0f1e;
-  --toolbar-bg: #1e1e36;
-  --toolbar-border: #2d2d4a;
-  --topbar-bg: #0f0f1e;
-  --card-bg: #1e1e36;
-  --card-border: rgba(255,255,255,0.08);
-  --card-hover-bg: #25253f;
-  --input-bg: rgba(255,255,255,0.06);
-  --input-border: rgba(255,255,255,0.1);
-  --accent: #D4913E;
-  --accent-hover: #B8692A;
-  --text-primary: #e0e0e0;
-  --text-secondary: #a0a0b8;
-  --text-muted: #6b6b88;
-  --editor-bg: #1a1a2e;
-  --code-bg: #151528;
-  --code-border: #2d2d4a;
-  --blockquote-border: #3d3d5c;
-  --blockquote-text: #8888a8;
-  --hr-color: #2d2d4a;
-  --comment-bg: #3d2e10;
-  --comment-border: #B8692A;
-  --link-color: #60a5fa;
-  --link-hover: #93bbfd;
-  --dialog-bg: #1e1e36;
+  /* Warm dark variant — grays keep yellow undertone */
+  --background: #1c1b1a;
+  --foreground: rgba(255,255,255,0.92);
+  --page-bg: #1c1b1a;
+  --surface: #262523;
+  --surface-2: #31302e;        /* warm dark from DESIGN.md */
+  --ink: rgba(255,255,255,0.92);
+  --ink-2: rgba(255,255,255,0.86);
+  --ink-soft: #a39e98;
+  --ink-muted: #615d59;
+  --rule: rgba(255,255,255,0.1);
+  --rule-2: rgba(255,255,255,0.16);
+
+  --sidebar-bg: #1c1b1a;
+  --toolbar-bg: #262523;
+  --toolbar-border: rgba(255,255,255,0.1);
+  --topbar-bg: #1c1b1a;
+  --card-bg: #262523;
+  --card-border: rgba(255,255,255,0.1);
+  --card-hover-bg: #31302e;
+  --input-bg: #262523;
+  --input-border: rgba(255,255,255,0.16);
+
+  --accent: #62aef0;            /* Link Light Blue (DESIGN.md) */
+  --accent-hover: #97c9f5;
+  --accent-soft: rgba(0,117,222,0.18);
+  --accent-focus: #62aef0;
+  --accent-on-soft: #97c9f5;
+
+  --ai: #4fbdb8;
+  --ai-hover: #7cd1cd;
+  --ai-soft: rgba(42,157,153,0.18);
+
+  --ok: #4fd16a;
+  --ok-soft: rgba(26,174,57,0.18);
+  --warn: #f08040;
+  --warn-soft: rgba(221,91,0,0.22);
+
+  --pink: #ff64c8;
+  --purple: #6d4a96;
+  --brown: #8a6f42;
+
+  --text-primary: rgba(255,255,255,0.92);
+  --text-secondary: #a39e98;
+  --text-muted: #615d59;
+
+  --editor-bg: #1c1b1a;
+  --code-bg: #31302e;
+  --code-border: rgba(255,255,255,0.1);
+  --blockquote-border: rgba(255,255,255,0.16);
+  --blockquote-text: #a39e98;
+  --hr-color: rgba(255,255,255,0.1);
+  --comment-bg: rgba(221,91,0,0.22);
+  --comment-border: #dd5b00;
+  --link-color: #62aef0;
+  --link-hover: #97c9f5;
+  --dialog-bg: #262523;
   --dialog-overlay: rgba(0,0,0,0.6);
-  --scroll-fade: from-[#1e1e36];
+  --scroll-fade: from-[#262523];
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-rule: var(--rule);
+  --color-accent: var(--accent);
+  --color-ai: var(--ai);
+  --font-sans: var(--font-ui);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui, 'Inter'), -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-feature-settings: 'lnum', 'locl';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Aliases so prototype-ported styles keep working with DESIGN.md fonts */
+:root {
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Mono", Consolas, monospace;
+  --font-doc: var(--font-ui, 'Inter'), system-ui, sans-serif;
 }
 
 /* Collaboration cursors */
@@ -90,10 +178,35 @@ body {
   word-break: normal;
 }
 
-/* ProseMirror typography */
-.ProseMirror h1 { font-size: 2rem; font-weight: 700; border-bottom: 1px solid var(--hr-color); padding-bottom: 0.5rem; margin-bottom: 1rem; }
-.ProseMirror h2 { font-size: 1.5rem; font-weight: 700; border-bottom: 1px solid var(--hr-color); padding-bottom: 0.25rem; margin-bottom: 0.75rem; }
-.ProseMirror h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; }
+/* ProseMirror typography — Notion-inspired Inter scale */
+.ProseMirror {
+  font-family: var(--font-ui, 'Inter'), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.ProseMirror h1 {
+  font-size: 2.5rem; /* 40px — sub-heading large */
+  font-weight: 700; letter-spacing: -0.0625em;
+  color: var(--ink);
+  margin-top: 0; margin-bottom: 0.75rem; padding-bottom: 0;
+  border-bottom: none; line-height: 1.1;
+  font-feature-settings: 'lnum', 'locl';
+}
+.ProseMirror h2 {
+  font-size: 1.625rem; /* 26px — sub-heading */
+  font-weight: 700; letter-spacing: -0.024em; /* -0.625px ≈ -.024em */
+  color: var(--ink);
+  margin-top: 2rem; margin-bottom: 0.5rem; padding-bottom: 0;
+  border-bottom: none; line-height: 1.23;
+}
+.ProseMirror h3 {
+  font-size: 1.375rem; /* 22px — card title */
+  font-weight: 700; letter-spacing: -0.011em;
+  color: var(--ink);
+  margin-top: 1.5rem; margin-bottom: 0.5rem; line-height: 1.27;
+}
 
 /* Heading anchor links */
 .ProseMirror .heading-anchor-target {
@@ -284,15 +397,15 @@ body {
   display: block;
 }
 .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
-  background-color: #B8692A;
-  border-color: #B8692A;
+  background-color: var(--accent);
+  border-color: var(--accent);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
   background-size: 100%;
   background-position: center;
   background-repeat: no-repeat;
 }
 .ProseMirror ul[data-type="taskList"] li > label input[type="checkbox"]:hover {
-  border-color: #B8692A;
+  border-color: var(--accent);
 }
 .ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div > p {
   text-decoration: line-through;
@@ -1109,11 +1222,96 @@ body {
   top: 0;
   left: 0;
   height: 3px;
-  background: #d97706;
+  background: var(--accent);
   z-index: 5;
   transition: width 0.1s linear;
   border-radius: 0 1px 1px 0;
 }
+
+/* Comment-card margin-thread look: left-edge accent bar + serif italic anchor */
+[data-comment-sidebar] .comment-card,
+aside [class*="border-amber"]:has([class*="comment"]),
+aside .comment-item,
+aside > div > div[class*="rounded"][class*="border"] {
+  position: relative;
+}
+/* Top bar: clean white chrome, DESIGN.md nav spec (15px weight 500-600, ink text) */
+[data-topbar] {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* ========== markdown-collab prototype classes ========== */
+/* Pair rail (AI chat) */
+.mc-pair { display:flex; flex-direction:column; background:var(--surface); border-left:1px solid var(--rule); }
+.mc-pair-head { padding:14px 16px 12px; border-bottom:1px solid var(--rule); display:flex; align-items:flex-start; gap:11px; }
+.mc-pair-head .info { flex:1; min-width:0; }
+.mc-pair-head .name { font-weight:600; font-size:13.5px; letter-spacing:-.005em; display:flex; align-items:center; gap:7px; color:var(--ink); }
+.mc-pair-head .status { font-family:var(--font-mono); font-size:10.5px; color:var(--ink-muted); margin-top:3px; letter-spacing:.02em; display:flex; align-items:center; gap:5px; }
+.mc-pair-head .live-dot { width:5px; height:5px; border-radius:50%; background:var(--ok); animation: mc-pulse 1.8s ease-in-out infinite; }
+@keyframes mc-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.mc-pair-head .icon-btn { width:26px; height:26px; border-radius:6px; border:none; background:transparent; display:flex; align-items:center; justify-content:center; color:var(--ink-soft); cursor:pointer; font-size:14px; }
+.mc-pair-head .icon-btn:hover { background:var(--surface-2); color:var(--ink); }
+
+.mc-avatar-ai {
+  width:28px; height:28px; border-radius:50%; background:var(--ai);
+  color:#fff; display:inline-flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:600; flex-shrink:0; position:relative;
+}
+.mc-avatar-ai::after {
+  content:''; position:absolute; inset:-2px;
+  border:2px dashed var(--ai); border-radius:50%; opacity:.35;
+}
+.mc-avatar-ai.sm { width:22px; height:22px; font-size:10px; }
+.mc-avatar-ai.xs { width:16px; height:16px; font-size:9px; }
+.mc-avatar-ai.xs::after, .mc-avatar-ai.sm::after { inset:-1.5px; border-width:1.5px; }
+
+.mc-badge-ai {
+  display:inline-flex; align-items:center;
+  font-family:var(--font-mono); font-size:9px; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+  padding:1px 5px; border-radius:3px; background:transparent; color:var(--ai);
+  border:1px solid color-mix(in oklab, var(--ai) 30%, transparent);
+}
+
+.mc-pair-scroll { flex:1; overflow-y:auto; padding:16px 16px 8px; }
+.mc-pair-msg { margin-bottom:18px; position:relative; }
+.mc-pair-msg.user { text-align:right; margin-bottom:10px; }
+.mc-pair-msg.user .meta { font-family:var(--font-mono); font-size:10px; color:var(--ink-muted); letter-spacing:.04em; margin-bottom:3px; }
+.mc-pair-msg.user .instruction {
+  display:inline-block; font-family:var(--font-doc); font-style:italic;
+  font-size:13.5px; color:var(--ink-2); line-height:1.5;
+  background:var(--surface-2); padding:7px 11px; border-radius:10px 10px 2px 10px;
+  max-width:90%; text-align:left;
+}
+.mc-pair-msg.agent .meta { display:flex; align-items:center; gap:7px; margin-bottom:6px; font-size:11.5px; }
+.mc-pair-msg.agent .meta .nm { font-weight:600; color:var(--ink); font-size:12px; }
+.mc-pair-msg.agent .meta .tm { font-family:var(--font-mono); font-size:10px; color:var(--ink-muted); letter-spacing:.04em; margin-left:auto; }
+.mc-pair-msg.agent .body { font-size:13px; color:var(--ink-2); line-height:1.55; padding-left:30px; }
+.mc-pair-msg.agent .body code { font-family:var(--font-mono); font-size:11.5px; background:var(--surface-2); padding:1px 5px; border-radius:3px; color:var(--ink); }
+
+.mc-pair-compose { border-top:1px solid var(--rule); padding:12px 14px; background:var(--surface); }
+.mc-pair-input {
+  border:1px solid var(--rule); border-radius:10px; padding:8px 10px;
+  background:var(--surface-2); display:flex; align-items:flex-end; gap:8px;
+  transition: border-color .15s;
+}
+.mc-pair-input:focus-within { border-color:var(--ai); background:var(--surface); }
+.mc-pair-input .slash { font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); padding:2px 6px; background:var(--surface); border:1px solid var(--rule); border-radius:4px; flex-shrink:0; align-self:flex-start; margin-top:4px; }
+.mc-pair-input textarea {
+  flex:1; min-width:0; resize:none; border:none; outline:none; background:transparent;
+  font: inherit; font-size:13px; color:var(--ink); padding:4px 0; max-height:80px;
+}
+.mc-pair-input textarea::placeholder { color:var(--ink-muted); }
+.mc-pair-input .send {
+  width:28px; height:28px; border-radius:7px; background:var(--ink); color:var(--surface);
+  display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;
+  border:none; cursor:pointer; transition: background .12s;
+}
+.mc-pair-input .send:hover:not(:disabled) { background:var(--ink-2); }
+.mc-pair-input .send:disabled { opacity:.4; cursor:not-allowed; background:var(--rule-2); color:var(--ink-muted); }
+.mc-pair-hints { display:flex; gap:14px; margin-top:8px; font-family:var(--font-mono); font-size:10px; color:var(--ink-muted); letter-spacing:.02em; }
+.mc-pair-hints .h { display:flex; align-items:center; gap:4px; }
+.mc-kbd { background:var(--surface); border:1px solid var(--rule); border-bottom-width:1.5px; border-radius:3px; padding:0 4px; font-family:var(--font-mono); font-size:10px; color:var(--ink-2); }
 
 /* Grammar check squiggly underline */
 .grammar-error {
@@ -1210,24 +1408,27 @@ body {
   to { opacity: 1; }
 }
 
-/* Mobile menu item base style */
+/* Mobile / overflow menu item base style — white drawer, ink text */
 .mobile-menu-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   width: 100%;
   padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 0.5rem;
+  font-size: 14px;
+  color: var(--ink-soft);
+  border-radius: 6px;
   transition: background-color 0.15s, color 0.15s;
   text-align: left;
-  min-height: 44px;
+  min-height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
 }
 .mobile-menu-item:hover,
 .mobile-menu-item:active {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background-color: var(--surface-2);
+  color: var(--ink);
 }
 .mobile-menu-item:disabled {
   opacity: 0.4;
@@ -1262,6 +1463,6 @@ body {
 /* Ensure content area has bottom padding on mobile for the fixed toolbar */
 @media (max-width: 767px) {
   .ProseMirror {
-    padding-bottom: 60px;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
   }
 }

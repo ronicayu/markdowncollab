@@ -150,12 +150,6 @@ export default function MobileToolbar({ editor }: MobileToolbarProps) {
           isActive: () => editor.isActive("subscript"),
         },
         {
-          label: "Highlight",
-          icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /><path strokeLinecap="round" d="M3 21h18" strokeWidth={2.5} style={{ color: '#facc15' }} /></svg>,
-          action: () => editor.chain().focus().toggleHighlight().run(),
-          isActive: () => editor.isActive("highlight"),
-        },
-        {
           label: "Code",
           icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 9l-3 3 3 3M16 9l3 3-3 3" /></svg>,
           action: () => editor.chain().focus().toggleCode().run(),
@@ -323,7 +317,7 @@ export default function MobileToolbar({ editor }: MobileToolbarProps) {
     <>
       {/* Fixed bottom bar - mobile only */}
       <div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--toolbar-bg)] border-t border-[var(--toolbar-border)] mobile-toolbar-bar"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-black/10 mobile-toolbar-bar"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="flex items-center justify-around px-1 py-1">

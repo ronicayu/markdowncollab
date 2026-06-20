@@ -163,15 +163,15 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-900">
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-[rgba(0,0,0,0.1)] overflow-hidden z-50">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,0,0,0.1)]">
+            <h3 className="text-sm font-semibold text-[#31302e]">
               Notifications
             </h3>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-[#B8692A] hover:text-[#96541F] font-medium"
+                className="text-xs text-[#0075de] hover:text-[#005bab] font-medium"
               >
                 Mark all as read
               </button>
@@ -179,11 +179,11 @@ export default function NotificationBell() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400">
+              <div className="px-4 py-8 text-center text-sm text-[#a39e98]">
                 Loading...
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-16 text-[#a39e98]">
                 <span className="text-4xl mb-3">&#128276;</span>
                 <p className="text-sm">No notifications yet.</p>
               </div>
@@ -192,24 +192,24 @@ export default function NotificationBell() {
                 <button
                   key={notif.id}
                   onClick={() => handleNotificationClick(notif)}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 ${
-                    !notif.read ? "bg-amber-50/50" : ""
+                  className={`w-full text-left px-4 py-3 hover:bg-[#f6f5f4] transition-colors border-b border-[rgba(0,0,0,0.08)] last:border-0 ${
+                    !notif.read ? "bg-[#fbece0]/50" : ""
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     {!notif.read && (
-                      <span className="mt-1.5 h-2 w-2 rounded-full bg-[#B8692A] shrink-0" />
+                      <span className="mt-1.5 h-2 w-2 rounded-full bg-[#0075de] shrink-0" />
                     )}
                     <div className={`min-w-0 ${notif.read ? "ml-5" : ""}`}>
-                      <p className="text-sm text-gray-700 line-clamp-2">
+                      <p className="text-sm text-[#31302e] line-clamp-2">
                         {notif.message}
                       </p>
                       {notif.snippet && (
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 italic bg-gray-50 rounded px-1.5 py-1">
+                        <p className="text-xs text-[#615d59] mt-0.5 line-clamp-2 italic bg-[#f6f5f4] rounded px-1.5 py-1">
                           &ldquo;{notif.snippet}&rdquo;
                         </p>
                       )}
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-[#a39e98] mt-0.5">
                         {timeAgo(notif.createdAt)}
                       </p>
                     </div>

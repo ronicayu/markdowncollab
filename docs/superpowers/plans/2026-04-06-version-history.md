@@ -1251,7 +1251,7 @@ export default function VersionHistoryPanel({
     switch (type) {
       case "manual":
         return (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#B8692A]/15 text-[#B8692A]">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#0075de]/15 text-[#0075de]">
             Manual
           </span>
         );
@@ -1289,15 +1289,15 @@ export default function VersionHistoryPanel({
 
   return (
     <>
-      <div className="w-80 shrink-0 overflow-y-auto border-l border-[#E8D8C0] bg-[#F5EBD8] flex flex-col">
+      <div className="w-80 shrink-0 overflow-y-auto border-l border-[#eeeceb] bg-[#ffffff] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#E8D8C0]">
+        <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#eeeceb]">
           <h2 className="text-sm font-semibold text-gray-700">
             Version History
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+            className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-[#eeeceb] transition-colors"
             title="Close version history"
           >
             <svg
@@ -1317,11 +1317,11 @@ export default function VersionHistoryPanel({
         </div>
 
         {/* Save version button */}
-        <div className="px-3 py-2 border-b border-[#E8D8C0]">
+        <div className="px-3 py-2 border-b border-[#eeeceb]">
           <button
             onClick={handleSaveManual}
             disabled={savingManual}
-            className="w-full flex items-center justify-center gap-1.5 h-8 text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] disabled:bg-gray-300 rounded-md transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 h-8 text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] disabled:bg-gray-300 rounded-md transition-colors"
           >
             {savingManual ? (
               <>
@@ -1408,7 +1408,7 @@ export default function VersionHistoryPanel({
                       <button
                         key={version.id}
                         onClick={() => handlePreview(version)}
-                        className="w-full text-left px-2.5 py-2 rounded-md border border-transparent hover:border-[#D4A978] hover:bg-[#FFFEF9] transition-colors group"
+                        className="w-full text-left px-2.5 py-2 rounded-md border border-transparent hover:border-[#dddddd] hover:bg-[#ffffff] transition-colors group"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-medium text-gray-700">
@@ -1434,7 +1434,7 @@ export default function VersionHistoryPanel({
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#E8D8C0]">
+                <div className="flex items-center justify-between pt-2 border-t border-[#eeeceb]">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
@@ -1469,7 +1469,7 @@ export default function VersionHistoryPanel({
           }}
         >
           <div
-            className="bg-[#FFFEF9] rounded-xl shadow-xl mx-4 max-w-2xl w-full max-h-[80vh] flex flex-col"
+            className="bg-[#ffffff] rounded-xl shadow-xl mx-4 max-w-2xl w-full max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {previewLoading ? (
@@ -1552,7 +1552,7 @@ export default function VersionHistoryPanel({
                       setRestoreTarget(preview);
                       setPreview(null);
                     }}
-                    className="text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] px-4 py-1.5 rounded-md transition-colors"
+                    className="text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] px-4 py-1.5 rounded-md transition-colors"
                   >
                     Restore this version
                   </button>
@@ -1576,7 +1576,7 @@ export default function VersionHistoryPanel({
             <div className="flex items-center gap-3 mb-3">
               <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center">
                 <svg
-                  className="h-5 w-5 text-[#B8692A]"
+                  className="h-5 w-5 text-[#0075de]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -1615,7 +1615,7 @@ export default function VersionHistoryPanel({
               <button
                 onClick={() => handleRestore(restoreTarget)}
                 disabled={restoring}
-                className="text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] disabled:bg-gray-300 px-4 py-1.5 rounded-md transition-colors"
+                className="text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] disabled:bg-gray-300 px-4 py-1.5 rounded-md transition-colors"
               >
                 {restoring ? "Restoring..." : "Restore"}
               </button>

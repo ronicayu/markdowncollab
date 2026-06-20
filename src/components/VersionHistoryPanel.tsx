@@ -247,7 +247,7 @@ export default function VersionHistoryPanel({
     switch (type) {
       case "manual":
         return (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#B8692A]/15 text-[#B8692A]">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#0075de]/15 text-[#0075de]">
             Manual
           </span>
         );
@@ -259,7 +259,7 @@ export default function VersionHistoryPanel({
         );
       default:
         return (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#f6f5f4] text-[#615d59]">
             Auto
           </span>
         );
@@ -285,15 +285,15 @@ export default function VersionHistoryPanel({
 
   return (
     <>
-      <div className="w-80 shrink-0 overflow-y-auto border-l border-[#E8D8C0] bg-[#F5EBD8] flex flex-col">
+      <div className="w-80 shrink-0 overflow-y-auto border-l border-[#eeeceb] bg-[#ffffff] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#E8D8C0]">
-          <h2 className="text-sm font-semibold text-gray-700">
+        <div className="flex items-center justify-between px-3 py-2.5 border-b border-[#eeeceb]">
+          <h2 className="text-sm font-semibold text-[#31302e]">
             Version History
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+            className="p-1 rounded text-[#a39e98] hover:text-[#615d59] hover:bg-[#eeeceb] transition-colors"
             title="Close version history"
             aria-label="Close version history"
           >
@@ -314,15 +314,15 @@ export default function VersionHistoryPanel({
         </div>
 
         {/* Tab switcher */}
-        <div className="flex border-b border-[#E8D8C0]" role="tablist" aria-label="Version history tabs">
+        <div className="flex border-b border-[#eeeceb]" role="tablist" aria-label="Version history tabs">
           <button
             role="tab"
             aria-selected={activeTab === "versions"}
             onClick={() => setActiveTab("versions")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "versions"
-                ? "text-[#B8692A] border-b-2 border-[#B8692A]"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-[#0075de] border-b-2 border-[#0075de]"
+                : "text-[#615d59] hover:text-[#31302e]"
             }`}
           >
             Versions
@@ -333,8 +333,8 @@ export default function VersionHistoryPanel({
             onClick={() => setActiveTab("activity")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "activity"
-                ? "text-[#B8692A] border-b-2 border-[#B8692A]"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-[#0075de] border-b-2 border-[#0075de]"
+                : "text-[#615d59] hover:text-[#31302e]"
             }`}
           >
             Activity
@@ -345,8 +345,8 @@ export default function VersionHistoryPanel({
             onClick={() => setActiveTab("changelog")}
             className={`flex-1 px-3 py-2 text-xs font-medium transition-colors ${
               activeTab === "changelog"
-                ? "text-[#B8692A] border-b-2 border-[#B8692A]"
-                : "text-gray-500 hover:text-gray-700"
+                ? "text-[#0075de] border-b-2 border-[#0075de]"
+                : "text-[#615d59] hover:text-[#31302e]"
             }`}
           >
             Log
@@ -356,11 +356,11 @@ export default function VersionHistoryPanel({
         {activeTab === "versions" && (
         <>
         {/* Save version button */}
-        <div className="px-3 py-2 border-b border-[#E8D8C0]">
+        <div className="px-3 py-2 border-b border-[#eeeceb]">
           <button
             onClick={handleSaveManual}
             disabled={savingManual}
-            className="w-full flex items-center justify-center gap-1.5 h-8 text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] disabled:bg-gray-300 rounded-md transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 h-8 text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] disabled:bg-[#dddddd] rounded-md transition-colors"
           >
             {savingManual ? (
               <>
@@ -411,7 +411,7 @@ export default function VersionHistoryPanel({
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <svg
-                className="h-5 w-5 animate-spin text-gray-400"
+                className="h-5 w-5 animate-spin text-[#a39e98]"
                 viewBox="0 0 24 24"
                 fill="none"
               >
@@ -431,7 +431,7 @@ export default function VersionHistoryPanel({
               </svg>
             </div>
           ) : versions.length === 0 ? (
-            <p className="text-xs text-gray-400 py-4 text-center">
+            <p className="text-xs text-[#a39e98] py-4 text-center">
               No versions yet. Versions are created automatically as you edit, or
               click &quot;Save version&quot; above.
             </p>
@@ -439,32 +439,32 @@ export default function VersionHistoryPanel({
             <>
               {groupedVersions.map((group) => (
                 <div key={group.date} className="mb-3">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-1.5">
+                  <p className="text-[10px] font-medium text-[#a39e98] uppercase tracking-wide mb-1.5">
                     {group.date}
                   </p>
                   <div className="flex flex-col gap-1">
                     {group.items.map((version) => (
                       <div
                         key={version.id}
-                        className="w-full text-left px-2.5 py-2 rounded-md border border-transparent hover:border-[#D4A978] hover:bg-[#FFFEF9] transition-colors group"
+                        className="w-full text-left px-2.5 py-2 rounded-md border border-transparent hover:border-[#dddddd] hover:bg-[#ffffff] transition-colors group"
                       >
                         <button
                           onClick={() => handlePreview(version)}
                           className="w-full text-left"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-medium text-gray-700">
+                            <span className="text-xs font-medium text-[#31302e]">
                               {formatTime(version.createdAt)}
                             </span>
                             {typeBadge(version.type)}
                           </div>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[11px] text-gray-500 truncate">
+                            <span className="text-[11px] text-[#615d59] truncate">
                               {version.title}
                             </span>
                           </div>
                           {version.createdByName && (
-                            <span className="text-[10px] text-gray-400">
+                            <span className="text-[10px] text-[#a39e98]">
                               by {version.createdByName}
                             </span>
                           )}
@@ -475,7 +475,7 @@ export default function VersionHistoryPanel({
                               e.stopPropagation();
                               handleCompare(version);
                             }}
-                            className="mt-1 text-[10px] font-medium text-[#B8692A] hover:text-[#96541F] opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="mt-1 text-[10px] font-medium text-[#0075de] hover:text-[#005bab] opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             Compare with current
                           </button>
@@ -488,21 +488,21 @@ export default function VersionHistoryPanel({
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#E8D8C0]">
+                <div className="flex items-center justify-between pt-2 border-t border-[#eeeceb]">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
-                    className="text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 disabled:cursor-not-allowed"
+                    className="text-xs text-[#615d59] hover:text-[#31302e] disabled:text-[#a39e98] disabled:cursor-not-allowed"
                   >
                     Previous
                   </button>
-                  <span className="text-[10px] text-gray-400">
+                  <span className="text-[10px] text-[#a39e98]">
                     {page} / {totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 disabled:cursor-not-allowed"
+                    className="text-xs text-[#615d59] hover:text-[#31302e] disabled:text-[#a39e98] disabled:cursor-not-allowed"
                   >
                     Next
                   </button>
@@ -520,7 +520,7 @@ export default function VersionHistoryPanel({
             {changelogLoading ? (
               <div className="flex items-center justify-center py-8">
                 <svg
-                  className="h-5 w-5 animate-spin text-gray-400"
+                  className="h-5 w-5 animate-spin text-[#a39e98]"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -540,7 +540,7 @@ export default function VersionHistoryPanel({
                 </svg>
               </div>
             ) : (
-              <pre className="whitespace-pre-wrap text-xs text-gray-600 font-mono leading-relaxed">
+              <pre className="whitespace-pre-wrap text-xs text-[#615d59] font-mono leading-relaxed">
                 {changelogMarkdown || "No changelog entries yet."}
               </pre>
             )}
@@ -552,7 +552,7 @@ export default function VersionHistoryPanel({
             {activityLoading ? (
               <div className="flex items-center justify-center py-8">
                 <svg
-                  className="h-5 w-5 animate-spin text-gray-400"
+                  className="h-5 w-5 animate-spin text-[#a39e98]"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -572,7 +572,7 @@ export default function VersionHistoryPanel({
                 </svg>
               </div>
             ) : activities.length === 0 ? (
-              <p className="text-xs text-gray-400 py-4 text-center">
+              <p className="text-xs text-[#a39e98] py-4 text-center">
                 No activity recorded yet.
               </p>
             ) : (
@@ -582,37 +582,37 @@ export default function VersionHistoryPanel({
                   return (
                     <div
                       key={activity.id}
-                      className="py-2 border-b border-[#E8D8C0] last:border-b-0"
+                      className="py-2 border-b border-[#eeeceb] last:border-b-0"
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-medium text-gray-700">
+                        <span className="text-xs font-medium text-[#31302e]">
                           {activity.userName}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-[#615d59]">
                           {activity.action.replace(/_/g, " ")}
                         </span>
                       </div>
                       {activity.detail && (
-                        <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                        <p className="text-[11px] text-[#a39e98] mt-0.5 truncate">
                           {activity.detail}
                         </p>
                       )}
-                      <span className="text-[10px] text-gray-400">{ago}</span>
+                      <span className="text-[10px] text-[#a39e98]">{ago}</span>
                     </div>
                   );
                 })}
 
                 {/* Activity pagination */}
                 {Math.ceil(activityTotal / 20) > 1 && (
-                  <div className="flex items-center justify-between pt-2 border-t border-[#E8D8C0]">
+                  <div className="flex items-center justify-between pt-2 border-t border-[#eeeceb]">
                     <button
                       onClick={() => setActivityPage((p) => Math.max(1, p - 1))}
                       disabled={activityPage <= 1}
-                      className="text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 disabled:cursor-not-allowed"
+                      className="text-xs text-[#615d59] hover:text-[#31302e] disabled:text-[#a39e98] disabled:cursor-not-allowed"
                     >
                       Previous
                     </button>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-[#a39e98]">
                       {activityPage} / {Math.ceil(activityTotal / 20)}
                     </span>
                     <button
@@ -622,7 +622,7 @@ export default function VersionHistoryPanel({
                         )
                       }
                       disabled={activityPage >= Math.ceil(activityTotal / 20)}
-                      className="text-xs text-gray-500 hover:text-gray-700 disabled:text-gray-300 disabled:cursor-not-allowed"
+                      className="text-xs text-[#615d59] hover:text-[#31302e] disabled:text-[#a39e98] disabled:cursor-not-allowed"
                     >
                       Next
                     </button>
@@ -647,13 +647,13 @@ export default function VersionHistoryPanel({
             role="dialog"
             aria-modal="true"
             aria-label="Version preview"
-            className="bg-[#FFFEF9] rounded-xl shadow-xl mx-4 max-w-2xl w-full max-h-[80vh] flex flex-col"
+            className="bg-[#ffffff] rounded-xl shadow-xl mx-4 max-w-2xl w-full max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {previewLoading ? (
               <div className="flex items-center justify-center py-16">
                 <svg
-                  className="h-6 w-6 animate-spin text-gray-400"
+                  className="h-6 w-6 animate-spin text-[#a39e98]"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -675,12 +675,12 @@ export default function VersionHistoryPanel({
             ) : preview ? (
               <>
                 {/* Preview header */}
-                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.1)]">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900">
+                    <h3 className="text-sm font-semibold text-[#31302e]">
                       {preview.title}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-[#615d59] mt-0.5">
                       {formatTime(preview.createdAt)} &middot;{" "}
                       {formatDate(preview.createdAt)}
                       {preview.createdByName &&
@@ -692,7 +692,7 @@ export default function VersionHistoryPanel({
                     <button
                       onClick={() => setPreview(null)}
                       aria-label="Close preview"
-                      className="p-1 rounded text-gray-400 hover:text-gray-600"
+                      className="p-1 rounded text-[#a39e98] hover:text-[#615d59]"
                     >
                       <svg
                         className="h-4 w-4"
@@ -713,16 +713,16 @@ export default function VersionHistoryPanel({
 
                 {/* Markdown content */}
                 <div className="flex-1 overflow-y-auto px-5 py-4">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-700 font-mono leading-relaxed">
+                  <pre className="whitespace-pre-wrap text-sm text-[#31302e] font-mono leading-relaxed">
                     {preview.markdown}
                   </pre>
                 </div>
 
                 {/* Restore button */}
-                <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[rgba(0,0,0,0.1)]">
                   <button
                     onClick={() => setPreview(null)}
-                    className="text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5"
+                    className="text-xs text-[#615d59] hover:text-[#31302e] px-3 py-1.5"
                   >
                     Close
                   </button>
@@ -731,7 +731,7 @@ export default function VersionHistoryPanel({
                       setRestoreTarget(preview);
                       setPreview(null);
                     }}
-                    className="text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] px-4 py-1.5 rounded-md transition-colors"
+                    className="text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] px-4 py-1.5 rounded-md transition-colors"
                   >
                     Restore this version
                   </button>
@@ -756,9 +756,9 @@ export default function VersionHistoryPanel({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center">
+              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-[#fbece0] flex items-center justify-center">
                 <svg
-                  className="h-5 w-5 text-[#B8692A]"
+                  className="h-5 w-5 text-[#0075de]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -772,17 +772,17 @@ export default function VersionHistoryPanel({
                 </svg>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900">
+                <h3 className="text-sm font-semibold text-[#31302e]">
                   Restore this version?
                 </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-[#615d59] mt-0.5">
                   This will replace the current document content with the version
                   from {formatTime(restoreTarget.createdAt)},{" "}
                   {formatDate(restoreTarget.createdAt)}.
                 </p>
               </div>
             </div>
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs text-[#a39e98] mb-4">
               A safety snapshot of the current document will be saved
               automatically before restoring.
             </p>
@@ -790,14 +790,14 @@ export default function VersionHistoryPanel({
               <button
                 onClick={() => setRestoreTarget(null)}
                 disabled={restoring}
-                className="text-xs font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5"
+                className="text-xs font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleRestore(restoreTarget)}
                 disabled={restoring}
-                className="text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] disabled:bg-gray-300 px-4 py-1.5 rounded-md transition-colors"
+                className="text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] disabled:bg-[#dddddd] px-4 py-1.5 rounded-md transition-colors"
               >
                 {restoring ? "Restoring..." : "Restore"}
               </button>
@@ -819,13 +819,13 @@ export default function VersionHistoryPanel({
             role="dialog"
             aria-modal="true"
             aria-label="Version comparison"
-            className="bg-[#FFFEF9] rounded-xl shadow-xl mx-4 max-w-4xl w-full max-h-[85vh] flex flex-col"
+            className="bg-[#ffffff] rounded-xl shadow-xl mx-4 max-w-4xl w-full max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {diffLoading ? (
               <div className="flex items-center justify-center py-16">
                 <svg
-                  className="h-6 w-6 animate-spin text-gray-400"
+                  className="h-6 w-6 animate-spin text-[#a39e98]"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -846,14 +846,14 @@ export default function VersionHistoryPanel({
               </div>
             ) : diffData ? (
               <>
-                <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-900">
+                <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(0,0,0,0.1)]">
+                  <h3 className="text-sm font-semibold text-[#31302e]">
                     Version Comparison
                   </h3>
                   <button
                     onClick={() => setDiffData(null)}
                     aria-label="Close comparison"
-                    className="p-1 rounded text-gray-400 hover:text-gray-600"
+                    className="p-1 rounded text-[#a39e98] hover:text-[#615d59]"
                   >
                     <svg
                       className="h-4 w-4"
@@ -878,10 +878,10 @@ export default function VersionHistoryPanel({
                     newLabel="Current document"
                   />
                 </div>
-                <div className="flex items-center justify-end px-5 py-3 border-t border-gray-100">
+                <div className="flex items-center justify-end px-5 py-3 border-t border-[rgba(0,0,0,0.1)]">
                   <button
                     onClick={() => setDiffData(null)}
-                    className="text-xs font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5"
+                    className="text-xs font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5"
                   >
                     Close
                   </button>

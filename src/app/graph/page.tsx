@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, notFound } from "next/navigation";
 
 interface DocNode {
   id: string;
@@ -23,10 +23,12 @@ interface GraphNode extends DocNode {
   vy: number;
 }
 
+// Status colors aligned to DESIGN.md semantic palette:
+// draft -> warm gray 500, in_review -> Notion Orange, approved -> Notion Green.
 const STATUS_COLORS: Record<string, string> = {
-  draft: "#6B7280",
-  in_review: "#D97706",
-  approved: "#059669",
+  draft: "#615d59",
+  in_review: "#dd5b00",
+  approved: "#1aae39",
 };
 
 function getStatusColor(status: string): string {
@@ -34,6 +36,9 @@ function getStatusColor(status: string): string {
 }
 
 export default function GraphPage() {
+  if (process.env.NEXT_PUBLIC_ENABLE_GRAPH_VIEW !== "true") {
+    notFound();
+  }
   const router = useRouter();
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -200,8 +205,8 @@ export default function GraphPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#FFFEF9]">
-        <p className="text-gray-500">Loading graph...</p>
+      <div className="flex h-screen items-center justify-center" style={{ background: "var(--page-bg)" }}>
+        <p style={{ color: "var(--ink-soft)" }}>Loading graph...</p>
       </div>
     );
   }
@@ -209,23 +214,42 @@ export default function GraphPage() {
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   return (
-    <div className="flex h-screen flex-col bg-[#FFFEF9]">
-      <div className="flex items-center justify-between bg-[#111110] px-4 py-2 shrink-0">
+    <div className="flex h-screen flex-col" style={{ background: "var(--page-bg)" }}>
+      {/* Top bar: white surface with whisper border (not dark chrome) */}
+      <div
+        className="flex items-center justify-between px-4 py-3 shrink-0 border-b"
+        style={{ background: "var(--surface)", borderColor: "var(--rule)" }}
+      >
         <div className="flex items-center gap-3">
-          <a href="/" className="text-sm font-bold text-white/80 hover:text-white transition-colors">MC</a>
-          <span className="text-white/25 text-sm">/</span>
-          <span className="text-sm font-semibold text-white/80">Document Graph</span>
+          <a
+            href="/"
+            className="text-[15px] font-bold transition-colors"
+            style={{ color: "var(--ink)" }}
+          >
+            MC
+          </a>
+          <span className="text-sm" style={{ color: "var(--ink-muted)" }}>/</span>
+          <span
+            className="text-[15px] font-semibold"
+            style={{ color: "var(--ink)" }}
+          >
+            Document Graph
+          </span>
         </div>
         <a
           href="/"
-          className="text-sm text-white/60 hover:text-white transition-colors"
+          className="text-[15px] font-semibold hover:underline"
+          style={{ color: "var(--accent)" }}
         >
           Back to documents
         </a>
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-4 px-4 py-2 border-b border-gray-100 text-xs text-gray-500">
+      <div
+        className="flex items-center gap-4 px-4 py-2 border-b text-xs"
+        style={{ borderColor: "var(--rule)", color: "var(--ink-soft)" }}
+      >
         <span className="flex items-center gap-1.5">
           <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: STATUS_COLORS.draft }} />
           Draft
@@ -239,18 +263,27 @@ export default function GraphPage() {
           Approved
         </span>
         <span className="flex items-center gap-1.5 ml-4">
-          <span className="inline-block w-6 h-0.5 bg-gray-400" />
+          <span
+            className="inline-block w-6 h-0.5"
+            style={{ background: "var(--ink-muted)" }}
+          />
           Wiki link
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-6 h-0.5 bg-blue-400" style={{ borderTop: "2px dashed #60A5FA" }} />
+          <span
+            className="inline-block w-6 h-0.5"
+            style={{ borderTop: "2px dashed #0075de" }}
+          />
           Fork
         </span>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
         {nodes.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400">
+          <div
+            className="flex items-center justify-center h-full"
+            style={{ color: "var(--ink-muted)" }}
+          >
             No documents found. Create some documents first.
           </div>
         ) : (
@@ -272,7 +305,7 @@ export default function GraphPage() {
                   y1={s.y}
                   x2={t.x}
                   y2={t.y}
-                  stroke={e.type === "fork" ? "#60A5FA" : "#D1D5DB"}
+                  stroke={e.type === "fork" ? "#0075de" : "#a39e98"}
                   strokeWidth={e.type === "fork" ? 2 : 1.5}
                   strokeDasharray={e.type === "fork" ? "6,3" : undefined}
                   opacity={0.6}
@@ -294,14 +327,14 @@ export default function GraphPage() {
                   r={hoveredNode === n.id ? 22 : 18}
                   fill={getStatusColor(n.status)}
                   opacity={hoveredNode === n.id ? 1 : 0.85}
-                  stroke={hoveredNode === n.id ? "#fff" : "none"}
+                  stroke={hoveredNode === n.id ? "#ffffff" : "none"}
                   strokeWidth={2}
                 />
                 <text
                   y={32}
                   textAnchor="middle"
                   fontSize={11}
-                  fill="#374151"
+                  fill="#615d59"
                   fontWeight={hoveredNode === n.id ? 600 : 400}
                 >
                   {n.title.length > 20 ? n.title.slice(0, 18) + "..." : n.title}

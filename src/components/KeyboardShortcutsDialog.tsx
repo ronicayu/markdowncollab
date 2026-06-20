@@ -307,8 +307,8 @@ export default function KeyboardShortcutsDialog({
         className="bg-white rounded-xl shadow-xl mx-4 max-w-lg w-full max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between rounded-t-xl">
-          <h2 id="shortcuts-dialog-title" className="text-base font-semibold text-gray-900">
+        <div className="sticky top-0 bg-white border-b border-[rgba(0,0,0,0.1)] px-5 py-4 flex items-center justify-between rounded-t-xl">
+          <h2 id="shortcuts-dialog-title" className="text-base font-semibold text-[#31302e]">
             Keyboard Shortcuts
           </h2>
           <div className="flex items-center gap-2">
@@ -327,15 +327,15 @@ export default function KeyboardShortcutsDialog({
               }}
               className={`text-xs font-medium px-2 py-1 rounded transition-colors ${
                 customizeMode
-                  ? "bg-[#B8692A] text-white"
-                  : "text-gray-500 hover:text-gray-700 border border-gray-200 hover:border-gray-300"
+                  ? "bg-[#0075de] text-white"
+                  : "text-[#615d59] hover:text-[#31302e] border border-[rgba(0,0,0,0.1)] hover:border-[#dddddd]"
               }`}
             >
               {customizeMode ? "Done" : "Customize"}
             </button>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-[#a39e98] hover:text-[#615d59] transition-colors"
               aria-label="Close"
             >
               <svg
@@ -355,12 +355,12 @@ export default function KeyboardShortcutsDialog({
           </div>
         </div>
         {conflictWarning && (
-          <div className="mx-5 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-sm text-amber-800 font-medium">
+          <div className="mx-5 mt-3 p-3 bg-[#fbece0] border border-[rgba(221,91,0,0.3)] rounded-lg">
+            <p className="text-sm text-[#dd5b00] font-medium">
               Conflict detected
             </p>
-            <p className="text-xs text-amber-700 mt-1">
-              <kbd className="px-1 py-0.5 bg-amber-100 border border-amber-300 rounded text-xs font-mono">
+            <p className="text-xs text-[#dd5b00] mt-1">
+              <kbd className="px-1 py-0.5 bg-[#fbece0] border border-[rgba(221,91,0,0.5)] rounded text-xs font-mono">
                 {formatKey(conflictWarning.combo, isMac)}
               </kbd>{" "}
               is already bound to{" "}
@@ -369,13 +369,13 @@ export default function KeyboardShortcutsDialog({
             <div className="flex gap-2 mt-2">
               <button
                 onClick={acceptConflict}
-                className="text-xs px-2 py-1 bg-[#B8692A] text-white rounded hover:bg-[#9a5722] transition-colors"
+                className="text-xs px-2 py-1 bg-[#0075de] text-white rounded hover:bg-[#9a5722] transition-colors"
               >
                 Override anyway
               </button>
               <button
                 onClick={cancelConflict}
-                className="text-xs px-2 py-1 border border-gray-300 text-gray-600 rounded hover:bg-gray-50 transition-colors"
+                className="text-xs px-2 py-1 border border-[#dddddd] text-[#615d59] rounded hover:bg-[#f6f5f4] transition-colors"
               >
                 Cancel
               </button>
@@ -385,7 +385,7 @@ export default function KeyboardShortcutsDialog({
         <div className="px-5 py-4 space-y-5">
           {SHORTCUT_DATA.map((category) => (
             <div key={category.title}>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <h3 className="text-xs font-semibold text-[#a39e98] uppercase tracking-wider mb-2">
                 {category.title}
               </h3>
               <div className="space-y-1">
@@ -400,9 +400,9 @@ export default function KeyboardShortcutsDialog({
                       key={shortcut.action}
                       className={`flex items-center justify-between py-1.5 px-1.5 rounded transition-colors ${
                         isEditing
-                          ? "bg-amber-50 ring-1 ring-[#B8692A]"
+                          ? "bg-[#fbece0] ring-1 ring-[#0075de]"
                           : canCustomize
-                          ? "hover:bg-gray-50 cursor-pointer"
+                          ? "hover:bg-[#f6f5f4] cursor-pointer"
                           : ""
                       }`}
                       onClick={() => {
@@ -415,14 +415,14 @@ export default function KeyboardShortcutsDialog({
                     >
                       <span
                         className={`text-sm ${
-                          isCustomized ? "text-[#B8692A] font-semibold" : "text-gray-700"
+                          isCustomized ? "text-[#0075de] font-semibold" : "text-[#31302e]"
                         }`}
                       >
                         {shortcut.action}
                       </span>
                       <div className="flex items-center gap-1">
                         {isEditing ? (
-                          <span className="text-xs text-[#B8692A] font-medium animate-pulse">
+                          <span className="text-xs text-[#0075de] font-medium animate-pulse">
                             Press new shortcut...
                           </span>
                         ) : (
@@ -434,8 +434,8 @@ export default function KeyboardShortcutsDialog({
                                   key={i}
                                   className={`inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 text-xs font-medium rounded-md border ${
                                     isCustomized
-                                      ? "text-[#B8692A] bg-amber-50 border-amber-200"
-                                      : "text-gray-600 bg-gray-50 border-gray-200"
+                                      ? "text-[#0075de] bg-[#fbece0] border-[rgba(221,91,0,0.3)]"
+                                      : "text-[#615d59] bg-[#f6f5f4] border-[rgba(0,0,0,0.1)]"
                                   }`}
                                 >
                                   {part}

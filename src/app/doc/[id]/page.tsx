@@ -21,24 +21,18 @@ import MobileToolbar from "@/components/MobileToolbar";
 import KeyboardShortcutsDialog from "@/components/KeyboardShortcutsDialog";
 import TopBar from "@/components/TopBar";
 import type { Collaborator, BreadcrumbSegment } from "@/components/TopBar";
-import { getFontFamily, type FontOption } from "@/components/FontSelector";
 import CommentSidebar from "@/components/CommentSidebar";
 import VersionHistoryPanel, { type DiffOverlayData } from "@/components/VersionHistoryPanel";
 import DiffViewer from "@/components/DiffViewer";
 import OutlineSidebar from "@/components/OutlineSidebar";
-import RelatedDocs from "@/components/RelatedDocs";
 import FloatingCommentButton from "@/components/FloatingCommentButton";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import TypingIndicator from "@/components/TypingIndicator";
 import SaveTemplateDialog from "@/components/SaveTemplateDialog";
 import PresentationMode from "@/components/PresentationMode";
-import PinnedNotes from "@/components/PinnedNotes";
 import AIChatSidebar from "@/components/AIChatSidebar";
-import ReminderDialog from "@/components/ReminderDialog";
 import ExpirationDialog from "@/components/ExpirationDialog";
 
 import DocumentMetadata from "@/components/DocumentMetadata";
-import TabBar, { trackTab } from "@/components/TabBar";
 import {
   getSuggestions,
   getComments,
@@ -54,6 +48,7 @@ import {
 import { toast } from "@/lib/toast";
 import { getUserColor } from "@/lib/cursor-utils";
 import type { Suggestion, Comment, RevisionRequest } from "@/types";
+import { useEditorMode } from "@/hooks/useEditorMode";
 
 const ADJECTIVES = [
   "Swift",
@@ -103,6 +98,102 @@ function useMediaQuery(maxWidth: number): boolean {
   return matches;
 }
 
+function relativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  if (Number.isNaN(then)) return "";
+  const diffSec = Math.floor((now - then) / 1000);
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay === 1) return "yesterday";
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function DocSubtitle({ author, updatedAt, isDraft }: { author: string | null; updatedAt: string | null; isDraft: boolean }) {
+  const displayAuthor = author || "Unknown author";
+  const initials = displayAuthor
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+  const dot = (
+    <span
+      aria-hidden="true"
+      style={{
+        display: "inline-block",
+        width: 3,
+        height: 3,
+        borderRadius: "50%",
+        background: "var(--ink-muted)",
+        margin: "0 8px",
+        verticalAlign: "middle",
+      }}
+    />
+  );
+  return (
+    <div
+      style={{
+        padding: "6px 24px 12px 24px",
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: 13,
+        color: "var(--ink-soft)",
+        fontFamily: "var(--font-ui, 'Inter'), system-ui, sans-serif",
+      }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 20,
+          height: 20,
+          borderRadius: "50%",
+          background: "var(--surface-2)",
+          color: "var(--ink-soft)",
+          fontSize: 10,
+          fontWeight: 600,
+          flexShrink: 0,
+        }}
+      >
+        {initials || "?"}
+      </span>
+      <span style={{ display: "inline-flex", alignItems: "center" }}>
+        <span>{displayAuthor}</span>
+        {dot}
+        <span>updated {updatedAt ? relativeTime(updatedAt) : "just now"}</span>
+        {isDraft && (
+          <>
+            {dot}
+            <span
+              style={{
+                fontSize: 10,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                border: "1px solid var(--rule)",
+                padding: "1px 6px",
+                borderRadius: 3,
+                color: "var(--ink-muted)",
+                fontWeight: 600,
+              }}
+            >
+              Draft
+            </span>
+          </>
+        )}
+      </span>
+    </div>
+  );
+}
+
 function collectActiveCommentIds(editorInstance: import("@tiptap/core").Editor): Set<string> {
   const ids = new Set<string>();
   editorInstance.state.doc.descendants((node) => {
@@ -130,13 +221,29 @@ export default function DocumentPage({
     setUserName(session?.user?.name ?? getUserName());
   }, [session]);
 
-  // Read template content from sessionStorage (set by document list page)
+  // Seed an empty document with initial content stashed in sessionStorage by the
+  // home page: either a template, or the contents of an imported file. Both flow
+  // through the Editor's `initialContent` prop, which injects them once when the
+  // Yjs doc is still empty. The Markdown extension's setContent parses markdown
+  // ("markdown" format) and HTML ("html" format from docx/html imports) alike.
   useEffect(() => {
-    const key = `template:${id}`;
-    const content = sessionStorage.getItem(key);
-    if (content) {
-      sessionStorage.removeItem(key);
-      setTemplateContent(content);
+    const templateKey = `template:${id}`;
+    const template = sessionStorage.getItem(templateKey);
+    if (template) {
+      sessionStorage.removeItem(templateKey);
+      setTemplateContent(template);
+      return;
+    }
+    const importKey = `import:${id}`;
+    const imported = sessionStorage.getItem(importKey);
+    if (imported) {
+      sessionStorage.removeItem(importKey);
+      try {
+        const { content } = JSON.parse(imported) as { format: string; content: string };
+        if (content) setTemplateContent(content);
+      } catch {
+        // Ignore a malformed payload — the doc just opens empty.
+      }
     }
   }, [id]);
 
@@ -179,7 +286,6 @@ export default function DocumentPage({
   const [userRole, setUserRole] = useState<"owner" | "editor" | "viewer" | null>(null);
   const [docStatus, setDocStatus] = useState<string>("draft");
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbSegment[]>([]);
-  const [lockInfo, setLockInfo] = useState<{ locked: boolean; lockedBy: string | null } | null>(null);
   const [hasPassword, setHasPassword] = useState(false);
   const [passwordVerified, setPasswordVerified] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
@@ -189,8 +295,8 @@ export default function DocumentPage({
   const [publishAt, setPublishAt] = useState<string | null>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  const [fontFamily, setFontFamily] = useState<string | null>(null);
   const [forkedFrom, setForkedFrom] = useState<{ id: string; title: string } | null>(null);
+  const [docUpdatedAt, setDocUpdatedAt] = useState<string | null>(null);
   // Fetch document title, role, status, and breadcrumbs on mount
   useEffect(() => {
     fetch(`/api/documents/${id}`)
@@ -199,8 +305,8 @@ export default function DocumentPage({
         if (doc?.title) setDocTitle(doc.title);
         if (doc?.role) setUserRole(doc.role);
         if (doc?.coverImage) setCoverImage(doc.coverImage);
-        if (doc?.fontFamily) setFontFamily(doc.fontFamily);
         if (doc?.status) setDocStatus(doc.status);
+        if (doc?.updatedAt) setDocUpdatedAt(doc.updatedAt);
         if (doc?.hasPassword) {
           setHasPassword(true);
           // Check sessionStorage for previously verified password
@@ -211,7 +317,6 @@ export default function DocumentPage({
         }
         // Track recent document open for the RecentDocs widget
         trackDocumentOpen(id, doc?.title || id);
-        trackTab(id, doc?.title || "Untitled");
         if (typeof window !== "undefined") window.dispatchEvent(new Event("recentDocsUpdated"));
         // Fetch forked-from document info if applicable
         if (doc?.forkedFrom) {
@@ -283,31 +388,6 @@ export default function DocumentPage({
     [id]
   );
 
-  // Fetch lock status on mount
-  useEffect(() => {
-    fetch(`/api/documents/${id}/lock`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) setLockInfo({ locked: data.locked, lockedBy: data.lockedBy });
-      })
-      .catch(() => {});
-  }, [id]);
-
-  const handleToggleLock = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/documents/${id}/lock`, { method: "PUT" });
-      const data = await res.json();
-      if (res.ok) {
-        setLockInfo({ locked: data.locked, lockedBy: data.lockedBy });
-        toast(data.locked ? `Document locked` : "Document unlocked");
-      } else {
-        toast(data.error || "Failed to toggle lock", "error");
-      }
-    } catch {
-      toast("Failed to toggle lock", "error");
-    }
-  }, [id]);
-
   const handleSummarize = useCallback(async () => {
     setSummaryLoading(true);
     try {
@@ -360,26 +440,9 @@ export default function DocumentPage({
     } catch { /* silently fail */ }
   }, [id]);
 
-  const handleFontChange = useCallback(
-    async (font: FontOption) => {
-      setFontFamily(font);
-      try {
-        await fetch(`/api/documents/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fontFamily: font }),
-        });
-      } catch {
-        // silently fail — font is already set optimistically
-      }
-    },
-    [id]
-  );
-
   const handleTitleChange = useCallback(
     async (newTitle: string) => {
       setDocTitle(newTitle);
-      trackTab(id, newTitle);
       try {
         await fetch(`/api/documents/${id}`, {
           method: "PUT",
@@ -934,20 +997,6 @@ export default function DocumentPage({
     });
   }, []);
 
-  // Grammar check toggle (persisted to localStorage)
-  const [grammarCheckEnabled, setGrammarCheckEnabled] = useState(false);
-  useEffect(() => {
-    const stored = localStorage.getItem("grammarCheck:enabled");
-    if (stored === "true") setGrammarCheckEnabled(true);
-  }, []);
-  const toggleGrammarCheck = useCallback(() => {
-    setGrammarCheckEnabled((prev) => {
-      const next = !prev;
-      localStorage.setItem("grammarCheck:enabled", String(next));
-      return next;
-    });
-  }, []);
-
   // Document Diff Notification — detect remote changes since last visit
   const [diffBannerVisible, setDiffBannerVisible] = useState(false);
   const [lastVisitContent, setLastVisitContent] = useState<string | null>(null);
@@ -1049,6 +1098,8 @@ export default function DocumentPage({
 
   // Mobile sidebar collapse & swipe gestures
   const isMobile = useMediaQuery(768);
+  const { mode: editorMode, setMode: setEditorMode, allowed: allowedEditorModes } =
+    useEditorMode({ docId: id, userRole, isMobile });
   const [showOutline, setShowOutline] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
@@ -1183,7 +1234,6 @@ export default function DocumentPage({
   }, [leftSidebarWidth, rightSidebarWidth]);
 
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
-  const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [presentationMode, setPresentationMode] = useState(false);
   const [presentationContent, setPresentationContent] = useState("");
 
@@ -1203,70 +1253,6 @@ export default function DocumentPage({
     }
     toast("Template saved");
   }, [editor]);
-
-  // AI Translate
-  const [translateLoading, setTranslateLoading] = useState(false);
-
-  const handleTranslate = useCallback(async (language: string) => {
-    setTranslateLoading(true);
-    try {
-      const res = await fetch("/api/agent/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: id, targetLanguage: language }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast(`Translated to ${language}. Opening new document...`);
-        router.push(`/doc/${data.documentId}`);
-      } else {
-        toast(data.error || "Translation failed", "error");
-      }
-    } catch {
-      toast("Failed to translate", "error");
-    } finally {
-      setTranslateLoading(false);
-    }
-  }, [id, router]);
-
-  const [generateTitleLoading, setGenerateTitleLoading] = useState(false);
-
-  const handleGenerateTitle = useCallback(async () => {
-    setGenerateTitleLoading(true);
-    try {
-      const res = await fetch("/api/agent/title", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: id }),
-      });
-      const data = await res.json();
-      if (res.ok && data.title) {
-        setDocTitle(data.title);
-        trackTab(id, data.title);
-        await fetch(`/api/documents/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: data.title }),
-        });
-        toast("Title generated");
-      } else {
-        toast(data.error || "Failed to generate title", "error");
-      }
-    } catch {
-      toast("Failed to generate title", "error");
-    } finally {
-      setGenerateTitleLoading(false);
-    }
-  }, [id]);
-
-  // Show "Generate title" button when doc is "Untitled" and has >50 words
-  const showGenerateTitle = useMemo(() => {
-    if (docTitle !== "Untitled" && docTitle !== id) return false;
-    if (!editor) return false;
-    const text = editor.state.doc.textContent.trim();
-    const wordCount = text ? text.split(/\s+/).length : 0;
-    return wordCount > 50;
-  }, [docTitle, id, editor]);
 
   const [agentLoading, setAgentLoading] = useState(false);
   const [agentTone, setAgentTone] = useState("");
@@ -1318,34 +1304,34 @@ export default function DocumentPage({
   if (!userName) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-[#615d59]">Loading...</p>
       </div>
     );
   }
 
   if (hasPassword && !passwordVerified) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F2E8D5]">
+      <div className="flex h-screen items-center justify-center bg-[#ffffff]">
         <div className="bg-white rounded-xl shadow-xl p-8 mx-4 max-w-sm w-full text-center">
-          <svg className="h-10 w-10 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <svg className="h-10 w-10 mx-auto mb-4 text-[#a39e98]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
           </svg>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Password Protected</h2>
-          <p className="text-sm text-gray-500 mb-5">This document requires a password to access.</p>
+          <h2 className="text-lg font-semibold text-[#31302e] mb-1">Password Protected</h2>
+          <p className="text-sm text-[#615d59] mb-5">This document requires a password to access.</p>
           <input
             type="password"
             value={passwordInput}
             onChange={(e) => setPasswordInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handlePasswordSubmit(); }}
             placeholder="Enter password"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A] mb-3"
+            className="w-full border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de] mb-3"
             autoFocus
           />
           {passwordError && <p className="text-xs text-red-500 mb-3">{passwordError}</p>}
           <button
             onClick={handlePasswordSubmit}
             disabled={!passwordInput}
-            className="w-full px-4 py-2 text-sm font-medium text-white bg-[#B8692A] hover:bg-[#96541F] rounded-lg transition-colors disabled:opacity-40"
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-[#0075de] hover:bg-[#005bab] rounded-lg transition-colors disabled:opacity-40"
           >
             Unlock
           </button>
@@ -1355,7 +1341,7 @@ export default function DocumentPage({
   }
 
   return (
-    <div id="main-content" className={`flex h-screen flex-col bg-[#F2E8D5] ${zenMode ? "zen-mode" : ""}`}
+    <div id="main-content" className={`flex h-screen flex-col bg-[#ffffff] ${zenMode ? "zen-mode" : ""}`}
       onClick={zenMode ? (e) => {
         // Exit zen mode when clicking outside the editor text area
         const target = e.target as HTMLElement;
@@ -1370,7 +1356,7 @@ export default function DocumentPage({
         collaborators={collaborators}
         connected={connected}
         onInviteAgent={handleInviteAgent}
-        onTitleChange={userRole === "viewer" ? undefined : handleTitleChange}
+        onTitleChange={editorMode === "view" ? undefined : handleTitleChange}
         agentLoading={agentLoading}
         userRole={userRole}
         onToggleVersionHistory={toggleVersionHistory}
@@ -1389,32 +1375,23 @@ export default function DocumentPage({
         onToggleChat={toggleChat}
         chatOpen={chatOpen}
         breadcrumbs={breadcrumbs}
-        onSetReminder={() => setReminderDialogOpen(true)}
-        lockInfo={lockInfo}
-        onToggleLock={handleToggleLock}
         onSummarize={handleSummarize}
         summaryLoading={summaryLoading}
         onSetExpiration={() => setExpirationDialogOpen(true)}
-        fontFamily={(fontFamily as FontOption) ?? "default"}
-        onFontChange={userRole !== "viewer" ? handleFontChange : undefined}
         autoCompleteEnabled={autoCompleteEnabled}
         onToggleAutoComplete={toggleAutoComplete}
-        grammarCheckEnabled={grammarCheckEnabled}
-        onToggleGrammarCheck={toggleGrammarCheck}
         forkedFrom={forkedFrom}
-        onTranslate={handleTranslate}
-        translateLoading={translateLoading}
         agentTone={agentTone}
         onAgentToneChange={setAgentTone}
         publishAt={publishAt}
-        onSchedulePublish={userRole !== "viewer" ? handleSchedulePublish : undefined}
+        onSchedulePublish={editorMode === "view" ? undefined : handleSchedulePublish}
+        editorMode={editorMode}
+        onEditorModeChange={setEditorMode}
+        allowedEditorModes={allowedEditorModes}
         onShowMetadata={() => setMetadataOpen(true)}
-        onGenerateTitle={handleGenerateTitle}
-        generateTitleLoading={generateTitleLoading}
-        showGenerateTitle={showGenerateTitle}
       />}
       {zenMode && (
-        <div className="flex items-center justify-between bg-[#111110] px-4 py-2 shrink-0">
+        <div className="flex items-center justify-between bg-[#31302e] px-4 py-2 shrink-0">
           <span className="text-sm font-semibold text-white/60">{docTitle}</span>
           <button
             onClick={() => setZenMode(false)}
@@ -1427,9 +1404,8 @@ export default function DocumentPage({
           </button>
         </div>
       )}
-      {!focusMode && !zenMode && <TabBar />}
-      {userRole !== "viewer" && !focusMode && !zenMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
-      {userRole !== "viewer" && !focusMode && !zenMode && !(lockInfo?.locked && lockInfo.lockedBy !== userName) && <MobileToolbar editor={editor} />}
+      {editorMode !== "view" && !focusMode && !zenMode && <Toolbar editor={editor} onToggleShortcutsHelp={toggleShortcutsHelp} />}
+      {editorMode !== "view" && !focusMode && !zenMode && <MobileToolbar editor={editor} />}
       {/* Cover Image Banner */}
       {!focusMode && !zenMode && (
         <div className="relative group shrink-0">
@@ -1437,7 +1413,7 @@ export default function DocumentPage({
           {coverImage ? (
             <div className="relative w-full" style={{ maxHeight: 200 }}>
               <img src={coverImage} alt="Document cover" className="w-full object-cover" style={{ maxHeight: 200 }} />
-              {userRole !== "viewer" && (
+              {editorMode !== "view" && (
                 <button
                   onClick={handleRemoveCover}
                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs px-2 py-1 rounded hover:bg-black/80"
@@ -1445,7 +1421,7 @@ export default function DocumentPage({
                   Remove cover
                 </button>
               )}
-              {userRole !== "viewer" && (
+              {editorMode !== "view" && (
                 <button
                   onClick={() => coverInputRef.current?.click()}
                   className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 text-white text-xs px-2 py-1 rounded hover:bg-black/80"
@@ -1455,10 +1431,10 @@ export default function DocumentPage({
               )}
             </div>
           ) : (
-            userRole !== "viewer" && (
+            editorMode !== "view" && (
               <button
                 onClick={() => coverInputRef.current?.click()}
-                className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 opacity-0 group-hover:opacity-100 transition-all text-center"
+                className="w-full py-2 text-xs text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4] opacity-0 group-hover:opacity-100 transition-all text-center"
               >
                 + Add cover image
               </button>
@@ -1466,7 +1442,6 @@ export default function DocumentPage({
           )}
         </div>
       )}
-      {!focusMode && !zenMode && <TypingIndicator provider={provider} currentClientId={ydoc.clientID} />}
       <div className="flex flex-1 overflow-hidden">
         {/* Mobile sidebar overlay backdrop */}
         {isMobile && (showOutline || showComments) && (
@@ -1477,23 +1452,21 @@ export default function DocumentPage({
         )}
         {!focusMode && !zenMode && (
           <div className={`${isMobile ? (showOutline ? "fixed inset-y-0 left-0 z-50 flex" : "hidden") : "hidden lg:flex"} shrink-0`} style={{ width: leftSidebarWidth }}>
-            <div className="flex-1 overflow-hidden bg-[#F2E8D5]">
+            <div className="flex-1 overflow-hidden bg-[#ffffff]">
               <ErrorBoundary>
-                <OutlineSidebar editor={editor} documentId={id} ydoc={ydoc} currentUser={userName ?? undefined} />
-                <RelatedDocs documentId={id} />
+                <OutlineSidebar editor={editor} documentId={id} />
               </ErrorBoundary>
             </div>
             <div
               onMouseDown={(e) => startResize("left", e)}
-              className="w-1 hover:w-1.5 bg-transparent hover:bg-[#B8692A]/30 transition-colors shrink-0"
+              className="w-1 hover:w-1.5 bg-transparent hover:bg-[#0075de]/30 transition-colors shrink-0"
               style={{ cursor: "col-resize" }}
               title="Drag to resize sidebar"
             />
           </div>
         )}
         {ydoc && provider && (
-          <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode || zenMode ? "max-w-[700px] mx-auto" : ""}`} style={{ fontFamily: getFontFamily(fontFamily) }}>
-            {!focusMode && !zenMode && <PinnedNotes ydoc={ydoc} userName={userName} />}
+          <div className={`flex-1 flex flex-col transition-all duration-300 ${focusMode || zenMode ? "max-w-[700px] mx-auto" : ""}`}>
             {/* Document diff notification banner */}
             {diffBannerVisible && (
               <div className="mx-4 mt-2 mb-1 flex items-center gap-3 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2.5 z-10">
@@ -1518,6 +1491,13 @@ export default function DocumentPage({
             <ErrorBoundary>
               <div className="relative flex-1 flex flex-col overflow-hidden">
                 <div className={diffOverlay ? "invisible h-0 overflow-hidden" : "flex-1 flex flex-col"}>
+                  {!focusMode && !zenMode && (
+                    <DocSubtitle
+                      author={userName}
+                      updatedAt={docUpdatedAt}
+                      isDraft={docStatus === "draft"}
+                    />
+                  )}
                   <Editor
                     documentId={id}
                     userName={userName}
@@ -1525,20 +1505,19 @@ export default function DocumentPage({
                     provider={provider}
                     onEditorReady={handleEditorReady}
                     activeCommentId={activeCommentId}
-                    editable={userRole !== "viewer" && !(lockInfo?.locked && lockInfo.lockedBy !== userName)}
+                    mode={editorMode}
                     initialContent={templateContent}
                     onToggleShortcutsHelp={toggleShortcutsHelp}
                     autoCompleteEnabled={autoCompleteEnabled}
-                    grammarCheckEnabled={grammarCheckEnabled}
                   />
                 </div>
                 {diffOverlay && (
-                  <div className="flex-1 flex flex-col bg-[#FFFEF9] overflow-auto">
-                    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 shrink-0">
-                      <h3 className="text-sm font-semibold text-gray-700">Version Comparison</h3>
+                  <div className="flex-1 flex flex-col bg-[#ffffff] overflow-auto">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-[rgba(0,0,0,0.1)] bg-[#f6f5f4] shrink-0">
+                      <h3 className="text-sm font-semibold text-[#31302e]">Version Comparison</h3>
                       <button
                         onClick={() => setDiffOverlay(null)}
-                        className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+                        className="flex items-center gap-1 text-xs font-medium text-[#615d59] hover:text-[#31302e] px-2 py-1 rounded hover:bg-[#dddddd] transition-colors"
                       >
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1571,11 +1550,11 @@ export default function DocumentPage({
         {!focusMode && !zenMode && <div className={`${isMobile ? (showComments ? "fixed inset-y-0 right-0 z-50 flex" : "hidden") : "hidden md:flex"} shrink-0`} style={{ width: rightSidebarWidth }}>
           <div
             onMouseDown={(e) => startResize("right", e)}
-            className="w-1 hover:w-1.5 bg-transparent hover:bg-[#B8692A]/30 transition-colors shrink-0"
+            className="w-1 hover:w-1.5 bg-transparent hover:bg-[#0075de]/30 transition-colors shrink-0"
             style={{ cursor: "col-resize" }}
             title="Drag to resize sidebar"
           />
-          <div className="flex-1 overflow-hidden bg-[#F2E8D5]">
+          <div className="flex-1 overflow-hidden bg-[#ffffff]">
           <ErrorBoundary>
           <CommentSidebar
             suggestions={suggestions}
@@ -1631,7 +1610,7 @@ export default function DocumentPage({
       {hasSelection && (
         <button
           onClick={openMobileComment}
-          className="md:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#B8692A] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#96541F] active:bg-[#7A4318]"
+          className="md:hidden fixed bottom-24 right-4 z-40 flex items-center gap-2 bg-[#0075de] text-white px-4 py-3 rounded-full shadow-lg hover:bg-[#005bab] active:bg-[#005bab]"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -1644,25 +1623,25 @@ export default function DocumentPage({
       {mobileCommentOpen && (
         <div className="md:hidden fixed inset-0 z-50 flex flex-col justify-end bg-black/30" onClick={() => setMobileCommentOpen(false)}>
           <div className="bg-white rounded-t-2xl p-4 pb-8" onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4" />
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">Add comment</h3>
+            <div className="w-10 h-1 bg-[#dddddd] rounded-full mx-auto mb-4" />
+            <h3 className="text-sm font-semibold text-[#31302e] mb-2">Add comment</h3>
             <textarea
               ref={mobileTextareaRef}
               autoFocus
               placeholder="Type your comment..."
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-blue-400"
+              className="w-full border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-blue-400"
               rows={3}
             />
             <div className="flex gap-2 mt-3">
               <button
                 onClick={() => { setMobileCommentOpen(false); }}
-                className="flex-1 text-sm text-gray-600 border border-gray-200 rounded-lg py-2.5 hover:bg-gray-50"
+                className="flex-1 text-sm text-[#615d59] border border-[rgba(0,0,0,0.1)] rounded-lg py-2.5 hover:bg-[#f6f5f4]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleMobileCommentSubmit}
-                className="flex-1 text-sm font-medium text-white bg-[#B8692A] rounded-lg py-2.5 hover:bg-[#96541F] active:bg-[#7A4318]"
+                className="flex-1 text-sm font-medium text-white bg-[#0075de] rounded-lg py-2.5 hover:bg-[#005bab] active:bg-[#005bab]"
               >
                 Comment
               </button>
@@ -1670,12 +1649,12 @@ export default function DocumentPage({
 
             {/* Show existing comments */}
             {comments.filter((c) => !c.resolved).length > 0 && (
-              <div className="mt-4 border-t border-gray-100 pt-3">
-                <p className="text-xs font-medium text-gray-500 mb-2">Comments</p>
+              <div className="mt-4 border-t border-[rgba(0,0,0,0.1)] pt-3">
+                <p className="text-xs font-medium text-[#615d59] mb-2">Comments</p>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {comments.filter((c) => !c.resolved).map((c) => (
-                    <div key={c.id} className="text-xs text-gray-600 bg-gray-50 rounded-lg p-2">
-                      <span className="font-medium text-gray-800">{c.authorName}</span>: {c.content}
+                    <div key={c.id} className="text-xs text-[#615d59] bg-[#f6f5f4] rounded-lg p-2">
+                      <span className="font-medium text-[#31302e]">{c.authorName}</span>: {c.content}
                     </div>
                   ))}
                 </div>
@@ -1698,12 +1677,6 @@ export default function DocumentPage({
         onClose={() => setSaveTemplateOpen(false)}
         onSave={handleSaveAsTemplate}
       />
-      {reminderDialogOpen && (
-        <ReminderDialog
-          documentId={id}
-          onClose={() => setReminderDialogOpen(false)}
-        />
-      )}
       {presentationMode && (
         <PresentationMode
           content={presentationContent}

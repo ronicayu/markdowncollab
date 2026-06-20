@@ -1552,12 +1552,12 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddShare()}
-            className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+            className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]"
           />
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as "viewer" | "editor")}
-            className="border border-gray-200 rounded-lg px-2 py-2 text-sm outline-none focus:border-[#B8692A]"
+            className="border border-gray-200 rounded-lg px-2 py-2 text-sm outline-none focus:border-[#0075de]"
           >
             <option value="viewer">Viewer</option>
             <option value="editor">Editor</option>
@@ -1565,7 +1565,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
           <button
             onClick={handleAddShare}
             disabled={loading || !email.trim()}
-            className="shrink-0 bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="shrink-0 bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             Share
           </button>
@@ -1605,7 +1605,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
             <button
               onClick={toggleLinkSharing}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                linkEnabled ? "bg-[#B8692A]" : "bg-gray-200"
+                linkEnabled ? "bg-[#0075de]" : "bg-gray-200"
               }`}
             >
               <span
@@ -1650,7 +1650,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
                 />
                 <button
                   onClick={copyLink}
-                  className="shrink-0 text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+                  className="shrink-0 text-sm font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg transition-colors"
                 >
                   {linkCopied ? "Copied!" : "Copy"}
                 </button>

@@ -80,11 +80,11 @@ export default function RecentDocs() {
   if (docs.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-40">
+    <div className="fixed bottom-4 right-4 z-40 hidden md:block">
       {collapsed ? (
         <button
           onClick={() => setCollapsed(false)}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-[#111110] text-white shadow-lg hover:bg-[#222220] transition-colors"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-[#ffffff] text-[#31302e] border border-[rgba(0,0,0,0.1)] shadow-md hover:bg-[#f6f5f4] transition-colors"
           title="Recent documents"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -92,8 +92,8 @@ export default function RecentDocs() {
           </svg>
         </button>
       ) : (
-        <div className="w-72 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 bg-[#111110] text-white">
+        <div className="w-72 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-xl overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 bg-[#31302e] text-white">
             <span className="text-sm font-medium">Recent Documents</span>
             <button
               onClick={() => setCollapsed(true)}
@@ -105,7 +105,7 @@ export default function RecentDocs() {
               </svg>
             </button>
           </div>
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-[rgba(0,0,0,0.1)]">
             {docs.map((doc) => (
               <li key={doc.id}>
                 <button
@@ -113,10 +113,10 @@ export default function RecentDocs() {
                     router.push(`/doc/${doc.id}`);
                     setCollapsed(true);
                   }}
-                  className="w-full text-left px-3 py-2.5 hover:bg-gray-50 transition-colors"
+                  className="w-full text-left px-3 py-2.5 hover:bg-[#f6f5f4] transition-colors"
                 >
-                  <p className="text-sm text-gray-900 font-medium truncate">{doc.title || "Untitled"}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">{relativeTime(doc.openedAt)}</p>
+                  <p className="text-sm text-[#31302e] font-medium truncate">{doc.title || "Untitled"}</p>
+                  <p className="text-[10px] text-[#a39e98] mt-0.5">{relativeTime(doc.openedAt)}</p>
                 </button>
               </li>
             ))}

@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import ShareDialog from "@/components/ShareDialog";
-import ThemeEditor from "@/components/ThemeEditor";
-import FontSelector, { type FontOption } from "@/components/FontSelector";
 import { useTranslation, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 import { toast } from "@/lib/toast";
+import type { EditorMode } from "@/lib/editor-mode";
 
 export interface Collaborator {
   name: string;
@@ -39,29 +38,94 @@ interface TopBarProps {
   documentStatus?: string;
   onStatusChange?: (status: string) => void;
   breadcrumbs?: BreadcrumbSegment[];
-  onSetReminder?: () => void;
-  lockInfo?: { locked: boolean; lockedBy: string | null } | null;
-  onToggleLock?: () => void;
   onSummarize?: () => void;
   summaryLoading?: boolean;
   onSetExpiration?: () => void;
-  fontFamily?: FontOption;
-  onFontChange?: (font: FontOption) => void;
   autoCompleteEnabled?: boolean;
   onToggleAutoComplete?: () => void;
-  grammarCheckEnabled?: boolean;
-  onToggleGrammarCheck?: () => void;
   forkedFrom?: { id: string; title: string } | null;
-  onTranslate?: (language: string) => void;
-  translateLoading?: boolean;
   agentTone?: string;
   onAgentToneChange?: (tone: string) => void;
   publishAt?: string | null;
   onSchedulePublish?: (dateTime: string | null) => void;
   onShowMetadata?: () => void;
-  onGenerateTitle?: () => void;
-  generateTitleLoading?: boolean;
-  showGenerateTitle?: boolean;
+  editorMode?: EditorMode;
+  onEditorModeChange?: (mode: EditorMode) => void;
+  allowedEditorModes?: EditorMode[];
+}
+
+const MODE_META: Record<EditorMode, { label: string; title: string; path: string }> = {
+  edit: {
+    label: "Edit",
+    title: "Edit — your changes apply directly",
+    path: "M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125",
+  },
+  suggest: {
+    label: "Suggest",
+    title: "Suggest — your changes become tracked proposals",
+    path: "M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z",
+  },
+  view: {
+    label: "View",
+    title: "View — read-only",
+    path: "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  },
+};
+
+function ModeSwitcher({
+  mode,
+  onChange,
+  allowed,
+}: {
+  mode: EditorMode;
+  onChange: (m: EditorMode) => void;
+  allowed: EditorMode[];
+}) {
+  const modes: EditorMode[] = ["edit", "suggest", "view"];
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Editor mode"
+      className="inline-flex items-center rounded-full p-0.5 shrink-0"
+      style={{ background: "rgba(0,0,0,0.04)" }}
+    >
+      {modes.map((m) => {
+        const meta = MODE_META[m];
+        const isActive = mode === m;
+        const isAllowed = allowed.includes(m);
+        const title = isAllowed
+          ? meta.title
+          : `${meta.label} — not available for your role`;
+        return (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={isActive}
+            aria-label={meta.label}
+            disabled={!isAllowed}
+            onClick={() => isAllowed && onChange(m)}
+            title={title}
+            data-mode={m}
+            data-active={isActive ? "true" : "false"}
+            className="inline-flex items-center gap-1 h-7 px-2 rounded-full transition-colors disabled:cursor-not-allowed"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              background: isActive ? "#0075de" : "transparent",
+              color: isActive ? "#ffffff" : isAllowed ? "var(--ink-soft)" : "var(--ink-muted)",
+              opacity: isAllowed ? 1 : 0.45,
+            }}
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d={meta.path} />
+            </svg>
+            <span className="hidden sm:inline">{meta.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export default function TopBar({
@@ -84,29 +148,20 @@ export default function TopBar({
   documentStatus,
   onStatusChange,
   breadcrumbs,
-  onSetReminder,
-  lockInfo,
-  onToggleLock,
   onSummarize,
   summaryLoading,
   onSetExpiration,
-  fontFamily,
-  onFontChange,
   autoCompleteEnabled,
   onToggleAutoComplete,
-  grammarCheckEnabled,
-  onToggleGrammarCheck,
   forkedFrom,
-  onTranslate,
-  translateLoading,
   agentTone,
   onAgentToneChange,
   publishAt,
   onSchedulePublish,
   onShowMetadata,
-  onGenerateTitle,
-  generateTitleLoading,
-  showGenerateTitle,
+  editorMode,
+  onEditorModeChange,
+  allowedEditorModes,
 }: TopBarProps) {
   const { data: session } = useSession();
   const { t, locale, setLocale } = useTranslation();
@@ -120,10 +175,6 @@ export default function TopBar({
   const [showShareModal, setShowShareModal] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [preferredExportFormat, setPreferredExportFormat] = useState<string>("markdown");
-  const [translateOpen, setTranslateOpen] = useState(false);
-  const [avgRating, setAvgRating] = useState(0);
-  const [userRating, setUserRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [embedCodeOpen, setEmbedCodeOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -142,52 +193,18 @@ export default function TopBar({
     try { localStorage.setItem("preferredExportFormat", format); } catch {}
   };
 
-  // Fetch rating on mount
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch(`/api/documents/${documentId}/ratings`, { signal: controller.signal })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) setAvgRating(data.average);
-      })
-      .catch((err) => {
-        if (err.name !== "AbortError") console.error("Failed to fetch ratings:", err);
-      });
-    return () => controller.abort();
-  }, [documentId]);
-
-  const handleRate = useCallback(async (score: number) => {
-    setUserRating(score);
-    try {
-      const res = await fetch(`/api/documents/${documentId}/ratings`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ score }),
-      });
-      if (res.ok) {
-        // Refetch average
-        const avgRes = await fetch(`/api/documents/${documentId}/ratings`);
-        if (avgRes.ok) {
-          const data = await avgRes.json();
-          setAvgRating(data.average);
-        }
-      }
-    } catch {}
-  }, [documentId]);
-
   useEffect(() => {
     setEditableTitle(title);
   }, [title]);
 
   useEffect(() => {
-    if (!exportOpen && !translateOpen) return;
+    if (!exportOpen) return;
     function handleClick() {
       setExportOpen(false);
-      setTranslateOpen(false);
     }
     document.addEventListener("click", handleClick);
     return () => document.removeEventListener("click", handleClick);
-  }, [exportOpen, translateOpen]);
+  }, [exportOpen]);
 
   function commitTitle() {
     const trimmed = editableTitle.trim();
@@ -218,13 +235,14 @@ export default function TopBar({
 
   if (focusMode) {
     return (
-      <div className="flex items-center justify-between bg-[#111110] px-3 py-2 md:px-4 shrink-0 transition-all">
+      <div data-topbar className="flex items-center justify-between px-3 py-2 md:px-4 shrink-0 transition-all" style={{ background: "var(--surface)", borderBottom: "1px solid var(--rule)" }}>
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
-          <span className="text-sm font-semibold text-white/80 truncate">{title}</span>
+          <span className="truncate" style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>{title}</span>
         </div>
         <button
           onClick={onToggleFocusMode}
-          className="flex items-center gap-1.5 h-8 px-3 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-md transition-colors"
+          style={{ fontSize: 15, fontWeight: 500, color: "var(--ink-soft)" }}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -236,33 +254,39 @@ export default function TopBar({
   }
 
   return (
-    <div className="flex items-center justify-between bg-[#111110] px-3 py-2 md:px-4 shrink-0">
+    <div data-topbar className="flex items-center justify-between px-3 py-2 md:px-4 shrink-0 bg-white md:bg-[var(--surface)] border-b border-black/10 md:border-[var(--rule)]">
       {/* Left: breadcrumb + title */}
       <div className="flex items-center gap-2 md:gap-3 min-w-0">
         <a
           href="/"
-          aria-label="Go to document list"
-          className="inline-flex items-center h-9 px-1 text-sm font-bold text-white/80 hover:text-white shrink-0 transition-colors"
+          aria-label="Back to all documents"
+          className="inline-flex items-center gap-1.5 h-9 px-1 shrink-0 transition-colors hover:opacity-70"
+          style={{ fontSize: 14, fontWeight: 500, color: "var(--ink-soft)" }}
         >
-          MC
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="hidden sm:inline">All documents</span>
         </a>
+        <span className="hidden md:inline-block h-4 w-px shrink-0" style={{ background: "var(--rule)" }} />
         {breadcrumbs && breadcrumbs.length > 0 && (
           <>
-            {breadcrumbs.map((crumb) => (
+            {breadcrumbs.map((crumb, i) => (
               <span key={crumb.id} className="flex items-center gap-2">
-                <span className="text-white/25 text-sm">/</span>
+                {i > 0 && <span style={{ color: "var(--ink-muted)", fontSize: 13 }}>/</span>}
                 <a
                   href={`/?folder=${crumb.id}`}
-                  className="text-sm text-white/50 hover:text-white/80 truncate max-w-[80px] transition-colors"
+                  className="truncate max-w-[80px] transition-colors hover:opacity-70"
+                  style={{ fontSize: 13, color: "var(--ink-soft)" }}
                   title={crumb.name}
                 >
                   {crumb.name}
                 </a>
               </span>
             ))}
+            <span style={{ color: "var(--ink-muted)", fontSize: 13 }}>/</span>
           </>
         )}
-        <span className="text-white/25 text-sm">/</span>
         <input
           aria-label="Document title"
           value={editableTitle}
@@ -274,67 +298,41 @@ export default function TopBar({
               (e.target as HTMLInputElement).blur();
             }
           }}
-          className="h-9 text-sm font-semibold text-white/80 truncate max-w-[100px] sm:max-w-[150px] md:max-w-none bg-transparent border-none outline-none focus:ring-1 focus:ring-white/20 focus:bg-white/5 rounded px-1 -ml-1 transition-colors placeholder:text-white/30 min-w-0"
+          className="h-9 truncate max-w-[100px] sm:max-w-[150px] md:max-w-none bg-transparent border-none outline-none rounded px-1 -ml-1 transition-colors min-w-0"
+          style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}
         />
-        {showGenerateTitle && onGenerateTitle && (
-          <button
-            onClick={onGenerateTitle}
-            disabled={generateTitleLoading}
-            className="hidden sm:flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors px-1.5 py-0.5 rounded hover:bg-white/8 disabled:opacity-40 shrink-0"
-            title="Generate title with AI"
-          >
-            {generateTitleLoading ? (
-              <svg className="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-              </svg>
-            )}
-            <span>Title</span>
-          </button>
-        )}
-        {/* Connected status */}
+        {/* Connected status — dot + muted "saved" caption */}
         <div className="flex items-center gap-1.5 shrink-0">
           <span
-            className={`inline-block h-1.5 w-1.5 rounded-full transition-colors ${
-              connected ? "bg-[#0D9488]" : "bg-yellow-400"
-            }`}
+            className="inline-block h-1.5 w-1.5 rounded-full transition-colors"
+            style={{ background: connected ? "var(--ok)" : "var(--warn)" }}
           />
-          <span className="hidden md:inline text-xs text-white/40">
+          <span className="hidden md:inline" style={{ fontSize: 13, color: "var(--ink-muted)" }}>
             {connected ? t("status.connected") : t("status.connecting")}
           </span>
         </div>
-        {userRole === "viewer" && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-            View only
-          </span>
+        {editorMode && onEditorModeChange && allowedEditorModes && (
+          <ModeSwitcher
+            mode={editorMode}
+            onChange={onEditorModeChange}
+            allowed={allowedEditorModes}
+          />
         )}
-        {documentStatus && (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-            documentStatus === "approved"
-              ? "bg-green-100 text-green-800"
-              : documentStatus === "in_review"
-              ? "bg-amber-100 text-amber-800"
-              : "bg-gray-100 text-gray-600"
-          }`}>
-            {documentStatus === "approved" ? "Approved" : documentStatus === "in_review" ? "In Review" : "Draft"}
-          </span>
-        )}
-        {lockInfo?.locked && lockInfo.lockedBy && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-            Locked by {lockInfo.lockedBy}
+        {documentStatus && documentStatus !== "draft" && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full" style={{
+            fontSize: 12,
+            fontWeight: 600,
+            background: documentStatus === "approved" ? "var(--ok-soft)" : "var(--warn-soft)",
+            color: documentStatus === "approved" ? "var(--ok)" : "var(--warn)",
+          }}>
+            {documentStatus === "approved" ? "Approved" : "In Review"}
           </span>
         )}
         {forkedFrom && (
           <a
             href={`/doc/${forkedFrom.id}`}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full transition-colors"
+            style={{ fontSize: 12, fontWeight: 600, background: "var(--accent-soft)", color: "var(--accent-on-soft)" }}
             title={`Forked from: ${forkedFrom.title}`}
           >
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -348,7 +346,8 @@ export default function TopBar({
       {/* Mobile hamburger menu button */}
       <button
         onClick={() => setMobileMenuOpen(true)}
-        className="md:hidden flex items-center justify-center h-9 w-9 text-white/70 hover:text-white rounded-md hover:bg-white/8 transition-colors shrink-0"
+        className="md:hidden flex items-center justify-center h-9 w-9 rounded-md transition-colors shrink-0"
+        style={{ color: "var(--ink-soft)" }}
         aria-label="Open menu"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -356,22 +355,26 @@ export default function TopBar({
         </svg>
       </button>
 
-      {/* Mobile slide-out menu */}
+      {/* Slide-out menu (shared: mobile hamburger + desktop ⋯ overflow) */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-[100]">
+        <div className="fixed inset-0 z-[100]">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 mobile-menu-backdrop"
+            className="absolute inset-0 bg-black/40 mobile-menu-backdrop"
             onClick={() => setMobileMenuOpen(false)}
           />
-          {/* Panel */}
-          <div className="absolute top-0 right-0 bottom-0 w-[280px] bg-[#1a1a19] shadow-2xl overflow-y-auto mobile-menu-panel" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          {/* Panel — rendered as a clean white drawer matching DESIGN.md chrome */}
+          <div
+            className="absolute top-0 right-0 bottom-0 w-[300px] overflow-y-auto mobile-menu-panel"
+            style={{ background: "var(--surface)", borderLeft: "1px solid var(--rule)", boxShadow: "var(--shadow-deep)", paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
             {/* Close button */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-              <span className="text-sm font-semibold text-white/80">Menu</span>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--rule)" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>Menu</span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="h-9 w-9 flex items-center justify-center text-white/60 hover:text-white rounded-md hover:bg-white/8 transition-colors"
+                className="h-9 w-9 flex items-center justify-center rounded-md transition-colors"
+                style={{ color: "var(--ink-soft)" }}
                 aria-label="Close menu"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -382,7 +385,7 @@ export default function TopBar({
 
             {/* Document section */}
             <div className="px-2 py-2">
-              <p className="px-3 py-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-wider">Document</p>
+              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-muted)" }}>Document</p>
               <button
                 onClick={() => { setExportOpen(false); setMobileMenuOpen(false); }}
                 className="mobile-menu-item"
@@ -413,32 +416,12 @@ export default function TopBar({
                   <span>Present</span>
                 </button>
               )}
-              {onToggleLock && (
-                <button onClick={() => { onToggleLock(); setMobileMenuOpen(false); }} className="mobile-menu-item">
-                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    {lockInfo?.locked ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                    )}
-                  </svg>
-                  <span>{lockInfo?.locked ? "Unlock" : "Lock"}</span>
-                </button>
-              )}
               {onSaveAsTemplate && (
                 <button onClick={() => { onSaveAsTemplate(); setMobileMenuOpen(false); }} className="mobile-menu-item">
                   <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
                   <span>Duplicate as Template</span>
-                </button>
-              )}
-              {onSetReminder && (
-                <button onClick={() => { onSetReminder(); setMobileMenuOpen(false); }} className="mobile-menu-item">
-                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Set Reminder</span>
                 </button>
               )}
               {onSetExpiration && (
@@ -452,8 +435,8 @@ export default function TopBar({
             </div>
 
             {/* AI section */}
-            <div className="px-2 py-2 border-t border-white/5">
-              <p className="px-3 py-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-wider">AI</p>
+            <div className="px-2 py-2" style={{ borderTop: "1px solid var(--rule)" }}>
+              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-muted)" }}>AI</p>
               <button onClick={() => { onInviteAgent(); setMobileMenuOpen(false); }} disabled={agentLoading} className="mobile-menu-item">
                 <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082" />
@@ -476,14 +459,6 @@ export default function TopBar({
                   <span>Auto-Complete {autoCompleteEnabled ? "(On)" : "(Off)"}</span>
                 </button>
               )}
-              {onToggleGrammarCheck && (
-                <button onClick={() => { onToggleGrammarCheck(); setMobileMenuOpen(false); }} className="mobile-menu-item">
-                  <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Grammar Check {grammarCheckEnabled ? "(On)" : "(Off)"}</span>
-                </button>
-              )}
               {onToggleChat && (
                 <button onClick={() => { onToggleChat(); setMobileMenuOpen(false); }} className="mobile-menu-item">
                   <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -492,21 +467,11 @@ export default function TopBar({
                   <span>AI Chat {chatOpen ? "(Open)" : ""}</span>
                 </button>
               )}
-              {onTranslate && (
-                <>
-                  <p className="px-3 pt-2 pb-1 text-[10px] text-white/20">Translate to:</p>
-                  {["Spanish", "French", "Japanese", "Chinese", "German", "Portuguese"].map((lang) => (
-                    <button key={lang} onClick={() => { onTranslate(lang); setMobileMenuOpen(false); }} disabled={translateLoading} className="mobile-menu-item pl-11">
-                      <span>{lang}</span>
-                    </button>
-                  ))}
-                </>
-              )}
             </div>
 
             {/* Collaboration section */}
-            <div className="px-2 py-2 border-t border-white/5">
-              <p className="px-3 py-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-wider">Collaboration</p>
+            <div className="px-2 py-2" style={{ borderTop: "1px solid var(--rule)" }}>
+              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-muted)" }}>Collaboration</p>
               <button onClick={() => { handleShare(); setMobileMenuOpen(false); }} className="mobile-menu-item">
                 <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
@@ -519,33 +484,11 @@ export default function TopBar({
                 </svg>
                 <span>History {versionHistoryOpen ? "(Open)" : ""}</span>
               </button>
-              {/* Rating inline */}
-              <div className="flex items-center gap-1 px-3 py-2.5">
-                <span className="text-sm text-white/50 mr-1">Rating:</span>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => handleRate(star)}
-                    className="p-0.5"
-                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                  >
-                    <svg
-                      className="h-5 w-5"
-                      fill={star <= (userRating || Math.round(avgRating)) ? "#F59E0B" : "none"}
-                      viewBox="0 0 24 24"
-                      stroke={star <= (userRating || Math.round(avgRating)) ? "#F59E0B" : "#6B7280"}
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* View section */}
-            <div className="px-2 py-2 border-t border-white/5">
-              <p className="px-3 py-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-wider">View</p>
+            <div className="px-2 py-2" style={{ borderTop: "1px solid var(--rule)" }}>
+              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-muted)" }}>View</p>
               <div className="mobile-menu-item">
                 <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
@@ -557,9 +500,12 @@ export default function TopBar({
                   <button
                     key={loc}
                     onClick={() => { setLocale(loc); setMobileMenuOpen(false); }}
-                    className={`text-left px-3 py-2 text-sm rounded transition-colors ${
-                      locale === loc ? "text-white bg-white/10" : "text-white/60 hover:text-white hover:bg-white/5"
-                    }`}
+                    className="text-left px-3 py-2 text-sm rounded transition-colors"
+                    style={{
+                      color: locale === loc ? "var(--ink)" : "var(--ink-soft)",
+                      background: locale === loc ? "var(--surface-2)" : "transparent",
+                      fontWeight: locale === loc ? 600 : 400,
+                    }}
                   >
                     {LOCALE_LABELS[loc]}
                   </button>
@@ -575,8 +521,8 @@ export default function TopBar({
             </div>
 
             {/* Auth section */}
-            <div className="px-2 py-2 border-t border-white/5">
-              <p className="px-3 py-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-wider">Account</p>
+            <div className="px-2 py-2" style={{ borderTop: "1px solid var(--rule)" }}>
+              <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-muted)" }}>Account</p>
               {session ? (
                 <button onClick={() => { signOut(); setMobileMenuOpen(false); }} className="mobile-menu-item">
                   <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -596,16 +542,16 @@ export default function TopBar({
 
             {/* Status change for owner on mobile */}
             {userRole === "owner" && onStatusChange && (
-              <div className="px-2 py-2 border-t border-white/5">
-                <p className="px-3 py-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-wider">Status</p>
+              <div className="px-2 py-2" style={{ borderTop: "1px solid var(--rule)" }}>
+                <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--ink-muted)" }}>Status</p>
                 {documentStatus === "draft" && (
-                  <button onClick={() => { onStatusChange("in_review"); setMobileMenuOpen(false); }} className="mobile-menu-item text-amber-400">
+                  <button onClick={() => { onStatusChange("in_review"); setMobileMenuOpen(false); }} className="mobile-menu-item" style={{ color: "var(--warn)" }}>
                     <span>Submit for Review</span>
                   </button>
                 )}
                 {documentStatus === "in_review" && (
                   <>
-                    <button onClick={() => { onStatusChange("approved"); setMobileMenuOpen(false); }} className="mobile-menu-item text-green-400">
+                    <button onClick={() => { onStatusChange("approved"); setMobileMenuOpen(false); }} className="mobile-menu-item" style={{ color: "var(--ok)" }}>
                       <span>Approve</span>
                     </button>
                     <button onClick={() => { onStatusChange("draft"); setMobileMenuOpen(false); }} className="mobile-menu-item">
@@ -625,7 +571,58 @@ export default function TopBar({
       )}
 
       {/* Right: collaborators + actions (desktop only) */}
-      <div className="hidden md:flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
+      <div className="hidden md:flex items-center gap-2 shrink-0">
+        {/* Collaborator avatars — always visible */}
+        {collaborators.length > 0 && (
+          <div className="flex -space-x-2 mr-1">
+            {collaborators.slice(0, 4).map((collaborator, index) => (
+              <div
+                key={index}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold text-white"
+                style={{ backgroundColor: collaborator.color, border: "2px solid var(--surface)" }}
+                title={collaborator.name}
+              >
+                {collaborator.isAgent ? (
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714a2.25 2.25 0 00.659 1.591L19 14.5M14.25 3.104c.251.023.501.05.75.082" />
+                  </svg>
+                ) : (
+                  collaborator.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Overflow ⋯ menu — opens the same mobile menu panel which contains all secondary actions */}
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="flex items-center justify-center h-8 w-8 rounded-md transition-colors"
+          style={{ color: "var(--ink-soft)" }}
+          title="More actions"
+          aria-label="More actions"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v.01M12 12v.01M12 19v.01" />
+          </svg>
+        </button>
+
+        {/* Primary: Share */}
+        <button
+          onClick={handleShare}
+          aria-label="Share document"
+          className="flex items-center gap-1.5 h-8 px-3 rounded-md transition-colors"
+          style={{ background: "var(--accent)", color: "#fff", fontSize: 14, fontWeight: 600 }}
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
+          </svg>
+          <span>{copied ? "Copied!" : "Share"}</span>
+        </button>
+      </div>
+
+      {/* Hidden legacy desktop cluster — actions remain mounted but invisible; users reach them via the overflow ⋯ menu */}
+      <div className="hidden" aria-hidden="true">
         {/* Document info */}
         {onShowMetadata && (
           <button
@@ -654,7 +651,7 @@ export default function TopBar({
             </svg>
           </button>
           {langOpen && (
-            <div className="absolute right-0 top-full mt-1 w-36 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 py-1">
+            <div className="absolute right-0 top-full mt-1 w-36 bg-[#ffffff] border border-[rgba(0,0,0,0.1)] rounded-lg shadow-[var(--shadow-deep)] z-50 py-1">
               {(Object.keys(LOCALE_LABELS) as Locale[]).map((loc) => (
                 <button
                   key={loc}
@@ -669,55 +666,13 @@ export default function TopBar({
             </div>
           )}
         </div>
-        {/* Translate dropdown */}
-        {onTranslate && (
-          <div className="relative">
-            <button
-              onClick={() => setTranslateOpen((v) => !v)}
-              disabled={translateLoading}
-              className="flex items-center gap-1 h-8 px-2 text-white/60 hover:text-white text-sm font-medium transition-colors rounded-md hover:bg-white/8 disabled:opacity-40"
-              title="Translate document"
-              aria-label="Translate document"
-              aria-expanded={translateOpen}
-              aria-haspopup="true"
-            >
-              {translateLoading ? (
-                <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              ) : (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                </svg>
-              )}
-              <span className="hidden sm:inline">{translateLoading ? "Translating..." : "Translate"}</span>
-            </button>
-            {translateOpen && (
-              <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 py-1">
-                {["Spanish", "French", "Japanese", "Chinese", "German", "Portuguese"].map((lang) => (
-                  <button
-                    key={lang}
-                    onClick={() => { setTranslateOpen(false); onTranslate(lang); }}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Theme selector */}
-        <ThemeEditor />
         {/* Collaborator avatars */}
         {collaborators.length > 0 && (
           <div className="flex -space-x-2">
             {collaborators.slice(0, 4).map((collaborator, index) => (
               <div
                 key={index}
-                className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full border-2 border-[#111110] text-xs font-semibold text-white"
+                className="flex h-6 w-6 md:h-7 md:w-7 items-center justify-center rounded-full border border-[rgba(0,0,0,0.1)] bg-[#31302e] text-xs font-semibold text-white"
                 style={{ backgroundColor: collaborator.color }}
                 title={collaborator.name}
               >
@@ -731,29 +686,6 @@ export default function TopBar({
               </div>
             ))}
           </div>
-        )}
-
-        {/* Lock toggle */}
-        {onToggleLock && (
-          <button
-            onClick={onToggleLock}
-            className={`flex items-center gap-1.5 h-8 px-2 sm:px-3 text-sm font-medium transition-colors rounded-md ${
-              lockInfo?.locked
-                ? "text-amber-400 bg-amber-400/10 hover:bg-amber-400/20"
-                : "text-white/60 hover:text-white hover:bg-white/8"
-            }`}
-            title={lockInfo?.locked ? "Unlock document" : "Lock document"}
-            aria-label={lockInfo?.locked ? "Unlock document" : "Lock document"}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              {lockInfo?.locked ? (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-              )}
-            </svg>
-            <span className="hidden sm:inline">{lockInfo?.locked ? "Unlock" : "Lock"}</span>
-          </button>
         )}
 
         {/* Schedule Publish */}
@@ -788,13 +720,13 @@ export default function TopBar({
               <span className="hidden sm:inline">{publishAt ? "Scheduled" : "Schedule"}</span>
             </button>
             {scheduleOpen && (
-              <div className="absolute right-0 top-full mt-1 w-64 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 p-3">
+              <div className="absolute right-0 top-full mt-1 w-64 bg-[#ffffff] border border-[rgba(0,0,0,0.1)] rounded-lg shadow-[var(--shadow-deep)] z-50 p-3">
                 <p className="text-xs font-medium text-white/70 mb-2">Schedule publish date/time</p>
                 <input
                   type="datetime-local"
                   value={scheduleValue}
                   onChange={(e) => setScheduleValue(e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1.5 text-sm text-white outline-none focus:border-[#B8692A]"
+                  className="w-full bg-white/10 border border-white/20 rounded px-2 py-1.5 text-sm text-white outline-none focus:border-[#0075de]"
                 />
                 <div className="flex items-center gap-2 mt-2">
                   <button
@@ -804,7 +736,7 @@ export default function TopBar({
                       }
                       setScheduleOpen(false);
                     }}
-                    className="flex-1 text-xs font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-1.5 rounded transition-colors"
+                    className="flex-1 text-xs font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-1.5 rounded transition-colors"
                   >
                     Set schedule
                   </button>
@@ -823,11 +755,6 @@ export default function TopBar({
               </div>
             )}
           </div>
-        )}
-
-        {/* Font selector */}
-        {onFontChange && (
-          <FontSelector value={fontFamily ?? "default"} onChange={onFontChange} />
         )}
 
         {/* Summarize button */}
@@ -886,7 +813,7 @@ export default function TopBar({
             </svg>
           </button>
           {exportOpen && (
-            <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a19] border border-white/10 rounded-lg shadow-xl z-50 py-1">
+            <div className="absolute right-0 top-full mt-1 w-44 bg-[#ffffff] border border-[rgba(0,0,0,0.1)] rounded-lg shadow-[var(--shadow-deep)] z-50 py-1">
               {[
                 { key: "markdown", label: "Markdown (.md)", href: `/api/documents/${documentId}/export` },
                 { key: "pdf", label: "PDF (.pdf)", href: `/api/documents/${documentId}/export/pdf` },
@@ -941,7 +868,7 @@ export default function TopBar({
                     const { toPng } = await import("html-to-image");
                     const el = document.querySelector(".ProseMirror") as HTMLElement;
                     if (!el) return;
-                    const dataUrl = await toPng(el, { backgroundColor: "#FFFEF9", pixelRatio: 2 });
+                    const dataUrl = await toPng(el, { backgroundColor: "#ffffff", pixelRatio: 2 });
                     const link = document.createElement("a");
                     link.download = `${title || "document"}.png`;
                     link.href = dataUrl;
@@ -984,23 +911,6 @@ export default function TopBar({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                     <span>Save as template</span>
-                  </button>
-                </>
-              )}
-              {onSetReminder && (
-                <>
-                  <div className="border-t border-white/10 my-1" />
-                  <button
-                    onClick={() => {
-                      setExportOpen(false);
-                      onSetReminder();
-                    }}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors w-full text-left"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Set reminder</span>
                   </button>
                 </>
               )}
@@ -1077,26 +987,6 @@ export default function TopBar({
           </button>
         )}
 
-        {/* Grammar check toggle */}
-        {onToggleGrammarCheck && (
-          <button
-            onClick={onToggleGrammarCheck}
-            className={`flex items-center gap-1.5 h-8 px-2 sm:px-3 text-sm font-medium transition-colors rounded-md ${
-              grammarCheckEnabled
-                ? "text-white bg-white/15"
-                : "text-white/60 hover:text-white hover:bg-white/8"
-            }`}
-            title="Toggle grammar check"
-            aria-label="Toggle grammar check"
-            aria-pressed={grammarCheckEnabled ? "true" : "false"}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="hidden sm:inline">Grammar</span>
-          </button>
-        )}
-
         {/* AI Chat toggle */}
         {onToggleChat && (
           <button
@@ -1126,11 +1016,11 @@ export default function TopBar({
             title="AI writing tone"
             aria-label="Select AI writing tone"
           >
-            <option value="" className="bg-[#1a1a19] text-white">Default tone</option>
-            <option value="formal" className="bg-[#1a1a19] text-white">Formal</option>
-            <option value="casual" className="bg-[#1a1a19] text-white">Casual</option>
-            <option value="technical" className="bg-[#1a1a19] text-white">Technical</option>
-            <option value="friendly" className="bg-[#1a1a19] text-white">Friendly</option>
+            <option value="" className="bg-[#ffffff] text-[#31302e]">Default tone</option>
+            <option value="formal" className="bg-[#ffffff] text-[#31302e]">Formal</option>
+            <option value="casual" className="bg-[#ffffff] text-[#31302e]">Casual</option>
+            <option value="technical" className="bg-[#ffffff] text-[#31302e]">Technical</option>
+            <option value="friendly" className="bg-[#ffffff] text-[#31302e]">Friendly</option>
           </select>
         )}
 
@@ -1193,7 +1083,7 @@ export default function TopBar({
         {userRole === "owner" && onStatusChange && documentStatus === "draft" && (
           <button
             onClick={() => onStatusChange("in_review")}
-            className="flex items-center gap-1 h-8 px-2 sm:px-3 text-amber-400 hover:text-amber-300 border border-amber-400/30 hover:border-amber-400/50 text-xs sm:text-sm font-medium rounded-md transition-colors"
+            className="flex items-center gap-1 h-8 px-2 sm:px-3 text-[#dd5b00] hover:text-[#dd5b00] border border-[#dd5b00]/30 hover:border-[#dd5b00]/50 text-xs sm:text-sm font-medium rounded-md transition-colors"
             title="Submit for review"
           >
             <span className="hidden sm:inline">Submit for Review</span>
@@ -1231,38 +1121,11 @@ export default function TopBar({
           </button>
         )}
 
-        {/* Rating stars */}
-        <div className="flex items-center gap-0.5" title={`Average: ${avgRating}/5`}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              onClick={() => handleRate(star)}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(0)}
-              className="p-0 text-sm transition-colors"
-              aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-            >
-              <svg
-                className="h-4 w-4"
-                fill={star <= (hoverRating || userRating || Math.round(avgRating)) ? "#F59E0B" : "none"}
-                viewBox="0 0 24 24"
-                stroke={star <= (hoverRating || userRating || Math.round(avgRating)) ? "#F59E0B" : "#6B7280"}
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            </button>
-          ))}
-          {avgRating > 0 && (
-            <span className="text-xs text-white/40 ml-1">{avgRating}</span>
-          )}
-        </div>
-
         {/* Share — primary */}
         <button
           onClick={handleShare}
           aria-label="Share document"
-          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 bg-[#B8692A] hover:bg-[#96541F] text-white text-sm font-medium rounded-md transition-colors"
+          className="flex items-center gap-1.5 h-8 px-2 sm:px-3 bg-[#0075de] hover:bg-[#005bab] text-white text-sm font-medium rounded-md transition-colors"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
@@ -1282,13 +1145,13 @@ export default function TopBar({
       {showShareModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowShareModal(false)}>
           <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">Share this document</h3>
-            <p className="text-xs text-gray-500 mb-3">Copy the link and send it to your collaborators:</p>
+            <h3 className="text-sm font-semibold text-[#31302e] mb-2">Share this document</h3>
+            <p className="text-xs text-[#615d59] mb-3">Copy the link and send it to your collaborators:</p>
             <div className="flex gap-2">
               <input
                 readOnly
                 value={shareUrl}
-                className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 bg-gray-50 select-all"
+                className="flex-1 min-w-0 border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-sm text-[#31302e] bg-[#f6f5f4] select-all"
                 onFocus={(e) => e.target.select()}
               />
               <button
@@ -1302,13 +1165,13 @@ export default function TopBar({
                     toast("Failed to copy link — try selecting and copying manually", "error");
                   }
                 }}
-                className="shrink-0 text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+                className="shrink-0 text-sm font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg transition-colors"
               >
                 {copied ? "Copied!" : "Copy"}
               </button>
             </div>
             <div className="flex justify-end mt-3">
-              <button onClick={() => setShowShareModal(false)} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
+              <button onClick={() => setShowShareModal(false)} className="text-sm font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5">
                 Close
               </button>
             </div>
@@ -1320,12 +1183,12 @@ export default function TopBar({
       {embedCodeOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEmbedCodeOpen(false)}>
           <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold text-gray-900 mb-2">Embed this document</h3>
-            <p className="text-xs text-gray-500 mb-3">Copy the code below and paste it into your website:</p>
+            <h3 className="text-sm font-semibold text-[#31302e] mb-2">Embed this document</h3>
+            <p className="text-xs text-[#615d59] mb-3">Copy the code below and paste it into your website:</p>
             <textarea
               readOnly
               value={`<iframe src="${shareUrl.replace('/doc/', '/embed/')}" width="100%" height="600" frameborder="0" style="border: 1px solid #e5e7eb; border-radius: 8px;"></iframe>`}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 bg-gray-50 font-mono resize-none"
+              className="w-full border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-xs text-[#31302e] bg-[#f6f5f4] font-mono resize-none"
               rows={4}
               onFocus={(e) => e.target.select()}
             />
@@ -1336,11 +1199,11 @@ export default function TopBar({
                   try { await navigator.clipboard.writeText(code); } catch {}
                   setEmbedCodeOpen(false);
                 }}
-                className="text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+                className="text-sm font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg transition-colors"
               >
                 Copy & Close
               </button>
-              <button onClick={() => setEmbedCodeOpen(false)} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
+              <button onClick={() => setEmbedCodeOpen(false)} className="text-sm font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5">
                 Close
               </button>
             </div>

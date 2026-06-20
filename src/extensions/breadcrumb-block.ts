@@ -76,7 +76,7 @@ function BreadcrumbNodeView() {
               {
                 key: "home",
                 href: "/",
-                style: { color: "#B8692A", textDecoration: "none", fontWeight: 500 },
+                style: { color: "#0075de", textDecoration: "none", fontWeight: 500 },
               },
               "Home"
             ),
@@ -93,7 +93,7 @@ function BreadcrumbNodeView() {
                   "a",
                   {
                     href: `/?folder=${seg.id}`,
-                    style: { color: "#B8692A", textDecoration: "none" },
+                    style: { color: "#0075de", textDecoration: "none" },
                   },
                   seg.name
                 )

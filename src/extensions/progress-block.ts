@@ -28,8 +28,8 @@ export const ProgressBlock = Node.create({
         parseHTML: (element: HTMLElement) => parseInt(element.getAttribute("data-value") || "0", 10),
       },
       color: {
-        default: "#B8692A",
-        parseHTML: (element: HTMLElement) => element.getAttribute("data-color") || "#B8692A",
+        default: "#0075de",
+        parseHTML: (element: HTMLElement) => element.getAttribute("data-color") || "#0075de",
       },
     };
   },
@@ -87,7 +87,7 @@ export const ProgressBlock = Node.create({
               attrs: {
                 label: attrs?.label ?? "Progress",
                 value: attrs?.value ?? 0,
-                color: attrs?.color ?? "#B8692A",
+                color: attrs?.color ?? "#0075de",
               },
             })
             .run();

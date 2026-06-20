@@ -52,10 +52,10 @@ export default function RevisionRequestCard({
   const isResolved = request.status === "resolved";
 
   const cardClass = isResolved
-    ? "rounded-lg border border-gray-200 bg-gray-50 p-3 shadow-sm opacity-60"
+    ? "rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f6f5f4] p-3 shadow-sm opacity-60"
     : isActive
-    ? "cursor-pointer rounded-lg border border-orange-400 bg-orange-50 p-3 ring-2 ring-orange-300 shadow-sm transition-all hover:shadow-md"
-    : "cursor-pointer rounded-lg border border-orange-200 bg-white p-3 shadow-sm transition-all hover:shadow-md";
+    ? "cursor-pointer rounded-lg border border-[#dd5b00] bg-[#fbece0] p-3 ring-2 ring-[rgba(221,91,0,0.4)] shadow-sm transition-all hover:shadow-md"
+    : "cursor-pointer rounded-lg border border-[rgba(221,91,0,0.3)] bg-white p-3 shadow-sm transition-all hover:shadow-md";
 
   return (
     <div
@@ -65,18 +65,18 @@ export default function RevisionRequestCard({
     >
       {/* Header */}
       <div className="mb-2 flex items-center gap-2">
-        <div className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white bg-orange-600">
+        <div className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white bg-[#dd5b00]">
           {getInitials(request.authorName)}
         </div>
         <div className="flex-1 min-w-0">
           <span
             className={`text-sm font-medium ${
-              isResolved ? "text-gray-500" : "text-gray-900"
+              isResolved ? "text-[#615d59]" : "text-[#31302e]"
             }`}
           >
             {request.authorName}
           </span>
-          <span className="ml-2 text-xs text-gray-400">
+          <span className="ml-2 text-xs text-[#a39e98]">
             {formatTimestamp(request.createdAt)}
           </span>
         </div>
@@ -85,7 +85,7 @@ export default function RevisionRequestCard({
           className={`text-xs font-medium px-2 py-0.5 rounded-full ${
             isResolved
               ? "bg-green-100 text-green-700"
-              : "bg-orange-100 text-orange-700"
+              : "bg-[#fbece0] text-[#dd5b00]"
           }`}
         >
           {isResolved ? "Resolved" : "Open"}
@@ -95,7 +95,7 @@ export default function RevisionRequestCard({
       {/* Content */}
       <p
         className={`mb-2 text-sm ${
-          isResolved ? "text-gray-400" : "text-gray-600"
+          isResolved ? "text-[#a39e98]" : "text-[#615d59]"
         }`}
       >
         {request.content}
@@ -103,11 +103,11 @@ export default function RevisionRequestCard({
 
       {/* Assignee */}
       <div className="mb-2 flex items-center gap-1.5">
-        <span className="text-xs text-gray-400">Assigned to:</span>
+        <span className="text-xs text-[#a39e98]">Assigned to:</span>
         <span
           className={`text-xs font-medium px-2 py-0.5 rounded-full ${
             isResolved
-              ? "bg-gray-100 text-gray-500"
+              ? "bg-[#f6f5f4] text-[#615d59]"
               : "bg-blue-50 text-blue-700"
           }`}
         >
@@ -123,7 +123,7 @@ export default function RevisionRequestCard({
               e.stopPropagation();
               onResolve(request.id);
             }}
-            className="text-xs font-medium text-gray-400 hover:text-green-600 transition-colors"
+            className="text-xs font-medium text-[#a39e98] hover:text-green-600 transition-colors"
           >
             Resolve
           </button>

@@ -7,7 +7,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 const COLORS = [
   { label: "Black", value: "#000000" },
   { label: "Red", value: "#DC2626" },
-  { label: "Blue", value: "#2563EB" },
+  { label: "Blue", value: "#0075de" },
 ];
 
 export default function CanvasNodeView({ node, updateAttributes }: NodeViewProps) {
@@ -108,16 +108,16 @@ export default function CanvasNodeView({ node, updateAttributes }: NodeViewProps
 
   return (
     <NodeViewWrapper className="my-4">
-      <div className="border border-gray-200 rounded-lg overflow-hidden bg-white" contentEditable={false}>
+      <div className="border border-[rgba(0,0,0,0.1)] rounded-lg overflow-hidden bg-white" contentEditable={false}>
         {/* Toolbar */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border-b border-gray-200">
-          <span className="text-xs font-medium text-gray-500 mr-2">Draw</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-[#f6f5f4] border-b border-[rgba(0,0,0,0.1)]">
+          <span className="text-xs font-medium text-[#615d59] mr-2">Draw</span>
           {COLORS.map((c) => (
             <button
               key={c.value}
               onClick={() => { setColor(c.value); setEraser(false); }}
               className={`w-5 h-5 rounded-full border-2 transition-all ${
-                color === c.value && !eraser ? "border-gray-800 scale-110" : "border-gray-300"
+                color === c.value && !eraser ? "border-[#31302e] scale-110" : "border-[#dddddd]"
               }`}
               style={{ backgroundColor: c.value }}
               title={c.label}
@@ -126,7 +126,7 @@ export default function CanvasNodeView({ node, updateAttributes }: NodeViewProps
           <button
             onClick={() => setEraser(!eraser)}
             className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-              eraser ? "bg-gray-800 text-white" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+              eraser ? "bg-[#31302e] text-white" : "bg-[#dddddd] text-[#615d59] hover:bg-[#dddddd]"
             }`}
             title="Eraser"
           >

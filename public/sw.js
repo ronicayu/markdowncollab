@@ -1,4 +1,4 @@
-const CACHE_NAME = "mc-shell-v1";
+const CACHE_NAME = "mc-shell-v2";
 const SHELL_URLS = ["/"];
 
 self.addEventListener("install", (event) => {
@@ -56,7 +56,7 @@ self.addEventListener("fetch", (event) => {
           (cached) =>
             cached ||
             new Response(
-              '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MarkdownCollab - Offline</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#111110;color:#fff}div{text-align:center;max-width:400px;padding:2rem}.icon{font-size:3rem;margin-bottom:1rem}h1{font-size:1.5rem;margin:0 0 .5rem}p{color:rgba(255,255,255,.6);margin:0 0 1.5rem;line-height:1.5}button{background:#B8692A;color:#fff;border:none;padding:.75rem 1.5rem;border-radius:8px;font-size:.875rem;cursor:pointer}button:hover{background:#96541F}</style></head><body><div><div class="icon">&#9986;</div><h1>You\'re offline</h1><p>MarkdownCollab needs an internet connection to load your documents. Check your connection and try again.</p><button onclick="location.reload()">Retry</button></div></body></html>',
+              '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MarkdownCollab - Offline</title><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#31302e;color:#fff}div{text-align:center;max-width:400px;padding:2rem}.icon{font-size:3rem;margin-bottom:1rem}h1{font-size:1.5rem;margin:0 0 .5rem}p{color:rgba(255,255,255,.6);margin:0 0 1.5rem;line-height:1.5}button{background:#0075de;color:#fff;border:none;padding:.75rem 1.5rem;border-radius:8px;font-size:.875rem;cursor:pointer}button:hover{background:#005bab}</style></head><body><div><div class="icon">&#9986;</div><h1>You\'re offline</h1><p>MarkdownCollab needs an internet connection to load your documents. Check your connection and try again.</p><button onclick="location.reload()">Retry</button></div></body></html>',
               { status: 200, headers: { "Content-Type": "text/html" } }
             )
         )

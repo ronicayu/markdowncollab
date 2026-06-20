@@ -16,7 +16,6 @@ export const DEFAULT_KEYBINDINGS: KeybindingMap = {
   underline: "Mod+U",
   "inline-code": "Mod+E",
   strikethrough: "Mod+Shift+X",
-  highlight: "Mod+Shift+H",
   link: "Mod+K",
   "heading-1": "Mod+Alt+1",
   "heading-2": "Mod+Alt+2",
@@ -37,6 +36,7 @@ export const DEFAULT_KEYBINDINGS: KeybindingMap = {
   redo: "Mod+Shift+Z",
   "command-palette": "Mod+P",
   "shortcuts-help": "Mod+/",
+  cycleEditorMode: "Mod+Shift+M",
 };
 
 function getOverrides(): KeybindingMap {

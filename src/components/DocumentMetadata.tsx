@@ -109,9 +109,9 @@ export default function DocumentMetadata({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-[#31302e] flex items-center gap-2">
             <svg
-              className="h-4 w-4 text-gray-500"
+              className="h-4 w-4 text-[#615d59]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -127,7 +127,7 @@ export default function DocumentMetadata({
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-[#a39e98] hover:text-[#615d59] transition-colors"
           >
             <svg
               className="h-4 w-4"
@@ -147,7 +147,7 @@ export default function DocumentMetadata({
 
         {loading ? (
           <div className="py-8 text-center">
-            <p className="text-xs text-gray-400">Loading metadata...</p>
+            <p className="text-xs text-[#a39e98]">Loading metadata...</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -197,20 +197,20 @@ export default function DocumentMetadata({
             />
             {uniqueCollaborators.length > 0 && (
               <div className="pt-1">
-                <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide mb-1">
+                <p className="text-[10px] font-medium text-[#a39e98] uppercase tracking-wide mb-1">
                   Contributors
                 </p>
                 <div className="flex flex-wrap gap-1">
                   {uniqueCollaborators.slice(0, 10).map((name) => (
                     <span
                       key={name}
-                      className="px-2 py-0.5 rounded-full bg-gray-100 text-xs text-gray-600"
+                      className="px-2 py-0.5 rounded-full bg-[#f6f5f4] text-xs text-[#615d59]"
                     >
                       {name}
                     </span>
                   ))}
                   {uniqueCollaborators.length > 10 && (
-                    <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs text-gray-400">
+                    <span className="px-2 py-0.5 rounded-full bg-[#f6f5f4] text-xs text-[#a39e98]">
                       +{uniqueCollaborators.length - 10} more
                     </span>
                   )}
@@ -226,9 +226,9 @@ export default function DocumentMetadata({
 
 function MetadataRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0">
-      <span className="text-xs text-gray-500">{label}</span>
-      <span className="text-xs font-medium text-gray-900">{value}</span>
+    <div className="flex justify-between items-center py-1.5 border-b border-[rgba(0,0,0,0.08)] last:border-0">
+      <span className="text-xs text-[#615d59]">{label}</span>
+      <span className="text-xs font-medium text-[#31302e]">{value}</span>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ToastProvider from "@/components/ToastProvider";
 import SessionProvider from "@/components/SessionProvider";
@@ -12,7 +12,12 @@ import RecentDocs from "@/components/RecentDocs";
 import KeyboardDocCreate from "@/components/KeyboardDocCreate";
 import { I18nProvider } from "@/lib/i18n";
 
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-ui",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "MarkdownCollab",
@@ -24,9 +29,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#B8692A" />
+        <meta name="theme-color" content="#0075de" />
       </head>
-      <body className={jakarta.className} suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${inter.className}`}
+        suppressHydrationWarning
+      >
         <SessionProvider>
           <I18nProvider>
           <ThemeWrapper>

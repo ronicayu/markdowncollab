@@ -4,8 +4,8 @@
   "description": "Real-time collaborative markdown editing",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#111110",
-  "theme_color": "#B8692A",
+  "background_color": "#31302e",
+  "theme_color": "#0075de",
   "icons": [
     {
       "src": "/icon-192.png",

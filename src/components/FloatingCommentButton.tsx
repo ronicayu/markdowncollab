@@ -118,7 +118,7 @@ export default function FloatingCommentButton({
         transform: "translateY(-100%)",
         pointerEvents: "auto",
       }}
-      className="animate-fade-in"
+      className="animate-fade-in hidden md:block"
     >
       <button
         onMouseDown={(e) => {
@@ -127,7 +127,7 @@ export default function FloatingCommentButton({
           e.preventDefault();
           onAddComment();
         }}
-        className="flex items-center gap-1.5 rounded-full bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-opacity duration-150 hover:bg-amber-700 active:bg-amber-800 select-none"
+        className="flex items-center gap-1.5 rounded-full bg-[#dd5b00] px-3 py-1.5 text-xs font-semibold text-white shadow-md transition-opacity duration-150 hover:bg-[#b14800] active:bg-[#8a3800] select-none"
         aria-label="Add comment on selected text"
       >
         <svg

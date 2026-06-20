@@ -7,13 +7,12 @@ import Collaboration from "@tiptap/extension-collaboration";
 import { RemoteCursors } from "@/extensions/remote-cursors";
 import { getUserColor } from "@/lib/cursor-utils";
 import { SuggestionMark } from "@/extensions/suggestion-mark";
+import { SuggestModeExtension, setSuggestModeEnabled } from "@/extensions/suggest-mode";
+import type { EditorMode } from "@/lib/editor-mode";
 import { CommentMark, commentDecorationKey } from "@/extensions/comment-mark";
 import { Markdown } from "tiptap-markdown";
 import Image from "@tiptap/extension-image";
-import { Highlight } from "@tiptap/extension-highlight";
 import { TextAlign } from "@tiptap/extension-text-align";
-import { Color } from "@tiptap/extension-color";
-import { TextStyle } from "@tiptap/extension-text-style";
 import { Superscript } from "@tiptap/extension-superscript";
 import { Subscript } from "@tiptap/extension-subscript";
 import { MermaidBlock } from "@/extensions/mermaid-block";
@@ -42,16 +41,13 @@ import "./drag-handle.css";
 import SearchBar from "./SearchBar";
 import LinkDialog from "./LinkDialog";
 import TableSortMenu from "./TableSortMenu";
-import { PersonalHighlight } from "@/extensions/personal-highlight";
 import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib/health-score";
 import AIAutoComplete from "./AIAutoComplete";
 
 import CursorChat from "./CursorChat";
 import EditorStatusBar from "./EditorStatusBar";
 
-import { GrammarCheck, grammarCheckPluginKey } from "@/extensions/grammar-check";
 import { ProgressBlock } from "@/extensions/progress-block";
-import { SectionLockExtension } from "@/extensions/section-lock";
 import { BreadcrumbBlock } from "@/extensions/breadcrumb-block";
 import { IssueLinker } from "@/extensions/issue-linker";
 
@@ -70,11 +66,11 @@ interface EditorProps {
   onEditorReady?: (editor: TiptapEditor) => void;
   activeCommentId?: string | null;
   editable?: boolean;
+  mode?: EditorMode;
   initialContent?: string | null;
   onToggleShortcutsHelp?: () => void;
   templateId?: string;
   autoCompleteEnabled?: boolean;
-  grammarCheckEnabled?: boolean;
 }
 
 export default function Editor({
@@ -85,11 +81,11 @@ export default function Editor({
   onEditorReady,
   activeCommentId,
   editable = true,
+  mode,
   initialContent,
   onToggleShortcutsHelp,
   templateId,
   autoCompleteEnabled = false,
-  grammarCheckEnabled = false,
 }: EditorProps) {
 
   const cursorColor = useMemo(() => getUserColor(userName), [userName]);
@@ -284,8 +280,11 @@ export default function Editor({
     };
   }, [handleScroll]);
 
+  const effectiveEditable = mode ? mode !== "view" : editable;
+  const initialSuggestEnabled = mode === "suggest";
+
   const editor = useEditor({
-    editable,
+    editable: effectiveEditable,
     extensions: [
       StarterKit.configure({
         undoRedo: false,
@@ -312,6 +311,13 @@ export default function Editor({
         placeholder: "Start typing, or press / for commands...",
       }),
       SuggestionMark,
+      SuggestModeExtension.configure({
+        initialEnabled: initialSuggestEnabled,
+        authorName: userName,
+        authorType: "human",
+        documentId,
+        ydoc,
+      }),
       CommentMark,
       SearchReplace,
       Collaboration.configure({
@@ -333,14 +339,9 @@ export default function Editor({
         allowBase64: false,
         HTMLAttributes: { class: "editor-image" },
       }),
-      Highlight.configure({
-        multicolor: false,
-      }),
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
-      TextStyle,
-      Color,
       Superscript,
       Subscript,
       TaskList,
@@ -360,16 +361,8 @@ export default function Editor({
         provider,
         currentUser: userName,
       }),
-      PersonalHighlight.configure({
-        documentId,
-      }),
-      GrammarCheck,
       ProgressBlock,
       BreadcrumbBlock,
-      SectionLockExtension.configure({
-        ydoc,
-        currentUser: userName,
-      }),
       IssueLinker,
       HeadingAnchor,
       InlineDate,
@@ -395,7 +388,6 @@ export default function Editor({
             underline: (e) => e.chain().focus().toggleUnderline().run(),
             "inline-code": (e) => e.chain().focus().toggleCode().run(),
             strikethrough: (e) => e.chain().focus().toggleStrike().run(),
-            highlight: (e) => e.chain().focus().toggleHighlight().run(),
             "heading-1": (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
             "heading-2": (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
             "heading-3": (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
@@ -883,23 +875,19 @@ export default function Editor({
     );
   }, [editor, heatmapEnabled]);
 
-  // Toggle grammar check
-  useEffect(() => {
-    if (!editor) return;
-    (editor.storage as any).grammarCheck.enabled = grammarCheckEnabled;
-    if (!grammarCheckEnabled) {
-      // Clear decorations when disabled
-      editor.view.dispatch(
-        editor.view.state.tr.setMeta(grammarCheckPluginKey, { clear: true })
-      );
-    }
-  }, [editor, grammarCheckEnabled]);
-
   useEffect(() => {
     if (editor) {
-      editor.setEditable(editable);
+      editor.setEditable(effectiveEditable);
     }
-  }, [editor, editable]);
+  }, [editor, effectiveEditable]);
+
+  useEffect(() => {
+    if (!editor || mode === undefined) return;
+    setSuggestModeEnabled(
+      editor as unknown as { view: { state: unknown; dispatch: (tr: unknown) => void } },
+      mode === "suggest",
+    );
+  }, [editor, mode]);
 
   useEffect(() => {
     if (editor && onEditorReady) {
@@ -1011,7 +999,7 @@ export default function Editor({
   };
 
   return (
-    <div ref={scrollContainerRef} className={`flex-1 overflow-auto bg-[#FFFEF9] relative ${typewriterMode ? "typewriter-mode" : ""}`}>
+    <div ref={scrollContainerRef} className={`flex-1 overflow-auto bg-[#ffffff] relative ${typewriterMode ? "typewriter-mode" : ""}`}>
       {isScrollable && (
         <div
           className="reading-progress-bar"
@@ -1049,20 +1037,20 @@ export default function Editor({
       {/* BubbleMenu removed: @tiptap/react v3 doesn't export BubbleMenu React component.
           Formatting is available via the static toolbar above. */}
       {showDraftBanner && (
-        <div className="mx-6 mt-2 mb-1 flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5">
-          <svg className="h-4 w-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="mx-6 mt-2 mb-1 flex items-center gap-3 rounded-lg border border-[rgba(221,91,0,0.5)] bg-[#fbece0] px-4 py-2.5">
+          <svg className="h-4 w-4 text-[#dd5b00] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
           </svg>
-          <span className="text-xs text-amber-800 flex-1">Unsaved draft found. Recover changes?</span>
+          <span className="text-xs text-[#dd5b00] flex-1">Unsaved draft found. Recover changes?</span>
           <button
             onClick={handleRecoverDraft}
-            className="px-2.5 py-1 rounded text-xs font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors"
+            className="px-2.5 py-1 rounded text-xs font-medium text-white bg-[#dd5b00] hover:bg-[#b14800] transition-colors"
           >
             Recover
           </button>
           <button
             onClick={handleDismissDraft}
-            className="px-2.5 py-1 rounded text-xs font-medium text-amber-700 hover:text-amber-900 hover:bg-amber-100 transition-colors"
+            className="px-2.5 py-1 rounded text-xs font-medium text-[#dd5b00] hover:text-[#31302e] hover:bg-[#fbece0] transition-colors"
           >
             Dismiss
           </button>
@@ -1101,7 +1089,7 @@ export default function Editor({
           onClick={() => {
             scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="fixed bottom-20 right-6 z-40 flex items-center justify-center w-9 h-9 rounded-full bg-[#111110] text-white shadow-lg hover:bg-[#333] transition-all opacity-80 hover:opacity-100"
+          className="fixed bottom-20 right-6 z-40 hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-[#ffffff] text-[#31302e] border border-[rgba(0,0,0,0.1)] shadow-md hover:bg-[#f6f5f4] transition-all opacity-80 hover:opacity-100"
           title="Scroll to top"
           aria-label="Scroll to top"
         >
@@ -1123,14 +1111,14 @@ export default function Editor({
       {issueSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setIssueSettingsOpen(false)}>
           <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Issue Tracker Settings</h3>
-            <p className="text-xs text-gray-500 mb-3">
+            <h3 className="text-sm font-semibold text-[#31302e] mb-1">Issue Tracker Settings</h3>
+            <p className="text-xs text-[#615d59] mb-3">
               Configure URL patterns for auto-linking. Use {"{ref}"} for the full reference (e.g. JIRA-123) and {"{num}"} for just the number.
             </p>
             <textarea
               value={issuePatterns}
               onChange={(e) => setIssuePatterns(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 font-mono resize-none focus:outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+              className="w-full border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-xs text-[#31302e] font-mono resize-none focus:outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]"
               rows={6}
               placeholder='{"JIRA": "https://jira.example.com/browse/{ref}"}'
             />
@@ -1145,11 +1133,11 @@ export default function Editor({
                     alert("Invalid JSON. Please check the format.");
                   }
                 }}
-                className="text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+                className="text-sm font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg transition-colors"
               >
                 Save
               </button>
-              <button onClick={() => setIssueSettingsOpen(false)} className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5">
+              <button onClick={() => setIssueSettingsOpen(false)} className="text-sm font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5">
                 Cancel
               </button>
             </div>

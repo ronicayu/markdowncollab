@@ -66,25 +66,25 @@ function ReactionBar({
             title={reactors.join(", ")}
             className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-colors ${
               isReacted
-                ? "bg-amber-100 border border-amber-300"
-                : "bg-gray-100 border border-gray-200 hover:bg-gray-200"
+                ? "bg-[#fbece0] border border-[rgba(221,91,0,0.5)]"
+                : "bg-[#f6f5f4] border border-[rgba(0,0,0,0.1)] hover:bg-[#dddddd]"
             }`}
           >
             <span>{emoji}</span>
-            <span className="text-gray-600 font-medium">{count}</span>
+            <span className="text-[#615d59] font-medium">{count}</span>
           </button>
         );
       })}
       <div className="relative">
         <button
           onClick={() => setPickerOpen((v) => !v)}
-          className="inline-flex items-center justify-center h-5 w-5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 text-xs transition-colors"
+          className="inline-flex items-center justify-center h-5 w-5 rounded-full text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4] text-xs transition-colors"
           title="Add reaction"
         >
           +
         </button>
         {pickerOpen && (
-          <div className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg shadow-lg p-1 z-10">
+          <div className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg p-1 z-10">
             {REACTION_EMOJIS.map((em) => (
               <button
                 key={em}
@@ -92,7 +92,7 @@ function ReactionBar({
                   onToggleReaction(commentId, em);
                   setPickerOpen(false);
                 }}
-                className="text-sm hover:scale-125 transition-transform p-0.5 rounded hover:bg-gray-100"
+                className="text-sm hover:scale-125 transition-transform p-0.5 rounded hover:bg-[#f6f5f4]"
               >
                 {em}
               </button>
@@ -126,11 +126,12 @@ export default function CommentCard({
 
   const isAgent = comment.authorType === "agent";
 
+  const accentColor = isAgent ? "var(--ai)" : "var(--warn)";
   const cardClass = comment.resolved
-    ? "rounded-lg border border-gray-200 bg-gray-50 p-3 shadow-sm opacity-60"
+    ? "relative rounded-lg border border-[rgba(0,0,0,0.1)] bg-[#f6f5f4] p-3 pl-4 shadow-sm opacity-60"
     : isActive
-    ? "cursor-pointer rounded-lg border border-amber-400 bg-amber-50 p-3 ring-2 ring-amber-300 shadow-sm transition-all hover:shadow-md"
-    : "cursor-pointer rounded-lg border border-gray-200 bg-white p-3 shadow-sm transition-all hover:shadow-md";
+    ? "cursor-pointer relative rounded-lg border border-[#dddddd] bg-white p-3 pl-4 shadow-sm transition-all hover:shadow-md"
+    : "cursor-pointer relative rounded-lg border border-[#eeeceb] bg-white p-3 pl-4 shadow-sm transition-all hover:shadow-md";
 
   return (
     <div
@@ -138,10 +139,15 @@ export default function CommentCard({
       className={cardClass}
       onClick={() => !comment.resolved && onClick(comment.id)}
     >
+      <span
+        aria-hidden
+        className="absolute left-0 top-2.5 bottom-2.5 w-[2px] rounded-sm"
+        style={{ background: accentColor, opacity: isActive ? 1 : 0.65 }}
+      />
       <div className="mb-2 flex items-center gap-2">
         <div
           className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold text-white ${
-            isAgent ? "bg-gray-700" : "bg-green-600"
+            isAgent ? "bg-[var(--ai)]" : "bg-green-600"
           }`}
         >
           {isAgent ? (
@@ -163,16 +169,16 @@ export default function CommentCard({
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <span className={`text-sm font-medium ${comment.resolved ? "text-gray-500" : "text-gray-900"}`}>
+          <span className={`text-sm font-medium ${comment.resolved ? "text-[#615d59]" : "text-[#31302e]"}`}>
             {comment.authorName}
           </span>
-          <span className="ml-2 text-xs text-gray-400">
+          <span className="ml-2 text-xs text-[#a39e98]">
             {formatTimestamp(comment.createdAt)}
           </span>
         </div>
       </div>
 
-      <p className={`mb-2 text-sm ${comment.resolved ? "text-gray-400" : "text-gray-600"}`}>
+      <p className={`mb-2 text-sm ${comment.resolved ? "text-[#a39e98]" : "text-[#615d59]"}`}>
         {renderMentionText(comment.content).map((part, i) =>
           part.type === "mention" ? (
             <span key={i} className="text-[#b4783c] font-semibold">
@@ -196,14 +202,14 @@ export default function CommentCard({
 
       {/* Replies */}
       {comment.replies && comment.replies.length > 0 && (
-        <div className={`mb-2 pl-3 border-l-2 space-y-2 ${comment.resolved ? "border-gray-200" : "border-amber-200"}`}>
+        <div className={`mb-2 pl-3 border-l-2 space-y-2 ${comment.resolved ? "border-[rgba(0,0,0,0.1)]" : "border-[rgba(221,91,0,0.3)]"}`}>
           {comment.replies.map((reply) => (
             <div key={reply.id} className="text-xs">
-              <span className={`font-medium ${comment.resolved ? "text-gray-400" : "text-gray-700"}`}>
+              <span className={`font-medium ${comment.resolved ? "text-[#a39e98]" : "text-[#31302e]"}`}>
                 {reply.author}
               </span>
-              <span className="ml-1.5 text-gray-400">{formatTimestamp(reply.createdAt)}</span>
-              <p className={`mt-0.5 ${comment.resolved ? "text-gray-400" : "text-gray-600"}`}>
+              <span className="ml-1.5 text-[#a39e98]">{formatTimestamp(reply.createdAt)}</span>
+              <p className={`mt-0.5 ${comment.resolved ? "text-[#a39e98]" : "text-[#615d59]"}`}>
                 {renderMentionText(reply.text).map((part, i) =>
                   part.type === "mention" ? (
                     <span key={i} className="text-[#b4783c] font-semibold">
@@ -230,7 +236,7 @@ export default function CommentCard({
         <>
           <div className="flex items-center justify-between">
             {isContentDeleted && (
-              <span className="text-xs text-amber-600 font-medium">Content deleted</span>
+              <span className="text-xs text-[#dd5b00] font-medium">Content deleted</span>
             )}
             <div className={`flex items-center gap-3 ${!isContentDeleted ? "ml-auto" : ""}`}>
               <button
@@ -239,7 +245,7 @@ export default function CommentCard({
                   setShowReplyInput((v) => !v);
                   setReplyText("");
                 }}
-                className="text-xs font-medium text-gray-400 hover:text-[#B8692A] transition-colors"
+                className="text-xs font-medium text-[#a39e98] hover:text-[#0075de] transition-colors"
               >
                 Reply
               </button>
@@ -248,7 +254,7 @@ export default function CommentCard({
                   e.stopPropagation();
                   onResolve(comment.id);
                 }}
-                className="text-xs font-medium text-gray-400 hover:text-green-600 transition-colors"
+                className="text-xs font-medium text-[#a39e98] hover:text-green-600 transition-colors"
               >
                 Resolve
               </button>
@@ -278,12 +284,12 @@ export default function CommentCard({
                 }}
                 placeholder="Write a reply..."
                 rows={2}
-                className="w-full text-xs border border-gray-200 rounded-md px-2 py-1.5 resize-none focus:outline-none focus:border-[#B8692A]"
+                className="w-full text-xs border border-[rgba(0,0,0,0.1)] rounded-md px-2 py-1.5 resize-none focus:outline-none focus:border-[#0075de]"
               />
               <div className="flex justify-end gap-2 mt-1.5">
                 <button
                   onClick={() => { setShowReplyInput(false); setReplyText(""); }}
-                  className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+                  className="text-xs text-[#615d59] hover:text-[#31302e] px-2 py-1"
                 >
                   Cancel
                 </button>
@@ -296,7 +302,7 @@ export default function CommentCard({
                     }
                   }}
                   disabled={!replyText.trim()}
-                  className="text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] disabled:bg-gray-300 px-2.5 py-1 rounded-md"
+                  className="text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] disabled:bg-[#dddddd] px-2.5 py-1 rounded-md"
                 >
                   Reply
                 </button>

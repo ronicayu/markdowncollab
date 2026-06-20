@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const doc = await prisma.document.findUnique({
     where: { id },
-    select: { id: true, title: true, ownerId: true, visibility: true, status: true, approvedBy: true, approvedAt: true, folderId: true, forkedFrom: true, coverImage: true, fontFamily: true, password: true, expiresAt: true, createdAt: true, updatedAt: true },
+    select: { id: true, title: true, ownerId: true, visibility: true, status: true, approvedBy: true, approvedAt: true, folderId: true, forkedFrom: true, coverImage: true, password: true, expiresAt: true, createdAt: true, updatedAt: true },
   });
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -63,7 +63,6 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   if (body.title !== undefined) data.title = String(body.title).trim().substring(0, 500);
   if (body.folderId !== undefined) data.folderId = body.folderId;
   if (body.coverImage !== undefined) data.coverImage = body.coverImage;
-  if (body.fontFamily !== undefined) data.fontFamily = body.fontFamily;
   const doc = await prisma.document.update({ where: { id }, data });
   return NextResponse.json({ ...doc, role: access.role });
 }

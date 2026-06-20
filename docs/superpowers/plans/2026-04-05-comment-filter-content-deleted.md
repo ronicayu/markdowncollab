@@ -443,13 +443,13 @@ export default function CommentSidebar({
   }
 
   return (
-    <div className="w-72 shrink-0 overflow-y-auto border-l border-[#E8D8C0] bg-[#F5EBD8] p-3">
+    <div className="w-72 shrink-0 overflow-y-auto border-l border-[#eeeceb] bg-[#ffffff] p-3">
       <div className="flex items-center justify-between mb-3 gap-2">
         <h2 className="text-sm font-semibold text-gray-700 shrink-0">Comments</h2>
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as Filter)}
-          className="text-xs border border-[#D4A978] rounded-md px-1.5 py-1 bg-[#FFFEF9] text-gray-600 focus:outline-none focus:border-[#B8692A] cursor-pointer"
+          className="text-xs border border-[#dddddd] rounded-md px-1.5 py-1 bg-[#ffffff] text-gray-600 focus:outline-none focus:border-[#0075de] cursor-pointer"
         >
           <option value="open">Open</option>
           <option value="resolved">Resolved</option>
@@ -458,7 +458,7 @@ export default function CommentSidebar({
         {hasSelection && filter !== "resolved" && (
           <button
             onClick={() => setShowInput(true)}
-            className="text-xs font-medium text-[#B8692A] hover:text-[#96541F] shrink-0"
+            className="text-xs font-medium text-[#0075de] hover:text-[#005bab] shrink-0"
           >
             + Comment
           </button>
@@ -467,7 +467,7 @@ export default function CommentSidebar({
 
       {/* New comment input */}
       {showInput && (
-        <div className="mb-3 rounded-lg border border-[#D4A978] bg-[#FFFEF9] p-3">
+        <div className="mb-3 rounded-lg border border-[#dddddd] bg-[#ffffff] p-3">
           <p className="text-xs text-gray-500 mb-2">Comment on selected text:</p>
           <textarea
             autoFocus
@@ -484,7 +484,7 @@ export default function CommentSidebar({
               }
             }}
             placeholder="Type your comment..."
-            className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-[#B8692A]"
+            className="w-full text-sm border border-gray-200 rounded-md px-2.5 py-1.5 resize-none focus:outline-none focus:border-[#0075de]"
             rows={2}
           />
           <div className="flex justify-end gap-2 mt-2">
@@ -497,7 +497,7 @@ export default function CommentSidebar({
             <button
               onClick={handleSubmit}
               disabled={!commentText.trim()}
-              className="text-xs font-medium text-white bg-[#B8692A] hover:bg-[#96541F] disabled:bg-gray-300 px-3 py-1 rounded-md"
+              className="text-xs font-medium text-white bg-[#0075de] hover:bg-[#005bab] disabled:bg-gray-300 px-3 py-1 rounded-md"
             >
               Comment
             </button>

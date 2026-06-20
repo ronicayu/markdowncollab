@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 
 export const TOOLBAR_SECTIONS = [
-  { id: "formatting", label: "Formatting", description: "Bold, Italic, Underline, Strike, Superscript, Subscript, Highlight, Text color, Link, Inline code" },
+  { id: "formatting", label: "Formatting", description: "Bold, Italic, Underline, Strike, Superscript, Subscript, Link, Inline code" },
   { id: "headings", label: "Headings", description: "H1, H2, H3" },
   { id: "alignment", label: "Alignment", description: "Left, Center, Right" },
   { id: "lists", label: "Lists", description: "Bullet, Ordered, Task, Outdent, Indent" },
-  { id: "blocks", label: "Blocks", description: "Blockquote, Code, Mermaid, Emoji, HR, Table" },
+  { id: "blocks", label: "Blocks", description: "Blockquote, Code, Mermaid, HR, Table" },
   { id: "history", label: "History", description: "Undo, Redo" },
   { id: "search", label: "Search", description: "Find & Replace" },
-  { id: "advanced", label: "Advanced", description: "Auto-number, Snippet, Highlight, Macros, Shortcuts" },
+  { id: "advanced", label: "Advanced", description: "Auto-number headings, Shortcuts help" },
 ] as const;
 
 export type ToolbarSectionId = (typeof TOOLBAR_SECTIONS)[number]["id"];
@@ -88,13 +88,13 @@ export default function ToolbarSettings({ open, onClose, onChange }: ToolbarSett
   return (
     <div
       ref={dialogRef}
-      className="absolute top-full right-0 mt-1 z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-72"
+      className="absolute top-full right-0 mt-1 z-50 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-xl p-4 w-72"
     >
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-gray-900">Toolbar Sections</h3>
+        <h3 className="text-sm font-semibold text-[#31302e]">Toolbar Sections</h3>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className="text-[#a39e98] hover:text-[#615d59] transition-colors"
           aria-label="Close toolbar settings"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -102,7 +102,7 @@ export default function ToolbarSettings({ open, onClose, onChange }: ToolbarSett
           </svg>
         </button>
       </div>
-      <p className="text-xs text-gray-500 mb-3">Show or hide toolbar button groups.</p>
+      <p className="text-xs text-[#615d59] mb-3">Show or hide toolbar button groups.</p>
       <div className="space-y-2">
         {TOOLBAR_SECTIONS.map((section) => (
           <label
@@ -113,23 +113,23 @@ export default function ToolbarSettings({ open, onClose, onChange }: ToolbarSett
               type="checkbox"
               checked={!hidden.has(section.id)}
               onChange={() => toggleSection(section.id)}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#B8692A] focus:ring-[#B8692A]"
+              className="mt-0.5 h-4 w-4 rounded border-[#dddddd] text-[#0075de] focus:ring-[#0075de]"
             />
             <div className="min-w-0">
-              <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
+              <span className="text-sm font-medium text-[#31302e] group-hover:text-[#31302e]">
                 {section.label}
               </span>
-              <p className="text-[11px] text-gray-400 leading-tight">
+              <p className="text-[11px] text-[#a39e98] leading-tight">
                 {section.description}
               </p>
             </div>
           </label>
         ))}
       </div>
-      <div className="mt-3 pt-3 border-t border-gray-100">
+      <div className="mt-3 pt-3 border-t border-[rgba(0,0,0,0.1)]">
         <button
           onClick={resetToDefault}
-          className="w-full text-xs font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded py-1.5 transition-colors"
+          className="w-full text-xs font-medium text-[#615d59] hover:text-[#31302e] hover:bg-[#f6f5f4] rounded py-1.5 transition-colors"
         >
           Reset to default
         </button>

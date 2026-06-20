@@ -2,13 +2,6 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { Editor } from "@tiptap/core";
-import type * as Y from "yjs";
-import SectionLockIndicator from "./SectionLockIndicator";
-
-interface SectionLock {
-  lockedBy: string;
-  lockedAt: number;
-}
 
 interface Heading {
   level: number;
@@ -47,8 +40,6 @@ function saveBookmarks(docId: string, bookmarks: Bookmark[]) {
 interface OutlineSidebarProps {
   editor: Editor | null;
   documentId?: string;
-  ydoc?: Y.Doc;
-  currentUser?: string;
 }
 
 function computeHeadingNumbers(headings: Heading[]): string[] {
@@ -74,7 +65,7 @@ function computeHeadingNumbers(headings: Heading[]): string[] {
   return numbers;
 }
 
-export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }: OutlineSidebarProps) {
+export default function OutlineSidebar({ editor, documentId }: OutlineSidebarProps) {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const [backlinks, setBacklinks] = useState<Backlink[]>([]);
@@ -170,35 +161,6 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
 
   const headingNumbers = showNumbering ? computeHeadingNumbers(headings) : [];
 
-  // Section locks via Yjs
-  const [sectionLocks, setSectionLocks] = useState<Record<string, SectionLock>>({});
-
-  useEffect(() => {
-    if (!ydoc) return;
-    const locksMap = ydoc.getMap("sectionLocks");
-    const updateLocks = () => {
-      const locks: Record<string, SectionLock> = {};
-      locksMap.forEach((value, key) => {
-        locks[key] = value as SectionLock;
-      });
-      setSectionLocks(locks);
-    };
-    locksMap.observe(updateLocks);
-    updateLocks();
-    return () => { locksMap.unobserve(updateLocks); };
-  }, [ydoc]);
-
-  const handleToggleSectionLock = useCallback((headingText: string) => {
-    if (!ydoc || !currentUser) return;
-    const locksMap = ydoc.getMap("sectionLocks");
-    const existing = locksMap.get(headingText) as SectionLock | undefined;
-    if (existing && existing.lockedBy === currentUser) {
-      locksMap.delete(headingText);
-    } else if (!existing) {
-      locksMap.set(headingText, { lockedBy: currentUser, lockedAt: Date.now() });
-    }
-  }, [ydoc, currentUser]);
-
   // Load bookmarks from localStorage
   useEffect(() => {
     if (!documentId) return;
@@ -273,10 +235,10 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
 
   if (collapsed) {
     return (
-      <div className="border-r border-[#E8D8C0] bg-[#F5EBD8] p-2 flex flex-col items-center">
+      <div className="border-r border-[#eeeceb] bg-[#ffffff] p-2 flex flex-col items-center">
         <button
           onClick={() => setCollapsed(false)}
-          className="p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+          className="p-1.5 rounded-md text-[#a39e98] hover:text-[#615d59] hover:bg-[#eeeceb] transition-colors"
           title="Show outline"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -288,9 +250,9 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
   }
 
   return (
-    <div className="w-52 border-r border-[#E8D8C0] bg-[#F5EBD8] p-4 overflow-y-auto">
+    <div className="w-52 border-r border-[#eeeceb] bg-[#ffffff] p-4 overflow-y-auto">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold text-gray-400 tracking-widest">OUTLINE</p>
+        <p className="text-xs font-semibold text-[#a39e98] tracking-widest">OUTLINE</p>
         <div className="flex items-center gap-1">
           <button
             onClick={() => {
@@ -300,8 +262,8 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
             }}
             className={`p-1 rounded-md transition-colors ${
               showNumbering
-                ? "text-amber-600 bg-amber-100 hover:bg-amber-200"
-                : "text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0]"
+                ? "text-[#dd5b00] bg-[#fbece0] hover:bg-[#fbece0]"
+                : "text-[#a39e98] hover:text-[#615d59] hover:bg-[#eeeceb]"
             }`}
             title={showNumbering ? "Hide numbering" : "Show numbering"}
           >
@@ -311,7 +273,7 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
           </button>
           <button
             onClick={() => setCollapsed(true)}
-            className="p-1 rounded-md text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+            className="p-1 rounded-md text-[#a39e98] hover:text-[#615d59] hover:bg-[#eeeceb] transition-colors"
             title="Hide outline"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -321,7 +283,7 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
         </div>
       </div>
       {headings.length === 0 ? (
-        <p className="text-xs text-gray-400">No headings yet</p>
+        <p className="text-xs text-[#a39e98]">No headings yet</p>
       ) : (
         <div className="space-y-0.5">
           {headings.map((h, i) => (
@@ -336,7 +298,7 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
               onDragEnd={handleDragEnd}
             >
               {dropIndex === i && dragIndex !== null && dragIndex !== i && (
-                <div className="absolute -top-0.5 left-0 right-0 h-0.5 bg-[#B8692A] rounded-full z-10" />
+                <div className="absolute -top-0.5 left-0 right-0 h-0.5 bg-[#0075de] rounded-full z-10" />
               )}
               <button
                 onClick={() => {
@@ -357,39 +319,29 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
                     editor.commands.scrollIntoView();
                   }
                 }}
-                className={`flex-1 text-left text-sm truncate py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors ${
-                  sectionLocks[h.text] ? "text-amber-700" : "text-gray-600 hover:text-gray-900"
-                }`}
+                className="flex-1 text-left text-sm truncate py-1.5 px-2 rounded-md hover:bg-[#eeeceb] transition-colors text-[#615d59] hover:text-[#31302e]"
                 style={{ paddingLeft: `${(h.level - 1) * 12 + 8}px` }}
               >
                 {showNumbering && headingNumbers[i] ? (
-                  <span className="text-gray-400 mr-1 text-xs font-mono">{headingNumbers[i]}</span>
+                  <span className="text-[#a39e98] mr-1 text-xs font-mono">{headingNumbers[i]}</span>
                 ) : null}
                 {h.text}
               </button>
-              {ydoc && currentUser && (
-                <SectionLockIndicator
-                  headingText={h.text}
-                  lock={sectionLocks[h.text] || null}
-                  onToggle={handleToggleSectionLock}
-                  currentUser={currentUser}
-                />
-              )}
             </div>
           ))}
         </div>
       )}
       {/* Bookmarks section */}
       {documentId && (
-        <div className="mt-6 pt-4 border-t border-[#E8D8C0]">
+        <div className="mt-6 pt-4 border-t border-[#eeeceb]">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-400 tracking-widest">BOOKMARKS</p>
+            <p className="text-xs font-semibold text-[#a39e98] tracking-widest">BOOKMARKS</p>
             <button
               onClick={() => {
                 setShowAddBookmark((v) => !v);
                 setTimeout(() => bookmarkInputRef.current?.focus(), 50);
               }}
-              className="p-0.5 rounded text-gray-400 hover:text-gray-600 hover:bg-[#E8D8C0] transition-colors"
+              className="p-0.5 rounded text-[#a39e98] hover:text-[#615d59] hover:bg-[#eeeceb] transition-colors"
               title="Add bookmark"
               aria-label="Add bookmark"
             >
@@ -407,33 +359,33 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
                 value={bookmarkName}
                 onChange={(e) => setBookmarkName(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") addBookmark(); if (e.key === "Escape") setShowAddBookmark(false); }}
-                className="flex-1 min-w-0 text-xs border border-[#E8D8C0] rounded px-1.5 py-1 bg-white/50 outline-none focus:border-gray-400"
+                className="flex-1 min-w-0 text-xs border border-[#eeeceb] rounded px-1.5 py-1 bg-white/50 outline-none focus:border-[#a39e98]"
               />
               <button
                 onClick={addBookmark}
                 disabled={!bookmarkName.trim()}
-                className="text-xs text-gray-500 hover:text-gray-700 px-1.5 py-1 rounded hover:bg-[#E8D8C0] disabled:opacity-40"
+                className="text-xs text-[#615d59] hover:text-[#31302e] px-1.5 py-1 rounded hover:bg-[#eeeceb] disabled:opacity-40"
               >
                 Add
               </button>
             </div>
           )}
           {bookmarks.length === 0 && !showAddBookmark ? (
-            <p className="text-xs text-gray-400">No bookmarks</p>
+            <p className="text-xs text-[#a39e98]">No bookmarks</p>
           ) : (
             <div className="space-y-0.5">
               {bookmarks.map((bm, i) => (
                 <div key={i} className="flex items-center group">
                   <button
                     onClick={() => scrollToBookmark(bm)}
-                    className="flex-1 text-left text-sm text-gray-600 hover:text-gray-900 truncate py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors"
+                    className="flex-1 text-left text-sm text-[#615d59] hover:text-[#31302e] truncate py-1.5 px-2 rounded-md hover:bg-[#eeeceb] transition-colors"
                     title={`Scroll to "${bm.name}"`}
                   >
                     {bm.name}
                   </button>
                   <button
                     onClick={() => removeBookmark(i)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-gray-400 hover:text-red-500 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-[#a39e98] hover:text-red-500 transition-all"
                     title="Remove bookmark"
                     aria-label={`Remove bookmark ${bm.name}`}
                   >
@@ -448,14 +400,14 @@ export default function OutlineSidebar({ editor, documentId, ydoc, currentUser }
         </div>
       )}
       {backlinks.length > 0 && (
-        <div className="mt-6 pt-4 border-t border-[#E8D8C0]">
-          <p className="text-xs font-semibold text-gray-400 tracking-widest mb-2">LINKED FROM</p>
+        <div className="mt-6 pt-4 border-t border-[#eeeceb]">
+          <p className="text-xs font-semibold text-[#a39e98] tracking-widest mb-2">LINKED FROM</p>
           <div className="space-y-1">
             {backlinks.map((bl) => (
               <a
                 key={bl.id}
                 href={`/doc/${bl.id}`}
-                className="block text-sm text-gray-600 hover:text-gray-900 py-1.5 px-2 rounded-md hover:bg-[#E8D8C0] transition-colors truncate"
+                className="block text-sm text-[#615d59] hover:text-[#31302e] py-1.5 px-2 rounded-md hover:bg-[#eeeceb] transition-colors truncate"
                 title={bl.snippet || bl.title}
               >
                 {bl.title}

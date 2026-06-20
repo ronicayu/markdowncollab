@@ -37,7 +37,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
       await QRCode.toCanvas(qrCanvasRef.current, url, {
         width: 200,
         margin: 2,
-        color: { dark: "#111110", light: "#ffffff" },
+        color: { dark: "#31302e", light: "#ffffff" },
       });
     } catch (err) {
       console.error("QR generation failed:", err);
@@ -55,7 +55,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
       const dataUrl = await QRCode.toDataURL(url, {
         width: 400,
         margin: 2,
-        color: { dark: "#111110", light: "#ffffff" },
+        color: { dark: "#31302e", light: "#ffffff" },
       });
       const link = document.createElement("a");
       link.download = `qr-${documentId.slice(0, 8)}.png`;
@@ -155,7 +155,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="share-dialog-title" className="bg-white rounded-xl shadow-xl p-6 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-        <h3 id="share-dialog-title" className="text-base font-semibold text-gray-900 mb-4">Share document</h3>
+        <h3 id="share-dialog-title" className="text-base font-semibold text-[#31302e] mb-4">Share document</h3>
 
         {/* Email share form */}
         <div className="flex gap-2 mb-3">
@@ -165,12 +165,12 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAddShare()}
-            className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#B8692A] focus:ring-1 focus:ring-[#B8692A]"
+            className="flex-1 min-w-0 border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]"
           />
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as "viewer" | "editor")}
-            className="border border-gray-200 rounded-lg px-2 py-2 text-sm outline-none focus:border-[#B8692A]"
+            className="border border-[rgba(0,0,0,0.1)] rounded-lg px-2 py-2 text-sm outline-none focus:border-[#0075de]"
           >
             <option value="viewer">Viewer</option>
             <option value="editor">Editor</option>
@@ -178,7 +178,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
           <button
             onClick={handleAddShare}
             disabled={loading || !email.trim()}
-            className="shrink-0 bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            className="shrink-0 bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
           >
             Share
           </button>
@@ -188,16 +188,16 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
 
         {/* Current shares list */}
         {shares.length > 0 && (
-          <div className="border border-gray-100 rounded-lg divide-y divide-gray-100 mb-4 max-h-40 overflow-y-auto">
+          <div className="border border-[rgba(0,0,0,0.1)] rounded-lg divide-y divide-[rgba(0,0,0,0.1)] mb-4 max-h-40 overflow-y-auto">
             {shares.map((share) => (
               <div key={share.id} className="flex items-center justify-between px-3 py-2">
                 <div className="min-w-0">
-                  <p className="text-sm text-gray-700 truncate">{share.email}</p>
-                  <p className="text-xs text-gray-400 capitalize">{share.role}</p>
+                  <p className="text-sm text-[#31302e] truncate">{share.email}</p>
+                  <p className="text-xs text-[#a39e98] capitalize">{share.role}</p>
                 </div>
                 <button
                   onClick={() => handleRemoveShare(share.id)}
-                  className="shrink-0 text-xs text-gray-400 hover:text-red-500 transition-colors ml-2"
+                  className="shrink-0 text-xs text-[#a39e98] hover:text-red-500 transition-colors ml-2"
                 >
                   Remove
                 </button>
@@ -207,11 +207,11 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
         )}
 
         {/* Link sharing section */}
-        <div className="border-t border-gray-100 pt-4 mt-2">
+        <div className="border-t border-[rgba(0,0,0,0.1)] pt-4 mt-2">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm font-medium text-gray-700">Anyone with the link</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-medium text-[#31302e]">Anyone with the link</p>
+              <p className="text-xs text-[#a39e98]">
                 {linkEnabled ? `Can ${linkRole === "editor" ? "edit" : "view"}` : "Disabled"}
               </p>
             </div>
@@ -220,7 +220,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
               aria-label={linkEnabled ? "Disable link sharing" : "Enable link sharing"}
               aria-pressed={linkEnabled}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                linkEnabled ? "bg-[#B8692A]" : "bg-gray-200"
+                linkEnabled ? "bg-[#0075de]" : "bg-[#dddddd]"
               }`}
             >
               <span
@@ -250,7 +250,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
                       setLinkUrl(`${window.location.origin}${data.url}`);
                     }
                   }}
-                  className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm outline-none"
+                  className="border border-[rgba(0,0,0,0.1)] rounded-lg px-2 py-1.5 text-sm outline-none"
                 >
                   <option value="viewer">Can view</option>
                   <option value="editor">Can edit</option>
@@ -260,12 +260,12 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
                 <input
                   readOnly
                   value={linkUrl}
-                  className="flex-1 min-w-0 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-500 bg-gray-50 select-all"
+                  className="flex-1 min-w-0 border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-sm text-[#615d59] bg-[#f6f5f4] select-all"
                   onFocus={(e) => e.target.select()}
                 />
                 <button
                   onClick={copyLink}
-                  className="shrink-0 text-sm font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-2 rounded-lg transition-colors"
+                  className="shrink-0 text-sm font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg transition-colors"
                 >
                   {linkCopied ? "Copied!" : "Copy"}
                 </button>
@@ -275,11 +275,11 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
         </div>
 
         {/* QR Code section */}
-        <div className="border-t border-gray-100 pt-4 mt-2">
+        <div className="border-t border-[rgba(0,0,0,0.1)] pt-4 mt-2">
           <button
             onClick={() => setShowQr((v) => !v)}
             aria-expanded={showQr}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-[#31302e] hover:text-[#31302e] transition-colors"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
@@ -289,10 +289,10 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
           </button>
           {showQr && (
             <div className="mt-3 flex flex-col items-center gap-3">
-              <canvas ref={qrCanvasRef} className="rounded-lg border border-gray-200" />
+              <canvas ref={qrCanvasRef} className="rounded-lg border border-[rgba(0,0,0,0.1)]" />
               <button
                 onClick={downloadQR}
-                className="text-xs font-medium bg-[#B8692A] hover:bg-[#96541F] text-white px-3 py-1.5 rounded-lg transition-colors"
+                className="text-xs font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-1.5 rounded-lg transition-colors"
               >
                 Download QR as PNG
               </button>
@@ -304,7 +304,7 @@ export default function ShareDialog({ documentId, isOpen, onClose }: ShareDialog
           <button
             onClick={onClose}
             aria-label="Close share dialog"
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-1.5"
+            className="text-sm font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5"
           >
             Done
           </button>

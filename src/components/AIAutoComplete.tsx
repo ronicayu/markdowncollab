@@ -121,17 +121,17 @@ export default function AIAutoComplete({ editor, enabled }: AIAutoCompleteProps)
 
   return (
     <div
-      className="absolute z-40 max-w-md bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-sm"
+      className="absolute z-40 max-w-md bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg px-3 py-2 text-sm"
       style={{ top: position.top, left: Math.max(0, position.left) }}
     >
-      <p className="text-gray-400 italic leading-relaxed">{suggestion}</p>
-      <div className="flex items-center gap-3 mt-1.5 text-[10px] text-gray-400">
+      <p className="text-[#a39e98] italic leading-relaxed">{suggestion}</p>
+      <div className="flex items-center gap-3 mt-1.5 text-[10px] text-[#a39e98]">
         <span className="flex items-center gap-1">
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[10px] font-mono">Tab</kbd>
+          <kbd className="px-1 py-0.5 bg-[#f6f5f4] rounded text-[10px] font-mono">Tab</kbd>
           accept
         </span>
         <span className="flex items-center gap-1">
-          <kbd className="px-1 py-0.5 bg-gray-100 rounded text-[10px] font-mono">Esc</kbd>
+          <kbd className="px-1 py-0.5 bg-[#f6f5f4] rounded text-[10px] font-mono">Esc</kbd>
           dismiss
         </span>
       </div>

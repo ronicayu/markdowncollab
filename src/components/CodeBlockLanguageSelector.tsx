@@ -82,17 +82,17 @@ export default function CodeBlockLanguageSelector({
 
   return (
     <NodeViewWrapper
-      className="code-block-wrapper relative my-3 rounded-md border border-gray-200 bg-[#f8f9fa] overflow-hidden"
+      className="code-block-wrapper relative my-3 rounded-md border border-[rgba(0,0,0,0.1)] bg-[#f8f9fa] overflow-hidden"
     >
       {/* Language selector bar */}
       <div
         contentEditable={false}
-        className="flex items-center justify-between px-3 py-1.5 bg-gray-100 border-b border-gray-200"
+        className="flex items-center justify-between px-3 py-1.5 bg-[#f6f5f4] border-b border-[rgba(0,0,0,0.1)]"
       >
         <select
           value={language}
           onChange={(e) => updateAttributes({ language: e.target.value })}
-          className="text-xs bg-transparent border border-gray-300 rounded px-1.5 py-0.5 text-gray-600 hover:border-gray-400 focus:outline-none focus:border-[#B8692A] cursor-pointer"
+          className="text-xs bg-transparent border border-[#dddddd] rounded px-1.5 py-0.5 text-[#615d59] hover:border-[#a39e98] focus:outline-none focus:border-[#0075de] cursor-pointer"
         >
           {LANGUAGES.map((lang) => (
             <option key={lang.value} value={lang.value}>
@@ -109,7 +109,7 @@ export default function CodeBlockLanguageSelector({
             className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded transition-colors ${
               isRunnable
                 ? "text-green-700 bg-green-50 hover:bg-green-100 border border-green-200"
-                : "text-gray-400 bg-gray-50 border border-gray-200 cursor-not-allowed"
+                : "text-[#a39e98] bg-[#f6f5f4] border border-[rgba(0,0,0,0.1)] cursor-not-allowed"
             }`}
             title={isRunnable ? "Run code in browser" : `Execution not supported for ${language}`}
           >
@@ -124,24 +124,24 @@ export default function CodeBlockLanguageSelector({
       {/* Code content */}
       <NodeViewContent<"pre">
         as={"pre" as "pre"}
-        className={`block w-full whitespace-pre-wrap p-3 font-mono text-sm text-gray-800 focus:outline-none ${
-          selected ? "ring-2 ring-[#B8692A]/30 ring-inset" : ""
+        className={`block w-full whitespace-pre-wrap p-3 font-mono text-sm text-[#31302e] focus:outline-none ${
+          selected ? "ring-2 ring-[#0075de]/30 ring-inset" : ""
         }`}
       />
 
       {/* Output section */}
       {output !== null && (
-        <div contentEditable={false} className="border-t border-gray-200">
-          <div className="flex items-center justify-between px-3 py-1 bg-gray-50">
-            <span className="text-[10px] font-medium text-gray-500 uppercase tracking-wide">Output</span>
+        <div contentEditable={false} className="border-t border-[rgba(0,0,0,0.1)]">
+          <div className="flex items-center justify-between px-3 py-1 bg-[#f6f5f4]">
+            <span className="text-[10px] font-medium text-[#615d59] uppercase tracking-wide">Output</span>
             <button
               onClick={() => setOutput(null)}
-              className="text-[10px] text-gray-400 hover:text-gray-600"
+              className="text-[10px] text-[#a39e98] hover:text-[#615d59]"
             >
               Clear
             </button>
           </div>
-          <pre className="px-3 py-2 text-xs font-mono text-gray-700 whitespace-pre-wrap bg-gray-50/50 max-h-40 overflow-y-auto">
+          <pre className="px-3 py-2 text-xs font-mono text-[#31302e] whitespace-pre-wrap bg-[#f6f5f4]/50 max-h-40 overflow-y-auto">
             {output}
           </pre>
         </div>

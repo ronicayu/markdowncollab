@@ -178,7 +178,7 @@ export default function TableSortMenu({ editor }: TableSortMenuProps) {
     >
       <button
         onClick={() => setMenuOpen((v) => !v)}
-        className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 shadow-sm transition-colors"
+        className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md bg-white border border-[rgba(0,0,0,0.1)] text-[#615d59] hover:bg-[#f6f5f4] hover:text-[#31302e] shadow-sm transition-colors"
         title="Sort table"
       >
         <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -186,15 +186,15 @@ export default function TableSortMenu({ editor }: TableSortMenuProps) {
         </svg>
         Sort
         {currentSort && (
-          <span className="text-[10px] text-gray-400">
+          <span className="text-[10px] text-[#a39e98]">
             ({colHeaders[currentSort.colIndex]?.slice(0, 8)} {currentSort.dir === "asc" ? "\u25B2" : "\u25BC"})
           </span>
         )}
       </button>
 
       {menuOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 w-52 z-50">
-          <p className="px-3 py-1 text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+        <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-xl border border-[rgba(0,0,0,0.1)] py-1 w-52 z-50">
+          <p className="px-3 py-1 text-[10px] font-medium text-[#a39e98] uppercase tracking-wide">
             Sort by column
           </p>
           {colHeaders.map((header, i) => (
@@ -203,19 +203,19 @@ export default function TableSortMenu({ editor }: TableSortMenuProps) {
                 onClick={() => sortTable(i, "asc")}
                 className={`flex-1 flex items-center gap-2 px-3 py-1.5 text-sm text-left transition-colors ${
                   currentSort?.colIndex === i && currentSort.dir === "asc"
-                    ? "bg-amber-50 text-[#B8692A] font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "bg-[#fbece0] text-[#0075de] font-medium"
+                    : "text-[#31302e] hover:bg-[#f6f5f4]"
                 }`}
               >
                 <span className="truncate">{header}</span>
-                <span className="text-[10px] text-gray-400 ml-auto shrink-0">{"\u25B2"}</span>
+                <span className="text-[10px] text-[#a39e98] ml-auto shrink-0">{"\u25B2"}</span>
               </button>
               <button
                 onClick={() => sortTable(i, "desc")}
                 className={`px-2 py-1.5 text-sm transition-colors ${
                   currentSort?.colIndex === i && currentSort.dir === "desc"
-                    ? "bg-amber-50 text-[#B8692A] font-medium"
-                    : "text-gray-400 hover:bg-gray-50 hover:text-gray-700"
+                    ? "bg-[#fbece0] text-[#0075de] font-medium"
+                    : "text-[#a39e98] hover:bg-[#f6f5f4] hover:text-[#31302e]"
                 }`}
               >
                 <span className="text-[10px]">{"\u25BC"}</span>
@@ -224,10 +224,10 @@ export default function TableSortMenu({ editor }: TableSortMenuProps) {
           ))}
           {currentSort && (
             <>
-              <div className="border-t border-gray-100 my-1" />
+              <div className="border-t border-[rgba(0,0,0,0.1)] my-1" />
               <button
                 onClick={() => { setCurrentSort(null); setMenuOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 transition-colors"
+                className="w-full text-left px-3 py-1.5 text-sm text-[#615d59] hover:bg-[#f6f5f4] transition-colors"
               >
                 Clear sort
               </button>
