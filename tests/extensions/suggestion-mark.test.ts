@@ -1,16 +1,26 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { SuggestionMark } from "../../src/extensions/suggestion-mark";
 
+let editor: Editor | null = null;
+
 function createEditor(content: string) {
-  return new Editor({
+  editor = new Editor({
     extensions: [StarterKit, SuggestionMark],
     content,
   });
+  return editor;
 }
 
 describe("SuggestionMark", () => {
+  afterEach(() => {
+    // Destroy the editor so Tiptap's deferred view callbacks don't fire after
+    // jsdom teardown ("document is not defined"). Matches sibling editor tests.
+    editor?.destroy();
+    editor = null;
+  });
+
   it("can apply a suggestion-add mark to selected text", () => {
     const editor = createEditor("<p>Hello world</p>");
     editor.commands.setTextSelection({ from: 7, to: 12 }); // "world"
