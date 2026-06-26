@@ -5,7 +5,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import ShareDialog from "@/components/ShareDialog";
 import { useTranslation, LOCALE_LABELS, type Locale } from "@/lib/i18n";
 import { toast } from "@/lib/toast";
-import type { EditorMode } from "@/lib/editor-mode";
+import { type EditorMode, globallyEnabledModes } from "@/lib/editor-mode";
 
 export interface Collaborator {
   name: string;
@@ -81,7 +81,9 @@ function ModeSwitcher({
   onChange: (m: EditorMode) => void;
   allowed: EditorMode[];
 }) {
-  const modes: EditorMode[] = ["edit", "suggest", "view"];
+  // Only render modes enabled for this deployment; flag-disabled modes
+  // (e.g. NEXT_PUBLIC_DISABLE_EDIT_MODE) are omitted entirely rather than greyed.
+  const modes = globallyEnabledModes();
   return (
     <div
       role="radiogroup"

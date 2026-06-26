@@ -3,33 +3,24 @@
 import { useState } from "react";
 import * as Y from "yjs";
 import type { Editor as TiptapEditor } from "@tiptap/core";
-import type { WebsocketProvider } from "y-websocket";
-import type { HealthScore as HealthScoreType } from "@/lib/health-score";
 import { addSuggestion } from "@/lib/suggestion-store";
 import type { Suggestion } from "@/types";
-import CursorChat from "./CursorChat";
 
 interface EditorStatusBarProps {
   editor: TiptapEditor | null;
   documentId: string;
   ydoc: Y.Doc;
-  provider: WebsocketProvider;
-  userName: string;
   saveStatus: "idle" | "saving" | "saved";
   lastSyncTime: number | null;
   now: number;
   lastSavedByName: string | null;
   hasTextSelection: boolean;
-  healthScore: HealthScoreType | null;
   wordCount: { words: number; chars: number };
   docSize: string;
   spellcheckEnabled: boolean;
   onSpellcheckChange: (v: boolean) => void;
-  heatmapEnabled: boolean;
-  onHeatmapChange: (v: boolean) => void;
   typewriterMode: boolean;
   onTypewriterChange: (v: boolean) => void;
-  onIssueSettingsOpen: () => void;
   wordGoal: number | null;
   onWordGoalChange: (v: number | null) => void;
 }
@@ -38,23 +29,17 @@ export default function EditorStatusBar({
   editor,
   documentId,
   ydoc,
-  provider,
-  userName,
   saveStatus,
   lastSyncTime,
   now,
   lastSavedByName,
   hasTextSelection,
-  healthScore,
   wordCount,
   docSize,
   spellcheckEnabled,
   onSpellcheckChange,
-  heatmapEnabled,
-  onHeatmapChange,
   typewriterMode,
   onTypewriterChange,
-  onIssueSettingsOpen,
   wordGoal,
   onWordGoalChange,
 }: EditorStatusBarProps) {
@@ -128,7 +113,6 @@ export default function EditorStatusBar({
     editor.commands.focus();
   }
 
-  const [showHealthDetails, setShowHealthDetails] = useState(false);
   const [showGoalInput, setShowGoalInput] = useState(false);
   const [goalInputValue, setGoalInputValue] = useState("");
 
@@ -285,8 +269,6 @@ export default function EditorStatusBar({
           )}
         </div>
       )}
-      {/* Cursor Chat */}
-      <CursorChat provider={provider} userName={userName} />
       {/* Spellcheck Toggle */}
       <button
         onClick={() => {
@@ -305,21 +287,6 @@ export default function EditorStatusBar({
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         Spellcheck
-      </button>
-      {/* Heatmap Toggle */}
-      <button
-        onClick={() => onHeatmapChange(!heatmapEnabled)}
-        className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors ${
-          heatmapEnabled
-            ? "text-[#dd5b00] bg-[#fbece0] hover:bg-[#fbece0]"
-            : "text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4]"
-        }`}
-        title={heatmapEnabled ? "Hide edit heatmap" : "Show edit heatmap"}
-      >
-        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
-        </svg>
-        Heatmap
       </button>
       {/* Typewriter Mode Toggle */}
       <button
@@ -340,81 +307,6 @@ export default function EditorStatusBar({
         </svg>
         Typewriter
       </button>
-      {/* Issue Tracker Settings */}
-      <button
-        onClick={onIssueSettingsOpen}
-        className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-[#a39e98] hover:text-[#615d59] hover:bg-[#f6f5f4] transition-colors"
-        title="Issue tracker link settings"
-      >
-        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.54a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.34 8.798" />
-        </svg>
-        Issues
-      </button>
-      {/* Health Score Badge */}
-      {healthScore && (
-        <div className="relative">
-          <button
-            onClick={() => setShowHealthDetails((v) => !v)}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-colors cursor-pointer ${
-              healthScore.color === "green"
-                ? "bg-green-100 text-green-700 hover:bg-green-200"
-                : healthScore.color === "amber"
-                ? "bg-[#fbece0] text-[#dd5b00] hover:bg-[#fbece0]"
-                : "bg-red-100 text-red-700 hover:bg-red-200"
-            }`}
-            title="Document Health Score — click for details"
-          >
-            <span>{healthScore.score}</span>
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
-          {showHealthDetails && (
-            <div className="absolute bottom-7 left-1/2 -translate-x-1/2 w-72 bg-white border border-[rgba(0,0,0,0.1)] rounded-lg shadow-lg p-3 z-50 text-xs text-[#31302e]">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-[#31302e]">Health Score: {healthScore.score}/100</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowHealthDetails(false); }}
-                  className="text-[#a39e98] hover:text-[#615d59]"
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex justify-between">
-                  <span>Readability (Flesch)</span>
-                  <span className="font-medium">{healthScore.metrics.fleschReadingEase}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Avg sentence length</span>
-                  <span className="font-medium">{healthScore.metrics.avgSentenceLength} words</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Has headings</span>
-                  <span className="font-medium">{healthScore.metrics.hasHeadings ? "Yes" : "No"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Has links</span>
-                  <span className="font-medium">{healthScore.metrics.hasLinks ? "Yes" : "No"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Word count</span>
-                  <span className="font-medium">{healthScore.metrics.wordCount} {healthScore.metrics.wordCountAppropriate ? "" : "(too short)"}</span>
-                </div>
-                {healthScore.metrics.templateCompleteness !== null && (
-                  <div className="flex justify-between">
-                    <span>Template completeness</span>
-                    <span className="font-medium">{healthScore.metrics.templateCompleteness}%</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
       <span
         className="cursor-pointer hover:text-[#615d59] transition-colors relative"
         onClick={() => {

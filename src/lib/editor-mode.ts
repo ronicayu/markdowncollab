@@ -4,9 +4,28 @@ export type UserRole = "owner" | "editor" | "viewer" | null | undefined;
 
 const MODE_ORDER: EditorMode[] = ["edit", "suggest", "view"];
 
+/**
+ * Modes that are globally enabled for the deployment, controlled by env flags.
+ * "view" can never be disabled — it is the read-only fallback every role keeps.
+ *
+ * - NEXT_PUBLIC_DISABLE_EDIT_MODE="true"    → removes "edit"
+ * - NEXT_PUBLIC_DISABLE_SUGGEST_MODE="true" → removes "suggest"
+ */
+export function globallyEnabledModes(): EditorMode[] {
+  const modes: EditorMode[] = [];
+  if (process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE !== "true") modes.push("edit");
+  if (process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE !== "true") modes.push("suggest");
+  modes.push("view");
+  return modes;
+}
+
 export function allowedModes(role: UserRole): EditorMode[] {
-  if (role === "owner" || role === "editor") return ["edit", "suggest", "view"];
-  return ["view"];
+  const enabled = globallyEnabledModes();
+  const byRole: EditorMode[] =
+    role === "owner" || role === "editor"
+      ? ["edit", "suggest", "view"]
+      : ["view"];
+  return byRole.filter((m) => enabled.includes(m));
 }
 
 export function clampMode(mode: EditorMode, role: UserRole): EditorMode {

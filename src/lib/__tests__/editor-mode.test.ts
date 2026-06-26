@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   allowedModes,
   clampMode,
   cycleMode,
+  globallyEnabledModes,
   initialMode,
   readStoredMode,
   writeStoredMode,
@@ -95,6 +96,72 @@ describe("editor-mode helpers", () => {
     it("uses stored mode when present (even on mobile)", () => {
       writeStoredMode("d", "edit");
       expect(initialMode({ docId: "d", role: "editor", isMobile: true })).toBe("edit");
+    });
+  });
+
+  describe("feature flags", () => {
+    afterEach(() => {
+      delete process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE;
+      delete process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE;
+    });
+
+    describe("globallyEnabledModes", () => {
+      it("enables all modes by default", () => {
+        expect(globallyEnabledModes()).toEqual(["edit", "suggest", "view"]);
+      });
+      it("drops edit when disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "true";
+        expect(globallyEnabledModes()).toEqual(["suggest", "view"]);
+      });
+      it("drops suggest when disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE = "true";
+        expect(globallyEnabledModes()).toEqual(["edit", "view"]);
+      });
+      it("keeps view even when both edit and suggest are disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "true";
+        process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE = "true";
+        expect(globallyEnabledModes()).toEqual(["view"]);
+      });
+      it("treats any value other than 'true' as enabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "false";
+        process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE = "1";
+        expect(globallyEnabledModes()).toEqual(["edit", "suggest", "view"]);
+      });
+    });
+
+    describe("allowedModes respects flags", () => {
+      it("removes edit from an editor when edit is disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "true";
+        expect(allowedModes("editor")).toEqual(["suggest", "view"]);
+      });
+      it("removes suggest from an owner when suggest is disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE = "true";
+        expect(allowedModes("owner")).toEqual(["edit", "view"]);
+      });
+      it("leaves viewer at view regardless of flags", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "true";
+        process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE = "true";
+        expect(allowedModes("viewer")).toEqual(["view"]);
+      });
+    });
+
+    describe("clampMode respects flags", () => {
+      it("snaps a stored edit mode to suggest when edit is disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "true";
+        expect(clampMode("edit", "editor")).toBe("suggest");
+      });
+      it("snaps to view when both writable modes are disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "true";
+        process.env.NEXT_PUBLIC_DISABLE_SUGGEST_MODE = "true";
+        expect(clampMode("edit", "owner")).toBe("view");
+      });
+    });
+
+    describe("initialMode respects flags", () => {
+      it("desktop editor falls back to suggest when edit is disabled", () => {
+        process.env.NEXT_PUBLIC_DISABLE_EDIT_MODE = "true";
+        expect(initialMode({ docId: "f", role: "editor", isMobile: false })).toBe("suggest");
+      });
     });
   });
 });

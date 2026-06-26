@@ -41,18 +41,14 @@ import "./drag-handle.css";
 import SearchBar from "./SearchBar";
 import LinkDialog from "./LinkDialog";
 import TableSortMenu from "./TableSortMenu";
-import { calculateHealthScore, type HealthScore as HealthScoreType } from "@/lib/health-score";
 import AIAutoComplete from "./AIAutoComplete";
 
-import CursorChat from "./CursorChat";
 import EditorStatusBar from "./EditorStatusBar";
 
 import { ProgressBlock } from "@/extensions/progress-block";
 import { BreadcrumbBlock } from "@/extensions/breadcrumb-block";
-import { IssueLinker } from "@/extensions/issue-linker";
 
 import { Extension } from "@tiptap/core";
-import { createHeatmapPlugin, heatmapPluginKey } from "@/extensions/heatmap-plugin";
 import { HeadingAnchor, initAnchorScrolling } from "@/extensions/heading-anchor";
 import { InlineDate } from "@/extensions/inline-date";
 import { getKeybindings, toProseMirrorKey } from "@/lib/keybindings";
@@ -69,7 +65,6 @@ interface EditorProps {
   mode?: EditorMode;
   initialContent?: string | null;
   onToggleShortcutsHelp?: () => void;
-  templateId?: string;
   autoCompleteEnabled?: boolean;
 }
 
@@ -84,7 +79,6 @@ export default function Editor({
   mode,
   initialContent,
   onToggleShortcutsHelp,
-  templateId,
   autoCompleteEnabled = false,
 }: EditorProps) {
 
@@ -106,7 +100,6 @@ export default function Editor({
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrollable, setIsScrollable] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [healthScore, setHealthScore] = useState<HealthScoreType | null>(null);
   const [lastSavedByName, setLastSavedByName] = useState<string | null>(null);
   const [typewriterMode, setTypewriterMode] = useState(false);
   const [hasTextSelection, setHasTextSelection] = useState(false);
@@ -118,19 +111,10 @@ export default function Editor({
       return stored === null ? true : stored === "true";
     } catch { return true; }
   });
-  const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
   const draftKey = `draft:${documentId}`;
   const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [issueSettingsOpen, setIssueSettingsOpen] = useState(false);
-  const [issuePatterns, setIssuePatterns] = useState(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      const stored = localStorage.getItem("issueLinker:patterns");
-      return stored || '{\n  "JIRA": "https://jira.example.com/browse/{ref}",\n  "GH": "https://github.com/org/repo/issues/{num}",\n  "#": "https://github.com/org/repo/issues/{num}"\n}';
-    } catch { return ""; }
-  });
 
   // Load typewriter mode from localStorage
   useEffect(() => {
@@ -363,15 +347,8 @@ export default function Editor({
       }),
       ProgressBlock,
       BreadcrumbBlock,
-      IssueLinker,
       HeadingAnchor,
       InlineDate,
-      Extension.create({
-        name: "heatmap",
-        addProseMirrorPlugins() {
-          return [createHeatmapPlugin()];
-        },
-      }),
       // Custom keybindings extension — applies user overrides via a high-priority
       // ProseMirror keymap plugin. Actions that need React state (find, link, etc.)
       // are dispatched as custom DOM events and handled in useEffect listeners.
@@ -666,14 +643,6 @@ export default function Editor({
       else if (bytes < 1024 * 1024) setDocSize(`${(bytes / 1024).toFixed(1)} KB`);
       else setDocSize(`${(bytes / (1024 * 1024)).toFixed(1)} MB`);
 
-      // Health score (use markdown storage for accurate markdown syntax detection)
-      try {
-        const mdText = (ed.storage as any).markdown?.getMarkdown?.() ?? text;
-        setHealthScore(calculateHealthScore(mdText, templateId));
-      } catch {
-        setHealthScore(calculateHealthScore(text, templateId));
-      }
-
       const { state, view } = ed;
       const { $from } = state.selection;
 
@@ -867,14 +836,6 @@ export default function Editor({
     return () => editorEl.removeEventListener("click", handleClick);
   }, [editor]);
 
-  // Toggle heatmap
-  useEffect(() => {
-    if (!editor) return;
-    editor.view.dispatch(
-      editor.view.state.tr.setMeta(heatmapPluginKey, { enabled: heatmapEnabled })
-    );
-  }, [editor, heatmapEnabled]);
-
   useEffect(() => {
     if (editor) {
       editor.setEditable(effectiveEditable);
@@ -1063,23 +1024,17 @@ export default function Editor({
         editor={editor}
         documentId={documentId}
         ydoc={ydoc}
-        provider={provider}
-        userName={userName}
         saveStatus={saveStatus}
         lastSyncTime={lastSyncTime}
         now={now}
         lastSavedByName={lastSavedByName}
         hasTextSelection={hasTextSelection}
-        healthScore={healthScore}
         wordCount={wordCount}
         docSize={docSize}
         spellcheckEnabled={spellcheckEnabled}
         onSpellcheckChange={setSpellcheckEnabled}
-        heatmapEnabled={heatmapEnabled}
-        onHeatmapChange={setHeatmapEnabled}
         typewriterMode={typewriterMode}
         onTypewriterChange={setTypewriterMode}
-        onIssueSettingsOpen={() => setIssueSettingsOpen(true)}
         wordGoal={wordGoal}
         onWordGoalChange={setWordGoal}
       />
@@ -1107,43 +1062,6 @@ export default function Editor({
         />
       )}
       {editor && <TableSortMenu editor={editor} />}
-      {/* Issue Tracker Settings Dialog */}
-      {issueSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setIssueSettingsOpen(false)}>
-          <div className="bg-white rounded-xl shadow-xl p-5 mx-4 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold text-[#31302e] mb-1">Issue Tracker Settings</h3>
-            <p className="text-xs text-[#615d59] mb-3">
-              Configure URL patterns for auto-linking. Use {"{ref}"} for the full reference (e.g. JIRA-123) and {"{num}"} for just the number.
-            </p>
-            <textarea
-              value={issuePatterns}
-              onChange={(e) => setIssuePatterns(e.target.value)}
-              className="w-full border border-[rgba(0,0,0,0.1)] rounded-lg px-3 py-2 text-xs text-[#31302e] font-mono resize-none focus:outline-none focus:border-[#0075de] focus:ring-1 focus:ring-[#0075de]"
-              rows={6}
-              placeholder='{"JIRA": "https://jira.example.com/browse/{ref}"}'
-            />
-            <div className="flex justify-end gap-2 mt-3">
-              <button
-                onClick={() => {
-                  try {
-                    JSON.parse(issuePatterns);
-                    localStorage.setItem("issueLinker:patterns", issuePatterns);
-                    setIssueSettingsOpen(false);
-                  } catch {
-                    alert("Invalid JSON. Please check the format.");
-                  }
-                }}
-                className="text-sm font-medium bg-[#0075de] hover:bg-[#005bab] text-white px-3 py-2 rounded-lg transition-colors"
-              >
-                Save
-              </button>
-              <button onClick={() => setIssueSettingsOpen(false)} className="text-sm font-medium text-[#615d59] hover:text-[#31302e] px-3 py-1.5">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

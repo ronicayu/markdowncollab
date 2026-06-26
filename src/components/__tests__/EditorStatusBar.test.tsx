@@ -4,11 +4,6 @@ import * as Y from "yjs";
 import EditorStatusBar from "../EditorStatusBar";
 import { getSuggestions } from "@/lib/suggestion-store";
 
-// Mock CursorChat to avoid WebSocket complexity
-vi.mock("../CursorChat", () => ({
-  default: () => <div data-testid="cursor-chat" />,
-}));
-
 // Mock addSuggestion to spy on calls without needing full Yjs wiring in DOM
 const mockAddSuggestion = vi.fn();
 vi.mock("@/lib/suggestion-store", async (importOriginal) => {
@@ -56,40 +51,24 @@ function createMockEditor() {
   return editor;
 }
 
-function createMockProvider() {
-  return {
-    awareness: { getStates: () => new Map(), on: vi.fn(), off: vi.fn() },
-    on: vi.fn(),
-    off: vi.fn(),
-    wsconnected: true,
-  };
-}
-
 function defaultProps(overrides: Record<string, unknown> = {}) {
   const ydoc = new Y.Doc();
   const editor = createMockEditor();
-  const provider = createMockProvider();
   return {
     editor: editor as unknown as Parameters<typeof EditorStatusBar>[0]["editor"],
     documentId: "doc-1",
     ydoc,
-    provider: provider as unknown as Parameters<typeof EditorStatusBar>[0]["provider"],
-    userName: "TestUser",
     saveStatus: "saved" as const,
     lastSyncTime: Date.now(),
     now: Date.now(),
     lastSavedByName: "TestUser",
     hasTextSelection: true,
-    healthScore: null,
     wordCount: { words: 100, chars: 500 },
     docSize: "2 KB",
     spellcheckEnabled: false,
     onSpellcheckChange: vi.fn(),
-    heatmapEnabled: false,
-    onHeatmapChange: vi.fn(),
     typewriterMode: false,
     onTypewriterChange: vi.fn(),
-    onIssueSettingsOpen: vi.fn(),
     wordGoal: null,
     onWordGoalChange: vi.fn(),
     _mockEditor: editor,
